@@ -9,7 +9,6 @@ import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -19,8 +18,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     var onTouch: () -> Unit = {}
     var onRelease: () -> Unit = {}
 
-    protected var totalRadius = 0F
-    protected var innerRadius = 0F
+    protected var radius = 0F
 
     protected var centerX = 0F
     protected var centerY = 0F
@@ -32,38 +30,35 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
 
     protected val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.GRAY
-        style = Paint.Style.FILL
+        style = Paint.Style.STROKE
+        strokeWidth = outlinePx
     }
 
-    private var outlinePx: Float
-
-    init {
-        outlinePx = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            OUTLINE_THICKNESS_DP.toFloat(),
-            resources.displayMetrics
-        )
-    }
+    private var outlinePx = TypedValue.applyDimension(
+        TypedValue.COMPLEX_UNIT_DIP,
+        OUTLINE_THICKNESS_DP.toFloat(),
+        resources.displayMetrics
+    )
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
         canvas.apply {
 
-            //Draw circle for outline
-            drawCircle(
-                centerX,
-                centerY,
-                totalRadius,
-                outlinePaint
-            )
-
             //Draw circle for body
             drawCircle(
                 centerX,
                 centerY,
-                innerRadius,
+                radius,
                 bodyPaint
+            )
+
+            //Draw line for the outline
+            drawCircle(
+                centerX,
+                centerY,
+                radius,
+                outlinePaint
             )
         }
     }
@@ -77,8 +72,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         val availableWidth = width - xPadding
         val availableHeight = height - yPadding
 
-        totalRadius = (min(availableWidth, availableHeight) / 2).toFloat()
-        innerRadius = totalRadius - outlinePx
+        radius = (min(availableWidth, availableHeight) / 2).toFloat()
 
         centerX = (width / 2).toFloat()
         centerY = (height / 2).toFloat()
@@ -106,7 +100,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         val xDiff = xTouch - centerX
         val yDiff = yTouch - centerY
 
-        return abs(xDiff) <= totalRadius && abs(yDiff) < totalRadius
+        return abs(xDiff) <= radius && abs(yDiff) < radius
     }
 
     fun setOutlineAlphaPercent(alpha: Double){
@@ -120,6 +114,6 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     }
 
     companion object {
-        const val OUTLINE_THICKNESS_DP = 2
+        const val OUTLINE_THICKNESS_DP = 4
     }
 }

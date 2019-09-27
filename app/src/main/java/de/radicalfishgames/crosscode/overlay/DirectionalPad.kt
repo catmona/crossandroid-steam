@@ -30,8 +30,8 @@ class DirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(conte
             val yDiff = yTouch - centerY
 
             // Return the values as values ranging from -1.0 to 1.0
-            val xDir = xDiff / innerRadius
-            val yDir = yDiff / innerRadius
+            val xDir = xDiff / radius
+            val yDir = yDiff / radius
 
             onDirectionUpdate(xDir.toDouble(), yDir.toDouble())
         }

@@ -12,9 +12,11 @@ class ControllerMapper(private val game: GameWrapper, private val rootView: View
     fun initControls(){
 
         val testButton = rootView.findViewById<CircleButton>(R.id.test_button)
+        testButton.setBodyAlphaPercent(0.3)
         bindButton(testButton, gamepad.rightCross.bottom)
 
         val testPad = rootView.findViewById<DirectionalPad>(R.id.test_pad)
+        testPad.setBodyAlphaPercent(0.3)
         bindPad(testPad, gamepad.leftStick)
     }
 
