@@ -80,3 +80,12 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# CrossCode game files
+app/src/main/assets/www/data
+app/src/main/assets/www/game
+app/src/main/assets/www/game.page
+app/src/main/assets/www/impact
+app/src/main/assets/www/js
+app/src/main/assets/www/media
+app/src/main/assets/www/modules
