@@ -48,9 +48,9 @@ class GameWrapper(private val webView: WebView) {
         webView.setOnTouchListener { _, _ -> true }
     }
 
-    fun loadGame() {
+    fun loadGame(fromLocation: String) {
 
-        webView.loadUrl("file:///android_asset/www/node-webkit.html")
+        webView.loadUrl(fromLocation)
 
     }
 

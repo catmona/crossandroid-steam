@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.os.Bundle
+import android.os.storage.StorageManager
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 
@@ -28,10 +29,17 @@ class GameActivity : AppCompatActivity() {
 
         gameWrapper = GameWrapper(findViewById(R.id.game_view))
         gameWrapper.initWebView()
-        gameWrapper.loadGame()
 
         controllerMapper = ControllerMapper(gameWrapper, findViewById(R.id.root_view))
         controllerMapper.initControls()
+
+        //TODO instead of bundling all game files in the APK, put them in an Android expansion file/OBB
+        // - the first attempt at this didn't work because WebView didn't interpret the mounted path
+        // correctly.
+        // Expansion files general : https://developer.android.com/google/play/expansion-files
+        // Creating an OBB file: https://developer.android.com/studio/command-line/jobb
+        // Mounting an OBB file: https://developer.android.com/reference/android/os/storage/StorageManager.html#mountObb(java.lang.String,%20java.lang.String,%20android.os.storage.OnObbStateChangeListener)
+        gameWrapper.loadGame("file:///android_asset/www/node-webkit.html")
 
     }
 }
