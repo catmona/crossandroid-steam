@@ -5,7 +5,7 @@ import android.view.View
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.activity_game.*
 
-class ControllerMapper(game: GameWrapper, override val containerView: View?): LayoutContainer {
+class ControllerMapper(private val game: GameWrapper, override val containerView: View?): LayoutContainer {
 
     private val gamepad = game.gamepadState
 
@@ -15,6 +15,36 @@ class ControllerMapper(game: GameWrapper, override val containerView: View?): La
 
         val handler = Handler()
 
+        overlay_toggle.apply {
+            setBodyAlphaPercent(0.3)
+
+            onRelease.add {
+                game.showControls = !game.showControls
+
+                if(game.showControls){
+
+                    aim_pad.visibility = View.VISIBLE
+                    action_button.visibility = View.VISIBLE
+                    dash_button.visibility = View.VISIBLE
+                    quickmenu_button.visibility = View.VISIBLE
+                    ult_button.visibility = View.VISIBLE
+                    shield_button.visibility = View.VISIBLE
+                    movement_pad.visibility = View.VISIBLE
+
+                }else{
+
+                    aim_pad.visibility = View.GONE
+                    action_button.visibility = View.GONE
+                    dash_button.visibility = View.GONE
+                    quickmenu_button.visibility = View.GONE
+                    ult_button.visibility = View.GONE
+                    shield_button.visibility = View.GONE
+                    movement_pad.visibility = View.GONE
+                }
+
+                containerView?.invalidate()
+            }
+        }
 
         shield_button.apply {
             setBodyAlphaPercent(0.3)

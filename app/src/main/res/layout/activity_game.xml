@@ -11,8 +11,7 @@
     <WebView
         android:id="@+id/game_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clickable="false" />
+        android:layout_height="match_parent"/>
 
     <de.radicalfishgames.crosscode.overlay.RingDirectionalPad
         android:id="@+id/aim_pad"
@@ -81,5 +80,13 @@
         app:layout_constraintTop_toTopOf="@+id/game_view"
         app:layout_constraintVertical_bias="0.95" />
 
+
+    <de.radicalfishgames.crosscode.overlay.OverlayToggle
+        android:id="@+id/overlay_toggle"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        app:layout_constraintBottom_toBottomOf="@+id/game_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,6 +2,8 @@ package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
 import android.content.Context.MODE_PRIVATE
+import android.view.MotionEvent
+import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -15,6 +17,8 @@ class GameWrapper(private val webView: WebView) {
 
     var isGameReady = false
         private set
+
+    var showControls = true
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -40,8 +44,10 @@ class GameWrapper(private val webView: WebView) {
             }
         }
 
-        // Disable clicking the game, since we have our own input method
-        webView.setOnTouchListener { _, _ -> true }
+        // Disable clicking the game while custom controls are active
+        webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
+            showControls
+        }
     }
 
     fun loadGame(fromLocation: String) {
