@@ -24,14 +24,15 @@
         app:layout_constraintTop_toTopOf="@+id/game_view" />
 
     <de.radicalfishgames.crosscode.overlay.DirectionalPad
-        android:id="@+id/test_pad"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:id="@+id/movement_pad"
+        android:layout_width="230dp"
+        android:layout_height="230dp"
         app:layout_constraintBottom_toBottomOf="@+id/game_view"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.03"
         app:layout_constraintStart_toStartOf="@+id/game_view"
         app:layout_constraintTop_toTopOf="@+id/game_view"
         app:layout_constraintVertical_bias="0.94" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

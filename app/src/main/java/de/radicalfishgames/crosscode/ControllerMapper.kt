@@ -15,25 +15,53 @@ class ControllerMapper(private val game: GameWrapper, private val rootView: View
         testButton.setBodyAlphaPercent(0.3)
         bindButton(testButton, gamepad.rightCross.bottom)
 
-        val testPad = rootView.findViewById<DirectionalPad>(R.id.test_pad)
-        testPad.setBodyAlphaPercent(0.3)
-        bindPad(testPad, gamepad.leftStick)
+        val movementPad = rootView.findViewById<DirectionalPad>(R.id.movement_pad)
+        movementPad.setBodyAlphaPercent(0.3)
+        movementPad.onDirectionUpdate.add { xDir: Double, yDir: Double -> updateState {
+            // Scale the results up a bit. This way the maximum running speed is achieved
+            // sooner, and we can activate dash for higher values.
+            val factor = 1.3
+            var dash = false
+
+            val actualX: Double
+            if(xDir * factor <= 1.0){
+                actualX = xDir * factor
+            }else{
+                actualX = 1.0
+                dash = true
+            }
+
+            val actualY: Double
+            if(yDir * factor <= 1.0){
+                actualY = yDir * factor
+            }else{
+                actualY = 1.0
+                dash = true
+            }
+
+
+            gamepad.leftStick.horizontal = actualX
+            gamepad.leftStick.vertical = actualY
+
+            gamepad.leftBumper.pressed = dash
+        } }
+
+        movementPad.onRelease.add { run {
+            updateState {
+                gamepad.leftStick.vertical = 0.0
+                gamepad.leftStick.horizontal = 0.0
+
+                gamepad.leftBumper.pressed = false
+            }
+        } }
     }
 
     private fun bindButton(button: CircleButton, gamepadButton: GamepadState.Button){
-        button.onTouch = { updateState { gamepadButton.pressed = true } }
-        button.onRelease = { updateState { gamepadButton.pressed = false } }
-    }
-
-    private fun bindPad(pad: DirectionalPad, gamepadStick: GamepadState.Stick){
-        pad.onDirectionUpdate = { xDir: Double, yDir: Double -> updateState {
-            gamepadStick.vertical = yDir
-            gamepadStick.horizontal = xDir
+        button.onTouch.add { run {
+            updateState { gamepadButton.pressed = true }
         } }
-
-        pad.onRelease = { updateState {
-            gamepadStick.vertical = 0.0
-            gamepadStick.horizontal = 0.0
+        button.onRelease.add { run {
+            updateState { gamepadButton.pressed = false }
         } }
     }
 
