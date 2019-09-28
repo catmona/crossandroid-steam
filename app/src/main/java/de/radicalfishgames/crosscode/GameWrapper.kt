@@ -77,7 +77,7 @@ class GameWrapper(private val webView: WebView) {
         )
     }
 
-    fun updateJSGamepad(){
+    private fun updateJSGamepad(){
         if(isGameReady){
             webView.evaluateJavascript(
                 "$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];",

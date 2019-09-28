@@ -11,9 +11,16 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
     fun initControls(){
 
-        val testButton = rootView.findViewById<CircleButton>(R.id.test_button)
-        testButton.setBodyAlphaPercent(0.3)
-        bindButton(testButton, gamepad.rightCross.bottom)
+        val actionButton = rootView.findViewById<CircleButton>(R.id.action_button)
+        actionButton.setBodyAlphaPercent(0.3)
+        actionButton.onTouch.add {
+            gamepad.rightCross.bottom.pressed = true
+            gamepad.rightBumper.pressed = true
+        }
+        actionButton.onRelease.add {
+            gamepad.rightCross.bottom.pressed = false
+            gamepad.rightBumper.pressed = false
+        }
 
         val movementPad = rootView.findViewById<DirectionalPad>(R.id.movement_pad)
         movementPad.setBodyAlphaPercent(0.3)
@@ -52,14 +59,5 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
             gamepad.leftBumper.pressed = false
         }
-    }
-
-    private fun bindButton(button: CircleButton, gamepadButton: GamepadState.Button){
-        button.onTouch.add { run {
-            gamepadButton.pressed = true
-        } }
-        button.onRelease.add { run {
-            gamepadButton.pressed = false
-        } }
     }
 }

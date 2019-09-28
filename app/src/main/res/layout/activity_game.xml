@@ -15,13 +15,15 @@
         android:clickable="false" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
-        android:id="@+id/test_button"
+        android:id="@+id/action_button"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="@+id/game_view"
+        app:layout_constraintEnd_toEndOf="@+id/game_view"
+        app:layout_constraintHorizontal_bias="0.9"
         app:layout_constraintStart_toStartOf="@+id/game_view"
-        app:layout_constraintTop_toTopOf="@+id/game_view" />
+        app:layout_constraintTop_toTopOf="@+id/game_view"
+        app:layout_constraintVertical_bias="0.8" />
 
     <de.radicalfishgames.crosscode.overlay.DirectionalPad
         android:id="@+id/movement_pad"
