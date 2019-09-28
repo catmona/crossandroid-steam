@@ -6,7 +6,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 
 
-class DirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(context, attrs) {
+class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(context, attrs) {
 
     var onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double) -> Unit> = HashSet()
 

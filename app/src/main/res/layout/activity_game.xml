@@ -70,7 +70,7 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@+id/movement_pad" />
 
-    <de.radicalfishgames.crosscode.overlay.DirectionalPad
+    <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
         android:id="@+id/movement_pad"
         android:layout_width="150dp"
         android:layout_height="150dp"

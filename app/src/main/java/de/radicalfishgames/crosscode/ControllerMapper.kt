@@ -3,7 +3,7 @@ package de.radicalfishgames.crosscode
 import android.os.Handler
 import android.view.ViewGroup
 import de.radicalfishgames.crosscode.overlay.CircleButton
-import de.radicalfishgames.crosscode.overlay.DirectionalPad
+import de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
 import de.radicalfishgames.crosscode.overlay.RingDirectionalPad
 
 
@@ -39,7 +39,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<DirectionalPad>(R.id.movement_pad).apply {
+        rootView.findViewById<CircleDirectionalPad>(R.id.movement_pad).apply {
             setBodyAlphaPercent(0.3)
 
             onDirectionUpdate.add { xDir: Double, yDir: Double ->
