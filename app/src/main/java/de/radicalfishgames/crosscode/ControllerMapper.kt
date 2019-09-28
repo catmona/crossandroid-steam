@@ -1,13 +1,11 @@
 package de.radicalfishgames.crosscode
 
 import android.os.Handler
-import android.view.ViewGroup
-import de.radicalfishgames.crosscode.overlay.CircleButton
-import de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
-import de.radicalfishgames.crosscode.overlay.RingDirectionalPad
+import android.view.View
+import kotlinx.android.extensions.LayoutContainer
+import kotlinx.android.synthetic.main.activity_game.*
 
-
-class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
+class ControllerMapper(game: GameWrapper, override val containerView: View?): LayoutContainer {
 
     private val gamepad = game.gamepadState
 
@@ -17,7 +15,8 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
         val handler = Handler()
 
-        rootView.findViewById<CircleButton>(R.id.shield_button).apply {
+
+        shield_button.apply {
             setBodyAlphaPercent(0.3)
 
             onTouch.add {
@@ -28,7 +27,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<CircleButton>(R.id.ult_button).apply {
+        ult_button.apply {
             setBodyAlphaPercent(0.3)
 
             onTouch.add {
@@ -39,7 +38,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<CircleDirectionalPad>(R.id.movement_pad).apply {
+        movement_pad.apply {
             setBodyAlphaPercent(0.3)
 
             onDirectionUpdate.add { xDir: Double, yDir: Double ->
@@ -83,7 +82,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
         }
 
 
-        rootView.findViewById<CircleButton>(R.id.action_button).apply {
+        action_button.apply {
             setBodyAlphaPercent(0.3)
             onTouch.add {
                 gamepad.rightCross.bottom.pressed = true
@@ -95,7 +94,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<CircleButton>(R.id.dash_button).apply {
+        dash_button.apply {
             setBodyAlphaPercent(0.3)
 
             onTouch.add {
@@ -106,7 +105,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<CircleButton>(R.id.quickmenu_button).apply {
+        quickmenu_button.apply {
             setBodyAlphaPercent(0.3)
 
             onTouch.add {
@@ -117,7 +116,7 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
-        rootView.findViewById<RingDirectionalPad>(R.id.aim_pad).apply {
+        aim_pad.apply {
             setBodyAlphaPercent(0.3)
 
             onDirectionUpdate.add { xDir: Double, yDir: Double ->
