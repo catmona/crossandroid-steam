@@ -12,62 +12,85 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
     fun initControls(){
 
-        val actionButton = rootView.findViewById<CircleButton>(R.id.action_button)
-        actionButton.setBodyAlphaPercent(0.3)
-        actionButton.onTouch.add {
-            gamepad.rightCross.bottom.pressed = true
-            gamepad.rightBumper.pressed = true
-        }
-        actionButton.onRelease.add {
-            gamepad.rightCross.bottom.pressed = false
-            gamepad.rightBumper.pressed = false
+        rootView.findViewById<CircleButton>(R.id.action_button).apply {
+            setBodyAlphaPercent(0.3)
+            onTouch.add {
+                gamepad.rightCross.bottom.pressed = true
+                gamepad.rightBumper.pressed = true
+            }
+            onRelease.add {
+                gamepad.rightCross.bottom.pressed = false
+                gamepad.rightBumper.pressed = false
+            }
         }
 
-        val movementPad = rootView.findViewById<DirectionalPad>(R.id.movement_pad)
-        movementPad.setBodyAlphaPercent(0.3)
-        movementPad.onDirectionUpdate.add { xDir: Double, yDir: Double ->
-            // Scale the results up a bit. This way the maximum running speed is achieved
-            // even without tapping the outermost end of the circle,
-            // and we can activate dash for the highest values.
-            val factor = 1.4
-            var dash = false
+        rootView.findViewById<CircleButton>(R.id.dash_button).apply {
+            setBodyAlphaPercent(0.3)
 
-            val actualX: Double
-            if(abs(xDir * factor) <= 1.0){
-                actualX = xDir * factor
-            }else{
-                if(xDir > 0){
-                    actualX = 1.0
+            onTouch.add {
+                gamepad.leftBumper.pressed = true
+            }
+            onRelease.add {
+                gamepad.leftBumper.pressed = false
+            }
+        }
+
+        rootView.findViewById<CircleButton>(R.id.ult_button).apply {
+            setBodyAlphaPercent(0.3)
+
+            onTouch.add {
+                gamepad.rightTrigger.pressed = true
+            }
+            onRelease.add {
+                gamepad.rightTrigger.pressed = false
+            }
+        }
+
+        rootView.findViewById<DirectionalPad>(R.id.movement_pad).apply {
+            setBodyAlphaPercent(0.3)
+
+            onDirectionUpdate.add { xDir: Double, yDir: Double ->
+                // Scale the results up a bit. This way the maximum running speed is achieved
+                // even without tapping the outermost end of the circle,
+                // and we can activate dash for the highest values.
+                val factor = 1.4
+
+                val actualX: Double
+                if(abs(xDir * factor) <= 1.0){
+                    actualX = xDir * factor
                 }else{
-                    actualX = -1.0
+                    if(xDir > 0){
+                        actualX = 1.0
+                    }else{
+                        actualX = -1.0
+                    }
                 }
-                dash = true
+
+                val actualY: Double
+                if(abs(yDir * factor) <= 1.0){
+                    actualY = yDir * factor
+                }else{
+                    if(yDir > 0){
+                        actualY = 1.0
+                    }else{
+                        actualY = -1.0
+                    }
+                }
+
+
+                gamepad.leftStick.horizontal.state = actualX
+                gamepad.leftStick.vertical.state = actualY
+
             }
 
-            val actualY: Double
-            if(abs(yDir * factor) <= 1.0){
-                actualY = yDir * factor
-            }else{
-                if(yDir > 0){
-                    actualY = 1.0
-                }else{
-                    actualY = -1.0
-                }
-                dash = true
+            onRelease.add {
+                gamepad.leftStick.vertical.state = 0.0
+                gamepad.leftStick.horizontal.state = 0.0
+
+                gamepad.leftBumper.pressed = false
             }
 
-
-            gamepad.leftStick.horizontal.state = actualX
-            gamepad.leftStick.vertical.state = actualY
-
-            gamepad.leftBumper.pressed = dash
         }
 
-        movementPad.onRelease.add {
-            gamepad.leftStick.vertical.state = 0.0
-            gamepad.leftStick.horizontal.state = 0.0
-
-            gamepad.leftBumper.pressed = false
-        }
     }
 }
