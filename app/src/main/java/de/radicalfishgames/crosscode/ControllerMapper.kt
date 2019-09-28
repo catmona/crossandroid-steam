@@ -5,7 +5,7 @@ import de.radicalfishgames.crosscode.overlay.CircleButton
 import de.radicalfishgames.crosscode.overlay.DirectionalPad
 
 
-class ControllerMapper(private val game: GameWrapper, private val rootView: ViewGroup) {
+class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
     private val gamepad = game.gamepadState
 
@@ -17,7 +17,7 @@ class ControllerMapper(private val game: GameWrapper, private val rootView: View
 
         val movementPad = rootView.findViewById<DirectionalPad>(R.id.movement_pad)
         movementPad.setBodyAlphaPercent(0.3)
-        movementPad.onDirectionUpdate.add { xDir: Double, yDir: Double -> updateState {
+        movementPad.onDirectionUpdate.add { xDir: Double, yDir: Double ->
             // Scale the results up a bit. This way the maximum running speed is achieved
             // sooner, and we can activate dash for higher values.
             val factor = 1.3
@@ -40,37 +40,26 @@ class ControllerMapper(private val game: GameWrapper, private val rootView: View
             }
 
 
-            gamepad.leftStick.horizontal = actualX
-            gamepad.leftStick.vertical = actualY
+            gamepad.leftStick.horizontal.state = actualX
+            gamepad.leftStick.vertical.state = actualY
 
             gamepad.leftBumper.pressed = dash
-        } }
+        }
 
-        movementPad.onRelease.add { run {
-            updateState {
-                gamepad.leftStick.vertical = 0.0
-                gamepad.leftStick.horizontal = 0.0
+        movementPad.onRelease.add {
+            gamepad.leftStick.vertical.state = 0.0
+            gamepad.leftStick.horizontal.state = 0.0
 
-                gamepad.leftBumper.pressed = false
-            }
-        } }
+            gamepad.leftBumper.pressed = false
+        }
     }
 
     private fun bindButton(button: CircleButton, gamepadButton: GamepadState.Button){
         button.onTouch.add { run {
-            updateState { gamepadButton.pressed = true }
+            gamepadButton.pressed = true
         } }
         button.onRelease.add { run {
-            updateState { gamepadButton.pressed = false }
+            gamepadButton.pressed = false
         } }
-    }
-
-    private fun updateState(update: () -> Unit){
-        if(game.isGameReady){
-            update()
-            game.updateJSGamepad()
-        }else {
-            update()
-        }
     }
 }

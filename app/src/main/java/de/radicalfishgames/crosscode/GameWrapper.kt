@@ -11,7 +11,7 @@ import org.json.JSONObject
 
 class GameWrapper(private val webView: WebView) {
 
-    val gamepadState: GamepadState = GamepadState()
+    val gamepadState: GamepadState = GamepadState {updateJSGamepad()}
 
     var isGameReady = false
         private set
@@ -78,65 +78,12 @@ class GameWrapper(private val webView: WebView) {
     }
 
     fun updateJSGamepad(){
-        webView.evaluateJavascript(
-            "$JS_GAMEPADS_VAR = [JSON.parse('${createGamepadJson(gamepadState)}')];",
-            null
-        )
-    }
-
-    private fun createGamepadJson(gamepad: GamepadState) : JSONObject{
-
-        val jsonGamepad = JSONObject()
-
-        // Mapping layout from https://w3c.github.io/gamepad/standard_gamepad.svg
-
-        val axes = JSONArray().apply {
-            put(0, gamepad.leftStick.horizontal)
-            put(1, gamepad.leftStick.vertical)
-
-            put(2, gamepad.rightStick.horizontal)
-            put(3, gamepad.rightStick.vertical)
+        if(isGameReady){
+            webView.evaluateJavascript(
+                "$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];",
+                null
+            )
         }
-
-        val buttons = JSONArray()
-        buttons.apply {
-
-            put(10, gamepad.leftStick.button.value)
-            put(11, gamepad.rightStick.button.value)
-
-            put(12, gamepad.leftCross.top.value)
-            put(13, gamepad.leftCross.bottom.value)
-            put(14, gamepad.leftCross.left.value)
-            put(15, gamepad.leftCross.right.value)
-
-            put(0, gamepad.rightCross.bottom.value)
-            put(1, gamepad.rightCross.right.value)
-            put(2, gamepad.rightCross.left.value)
-            put(3, gamepad.rightCross.top.value)
-
-            put(4, gamepad.leftBumper.value)
-            put(5, gamepad.rightBumper.value)
-
-            put(6, gamepad.leftTrigger.value)
-            put(7, gamepad.rightTrigger.value)
-
-            put(8, gamepad.selectOrBack.value)
-            put(9, gamepad.startOrForward.value)
-            put(16, gamepad.center.value)
-
-        }
-
-        jsonGamepad.apply {
-            put("id", "Virtual Controller")
-            put("index", 0)
-            put("connected", true)
-            put("timestamp", 0)
-            put("mapping", "standard")
-            put("axes", axes)
-            put("buttons", buttons)
-        }
-
-        return jsonGamepad
     }
 
     companion object {
