@@ -26,6 +26,9 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     var onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
     var onRelease: MutableSet<() -> Unit> = HashSet()
 
+    //TODO Make this an attribute
+    private val outLineThicknessDp = 4
+
     protected var radius = 0F
 
     protected var centerX = 0F
@@ -44,7 +47,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
 
     private var outlinePx = TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
-        OUTLINE_THICKNESS_DP.toFloat(),
+        outLineThicknessDp.toFloat(),
         resources.displayMetrics
     )
 
@@ -52,7 +55,6 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     private var mainPointerId: Int? = null
 
     override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
 
         canvas.apply {
 
@@ -195,7 +197,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         return eventPointersAreInCircle
     }
 
-    protected fun isInsideCircle(xTouch: Float, yTouch: Float): Boolean {
+    protected open fun isInsideCircle(xTouch: Float, yTouch: Float): Boolean {
 
         val xDiff = xTouch - centerX
         val yDiff = yTouch - centerY
@@ -226,9 +228,5 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
 
     private fun onRelease(){
         onRelease.forEach { it.invoke() }
-    }
-
-    companion object {
-        const val OUTLINE_THICKNESS_DP = 4
     }
 }
