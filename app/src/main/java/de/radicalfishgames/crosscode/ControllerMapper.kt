@@ -17,6 +17,17 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
         val handler = Handler()
 
+        rootView.findViewById<CircleButton>(R.id.shield_button).apply {
+            setBodyAlphaPercent(0.3)
+
+            onTouch.add {
+                gamepad.leftBumper.pressed = true
+            }
+            onRelease.add {
+                gamepad.leftBumper.pressed = false
+            }
+        }
+
         rootView.findViewById<CircleButton>(R.id.ult_button).apply {
             setBodyAlphaPercent(0.3)
 

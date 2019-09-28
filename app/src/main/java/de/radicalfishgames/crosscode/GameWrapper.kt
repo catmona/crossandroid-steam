@@ -32,10 +32,6 @@ class GameWrapper(private val webView: WebView) {
             allowUniversalAccessFromFileURLs = true
             mediaPlaybackRequiresUserGesture = false
 
-            val cacheDbPath = webView.context.applicationContext.getDir("cache_database", MODE_PRIVATE).path
-            setAppCacheEnabled(true)
-            setAppCachePath(cacheDbPath)
-
         }
 
         webView.webViewClient = object : WebViewClient() {
