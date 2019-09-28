@@ -11,6 +11,8 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
     private val gamepad = game.gamepadState
 
+    var alwaysSprint = true
+
     fun initControls(){
 
         val handler = Handler()
@@ -30,8 +32,26 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             setBodyAlphaPercent(0.3)
 
             onDirectionUpdate.add { xDir: Double, yDir: Double ->
-                gamepad.leftStick.horizontal.state = xDir
-                gamepad.leftStick.vertical.state = yDir
+                if(!alwaysSprint){
+                    gamepad.leftStick.horizontal.state = xDir
+                    gamepad.leftStick.vertical.state = yDir
+
+                }else{
+                    val xActual = when {
+                        xDir > 0.2 -> 1.0
+                        xDir < -0.2 -> -1.0
+                        else -> 0.0
+                    }
+
+                    val yActual = when {
+                        yDir > 0.2 -> 1.0
+                        yDir < -0.2 -> -1.0
+                        else -> 0.0
+                    }
+
+                    gamepad.leftStick.horizontal.state = xActual
+                    gamepad.leftStick.vertical.state = yActual
+                }
 
             }
 
