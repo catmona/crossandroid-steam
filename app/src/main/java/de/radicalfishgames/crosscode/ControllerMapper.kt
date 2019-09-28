@@ -16,7 +16,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
         val handler = Handler()
 
         overlay_toggle.apply {
-            setBodyAlphaPercent(0.3)
+            setBodyAlphaPercent(0.1)
 
             onRelease.add {
                 game.showControls = !game.showControls
@@ -30,7 +30,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                     ult_button.visibility = View.VISIBLE
                     shield_button.visibility = View.VISIBLE
                     movement_pad.visibility = View.VISIBLE
-
+                    menu_button.visibility = View.VISIBLE
                 }else{
 
                     aim_pad.visibility = View.GONE
@@ -40,6 +40,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                     ult_button.visibility = View.GONE
                     shield_button.visibility = View.GONE
                     movement_pad.visibility = View.GONE
+                    menu_button.visibility = View.GONE
                 }
 
                 containerView?.invalidate()
@@ -72,6 +73,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
             setBodyAlphaPercent(0.3)
 
             onDirectionUpdate.add { xDir: Double, yDir: Double ->
+
                 if(!alwaysSprint){
                     gamepad.leftStick.horizontal.state = xDir
                     gamepad.leftStick.vertical.state = yDir
@@ -92,7 +94,6 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                     gamepad.leftStick.horizontal.state = xActual
                     gamepad.leftStick.vertical.state = yActual
                 }
-
             }
 
             onRelease.add {
@@ -163,6 +164,43 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
 
                     gamepad.rightStick.vertical.state = 0.0
                     gamepad.rightStick.horizontal.state = 0.0
+                }, FAKE_CLICK_TIME)
+            }
+        }
+
+        menu_button.apply {
+            setBodyAlphaPercent(0.2)
+
+            var startedToPressAt: Long = 0
+            onTouch.add {
+                startedToPressAt = System.currentTimeMillis()
+
+            }
+
+            onRelease.add {
+
+                val timeDiff = (System.currentTimeMillis() - startedToPressAt)
+
+                // Decide based on long- or short click whether to open the inventory or menu
+                val openMenu = timeDiff > (0.5 * 1000)
+
+                // Open menu
+                if(openMenu){
+                    gamepad.startOrForward.pressed = true
+
+                // Open inventory
+                }else{
+                    gamepad.selectOrBack.pressed = true
+                }
+
+                handler.postDelayed({
+
+                    if(openMenu){
+                        gamepad.startOrForward.pressed = false
+                    }else{
+                        gamepad.selectOrBack.pressed = false
+                    }
+
                 }, FAKE_CLICK_TIME)
             }
         }
