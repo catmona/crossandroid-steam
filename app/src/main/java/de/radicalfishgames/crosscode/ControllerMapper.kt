@@ -3,6 +3,7 @@ package de.radicalfishgames.crosscode
 import android.view.ViewGroup
 import de.radicalfishgames.crosscode.overlay.CircleButton
 import de.radicalfishgames.crosscode.overlay.DirectionalPad
+import kotlin.math.abs
 
 
 class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
@@ -26,23 +27,32 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
         movementPad.setBodyAlphaPercent(0.3)
         movementPad.onDirectionUpdate.add { xDir: Double, yDir: Double ->
             // Scale the results up a bit. This way the maximum running speed is achieved
-            // sooner, and we can activate dash for higher values.
-            val factor = 1.3
+            // even without tapping the outermost end of the circle,
+            // and we can activate dash for the highest values.
+            val factor = 1.4
             var dash = false
 
             val actualX: Double
-            if(xDir * factor <= 1.0){
+            if(abs(xDir * factor) <= 1.0){
                 actualX = xDir * factor
             }else{
-                actualX = 1.0
+                if(xDir > 0){
+                    actualX = 1.0
+                }else{
+                    actualX = -1.0
+                }
                 dash = true
             }
 
             val actualY: Double
-            if(yDir * factor <= 1.0){
+            if(abs(yDir * factor) <= 1.0){
                 actualY = yDir * factor
             }else{
-                actualY = 1.0
+                if(yDir > 0){
+                    actualY = 1.0
+                }else{
+                    actualY = -1.0
+                }
                 dash = true
             }
 
