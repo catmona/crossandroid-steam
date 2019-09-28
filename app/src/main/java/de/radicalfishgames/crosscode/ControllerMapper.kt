@@ -69,6 +69,15 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             onRelease.add {
                 gamepad.leftStick.vertical.state = 0.0
                 gamepad.leftStick.horizontal.state = 0.0
+
+                // Confirm quickmenu selection automatically
+                if(gamepad.leftTrigger.pressed){
+                    gamepad.rightCross.bottom.pressed = true
+
+                    handler.postDelayed({
+                        gamepad.rightCross.bottom.pressed = false
+                    }, FAKE_CLICK_TIME)
+                }
             }
 
         }
@@ -97,6 +106,17 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
             }
         }
 
+        rootView.findViewById<CircleButton>(R.id.quickmenu_button).apply {
+            setBodyAlphaPercent(0.3)
+
+            onTouch.add {
+                gamepad.leftTrigger.pressed = true
+            }
+            onRelease.add {
+                gamepad.leftTrigger.pressed = false
+            }
+        }
+
         rootView.findViewById<RingDirectionalPad>(R.id.aim_pad).apply {
             setBodyAlphaPercent(0.3)
 
@@ -114,8 +134,12 @@ class ControllerMapper(game: GameWrapper, private val rootView: ViewGroup) {
 
                     gamepad.rightStick.vertical.state = 0.0
                     gamepad.rightStick.horizontal.state = 0.0
-                }, 20)
+                }, FAKE_CLICK_TIME)
             }
         }
+    }
+
+    companion object {
+        const val FAKE_CLICK_TIME = 20L
     }
 }
