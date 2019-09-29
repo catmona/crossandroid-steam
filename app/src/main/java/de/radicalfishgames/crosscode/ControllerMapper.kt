@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.os.Handler
+import android.util.Log
 import android.view.View
 import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.activity_game.*
@@ -8,8 +9,6 @@ import kotlinx.android.synthetic.main.activity_game.*
 class ControllerMapper(private val game: GameWrapper, override val containerView: View?): LayoutContainer {
 
     private val gamepad = game.gamepadState
-
-    var alwaysSprint = true
 
     fun initControls(){
 
@@ -24,20 +23,16 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                 if(game.showControls){
 
                     aim_pad.visibility = View.VISIBLE
-                    action_button.visibility = View.VISIBLE
                     dash_button.visibility = View.VISIBLE
                     quickmenu_button.visibility = View.VISIBLE
-                    ult_button.visibility = View.VISIBLE
                     shield_button.visibility = View.VISIBLE
                     movement_pad.visibility = View.VISIBLE
                     menu_button.visibility = View.VISIBLE
                 }else{
 
                     aim_pad.visibility = View.GONE
-                    action_button.visibility = View.GONE
                     dash_button.visibility = View.GONE
                     quickmenu_button.visibility = View.GONE
-                    ult_button.visibility = View.GONE
                     shield_button.visibility = View.GONE
                     movement_pad.visibility = View.GONE
                     menu_button.visibility = View.GONE
@@ -58,36 +53,37 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
             }
         }
 
-        ult_button.apply {
-            setBodyAlphaPercent(0.3)
-
-            onTouch.add {
-                gamepad.rightTrigger.pressed = true
-            }
-            onRelease.add {
-                gamepad.rightTrigger.pressed = false
-            }
-        }
-
         movement_pad.apply {
             setBodyAlphaPercent(0.3)
 
-            onDirectionUpdate.add { xDir: Double, yDir: Double ->
+            var lastInsideInnerCircle = false
 
-                if(!alwaysSprint){
-                    gamepad.leftStick.horizontal.state = xDir
-                    gamepad.leftStick.vertical.state = yDir
+            onDirectionUpdate.add { xDir, yDir, isInnerCircle ->
+
+                lastInsideInnerCircle = isInnerCircle
+
+                if(isInnerCircle){
+                    gamepad.rightTrigger.pressed = true
+
+                    if(gamepad.leftStick.vertical.state == 0.0
+                        && gamepad.leftStick.horizontal.state == 0.0){
+
+                        gamepad.leftStick.horizontal.state = xDir
+                        gamepad.leftStick.vertical.state = yDir
+                    }
 
                 }else{
+                    gamepad.rightTrigger.pressed = false
+
                     val xActual = when {
-                        xDir > 0.2 -> 1.0
-                        xDir < -0.2 -> -1.0
+                        xDir > 0.15 -> 1.0
+                        xDir < -0.15 -> -1.0
                         else -> 0.0
                     }
 
                     val yActual = when {
-                        yDir > 0.2 -> 1.0
-                        yDir < -0.2 -> -1.0
+                        yDir > 0.15 -> 1.0
+                        yDir < -0.15 -> -1.0
                         else -> 0.0
                     }
 
@@ -97,11 +93,15 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
             }
 
             onRelease.add {
+
+                gamepad.rightTrigger.pressed = false
+
                 gamepad.leftStick.vertical.state = 0.0
                 gamepad.leftStick.horizontal.state = 0.0
 
-                // Confirm quickmenu selection automatically
-                if(gamepad.leftTrigger.pressed){
+                // Confirm quickmenu selection
+                //TODO Do this right even when when there was no movement
+                if(lastInsideInnerCircle && gamepad.leftTrigger.pressed){
                     gamepad.rightCross.bottom.pressed = true
 
                     handler.postDelayed({
@@ -110,19 +110,6 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                 }
             }
 
-        }
-
-
-        action_button.apply {
-            setBodyAlphaPercent(0.3)
-            onTouch.add {
-                gamepad.rightCross.bottom.pressed = true
-                gamepad.rightBumper.pressed = true
-            }
-            onRelease.add {
-                gamepad.rightCross.bottom.pressed = false
-                gamepad.rightBumper.pressed = false
-            }
         }
 
         dash_button.apply {
@@ -150,21 +137,47 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
         aim_pad.apply {
             setBodyAlphaPercent(0.3)
 
-            onDirectionUpdate.add { xDir: Double, yDir: Double ->
-                gamepad.rightStick.horizontal.state = xDir
-                gamepad.rightStick.vertical.state = yDir
+            var lastInsideInnerCircle = false
+
+            onDirectionUpdate.add { xDir, yDir, isInsideInner ->
+
+                lastInsideInnerCircle = isInsideInner
+
+                if(isInsideInner){
+                    gamepad.rightCross.bottom.pressed = true
+                    gamepad.rightBumper.pressed = true
+
+                    gamepad.rightStick.horizontal.state = 0.0
+                    gamepad.rightStick.vertical.state = 0.0
+
+                }else{
+
+                    gamepad.rightCross.bottom.pressed = false
+                    gamepad.rightBumper.pressed = false
+
+                    gamepad.rightStick.horizontal.state = xDir
+                    gamepad.rightStick.vertical.state = yDir
+                }
             }
 
             onRelease.add {
-                gamepad.rightBumper.pressed = true
 
-                // CrossCode expects a button press to fire, so we give it one
-                handler.postDelayed({
+                if(lastInsideInnerCircle){
+                    gamepad.rightCross.bottom.pressed = false
                     gamepad.rightBumper.pressed = false
 
-                    gamepad.rightStick.vertical.state = 0.0
-                    gamepad.rightStick.horizontal.state = 0.0
-                }, FAKE_CLICK_TIME)
+                }else{
+                    gamepad.rightCross.bottom.pressed = false
+                    gamepad.rightBumper.pressed = true
+
+                    // CrossCode expects a button press to fire, so we give it one
+                    handler.postDelayed({
+                        gamepad.rightBumper.pressed = false
+
+                        gamepad.rightStick.vertical.state = 0.0
+                        gamepad.rightStick.horizontal.state = 0.0
+                    }, FAKE_CLICK_TIME)
+                }
             }
         }
 

@@ -61,9 +61,9 @@ class GamepadState(private val onControlUpdate: () -> Unit = {}){
     ){
 
         // negative = left; positive = right
-        var horizontal: Axis = Axis(horizontalJsonIndex)
+        val horizontal: Axis = Axis(horizontalJsonIndex)
         // negative = up; positive = down
-        var vertical: Axis = Axis(verticalJsonIndex)
+        val vertical: Axis = Axis(verticalJsonIndex)
         val button: Button = Button(buttonJsonIndex)
 
     }

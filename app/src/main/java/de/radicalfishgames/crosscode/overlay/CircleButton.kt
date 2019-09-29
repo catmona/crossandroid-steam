@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
 import android.util.AttributeSet
+import android.util.Log
 import android.util.SparseArray
 import android.util.TypedValue
 import android.view.MotionEvent
@@ -119,14 +120,19 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
             ACTION_MOVE -> {
                 for(index in 0 until event.pointerCount){
                     val movedId = event.getPointerId(index)
-                    if(activePointers.contains(movedId)){
-                        val pointer = activePointers[movedId]
-                        pointer.x = event.getX(index)
-                        pointer.y = event.getY(index)
 
-                        if(!isInsideCircle(pointer.x, pointer.y)){
-                            eventPointersAreInCircle = false
-                        }
+                    // A pointer moved into our View from another View
+                    if(!activePointers.contains(movedId)){
+                        activePointers[movedId] = PointF()
+                    }
+
+                    val pointer = activePointers[movedId]
+
+                    pointer.x = event.getX(index)
+                    pointer.y = event.getY(index)
+
+                    if(!isInsideCircle(pointer.x, pointer.y)){
+                        eventPointersAreInCircle = false
                     }
 
                 }
