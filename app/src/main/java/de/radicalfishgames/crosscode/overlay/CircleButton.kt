@@ -216,7 +216,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         outlinePaint.alpha = (255 * alpha).roundToInt()
     }
 
-    fun setBodyAlphaPercent(alpha: Double){
+    open fun setBodyAlphaPercent(alpha: Double){
         // Actual alpha values are from 0-255
         bodyPaint.alpha = (255 * alpha).roundToInt()
     }

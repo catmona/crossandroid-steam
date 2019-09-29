@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 
 class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(context, attrs) {
@@ -14,7 +15,7 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
     var onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double, insideInner: Boolean) -> Unit> = HashSet()
 
     //TODO Make this an attribute
-    private val innerRadiusPercent = 0.35
+    var innerRadiusPercent = 0.35
 
     private var innerRadius = 0F
 
@@ -66,5 +67,11 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
         val yDiff = yTouch - centerY
 
         return abs(xDiff) <= innerRadius && abs(yDiff) <= innerRadius
+    }
+
+    override fun setBodyAlphaPercent(alpha: Double) {
+        super.setBodyAlphaPercent(alpha)
+        // Actual alpha values are from 0-255
+        innerPaint.alpha = (255 * alpha).roundToInt()
     }
 }
