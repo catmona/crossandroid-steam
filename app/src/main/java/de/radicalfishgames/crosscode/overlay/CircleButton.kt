@@ -1,10 +1,7 @@
 package de.radicalfishgames.crosscode.overlay
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.PointF
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.util.SparseArray
@@ -16,6 +13,7 @@ import androidx.core.util.contains
 import androidx.core.util.containsKey
 import androidx.core.util.keyIterator
 import androidx.core.util.set
+import de.radicalfishgames.crosscode.R
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -52,6 +50,30 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         resources.displayMetrics
     )
 
+    private val imagePaint = Paint().apply {
+        isDither = false
+        isAntiAlias = false
+    }
+
+    private lateinit var fullSizeRect: RectF
+    private val imageBitmap: Bitmap
+
+    init {
+        context.theme.obtainStyledAttributes(
+            attrs,
+            R.styleable.CircleButton,
+            0, 0).apply {
+
+            try {
+                val resId = getResourceId(R.styleable.CircleButton_image, -1)
+                imageBitmap = BitmapFactory.decodeResource(context.resources, resId)
+            } finally {
+                recycle()
+            }
+        }
+
+    }
+
     private val activePointers = SparseArray<PointF>()
     private var mainPointerId: Int? = null
 
@@ -74,6 +96,13 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
                 radius,
                 outlinePaint
             )
+
+            drawBitmap(
+                imageBitmap,
+                null,
+                fullSizeRect,
+                imagePaint
+            )
         }
     }
 
@@ -90,6 +119,8 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
 
         centerX = (width / 2).toFloat()
         centerY = (height / 2).toFloat()
+
+        fullSizeRect = RectF(0F, 0F, width.toFloat(), height.toFloat())
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {

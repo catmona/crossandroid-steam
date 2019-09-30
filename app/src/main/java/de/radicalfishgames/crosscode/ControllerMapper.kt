@@ -60,11 +60,11 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
 
             var lastInsideInnerCircle = false
 
-            onDirectionUpdate.add { xDir, yDir, isInnerCircle ->
+            onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = isInnerCircle
+                lastInsideInnerCircle = xDir <= 0.7 && yDir <= 0.7
 
-                gamepad.rightTrigger.pressed = !isInnerCircle
+                gamepad.rightTrigger.pressed = !lastInsideInnerCircle
 
                 val xActual = when {
                     xDir > 0.15 -> 1.0
@@ -90,8 +90,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
                 gamepad.leftStick.horizontal.state = 0.0
 
                 // Confirm quickmenu selection
-                //TODO Do this right even when when there was no movement
-                if(!lastInsideInnerCircle && gamepad.leftTrigger.pressed){
+                if(lastInsideInnerCircle && gamepad.leftTrigger.pressed){
                     gamepad.rightCross.bottom.pressed = true
 
                     handler.postDelayed({
@@ -129,11 +128,11 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
 
             var lastInsideInnerCircle = false
 
-            onDirectionUpdate.add { xDir, yDir, isInsideInner ->
+            onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = isInsideInner
+                lastInsideInnerCircle = xDir <= 0.3 && yDir <= 0.3
 
-                if(isInsideInner){
+                if(lastInsideInnerCircle){
                     gamepad.rightCross.bottom.pressed = true
                     gamepad.rightBumper.pressed = true
 

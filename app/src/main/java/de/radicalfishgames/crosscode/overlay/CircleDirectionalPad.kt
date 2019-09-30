@@ -1,18 +1,17 @@
 package de.radicalfishgames.crosscode.overlay
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
+import de.radicalfishgames.crosscode.R
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 
 class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(context, attrs) {
 
-    var onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double, insideInner: Boolean) -> Unit> = HashSet()
+    var onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double) -> Unit> = HashSet()
 
     //TODO Make this an attribute
     var innerRadiusPercent = 0.35
@@ -59,14 +58,7 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
         val xDir = xDiff / radius
         val yDir = yDiff / radius
 
-        onDirectionUpdate.forEach { it.invoke(xDir.toDouble(), yDir.toDouble(), isInsideInnerCircle(xTouch, yTouch)) }
-    }
-
-    private fun isInsideInnerCircle(xTouch: Float, yTouch: Float): Boolean{
-        val xDiff = xTouch - centerX
-        val yDiff = yTouch - centerY
-
-        return abs(xDiff) <= innerRadius && abs(yDiff) <= innerRadius
+        onDirectionUpdate.forEach { it.invoke(xDir.toDouble(), yDir.toDouble()) }
     }
 
     override fun setBodyAlphaPercent(alpha: Double) {
