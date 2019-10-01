@@ -62,7 +62,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
 
             onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = xDir <= 0.7 && yDir <= 0.7
+                lastInsideInnerCircle = xDir <= 0.7 && xDir >= -0.7 && yDir <= 0.7 && yDir >= -0.7
 
                 gamepad.rightTrigger.pressed = !lastInsideInnerCircle
 
@@ -130,7 +130,7 @@ class ControllerMapper(private val game: GameWrapper, override val containerView
 
             onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = xDir <= 0.3 && yDir <= 0.3
+                lastInsideInnerCircle = xDir <= 0.3 && xDir >= -0.3 && yDir <= 0.3 && yDir >= -0.3
 
                 if(lastInsideInnerCircle){
                     gamepad.rightCross.bottom.pressed = true
