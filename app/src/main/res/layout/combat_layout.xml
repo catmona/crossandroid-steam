@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
+        android:id="@+id/aim_pad"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        app:image="@drawable/attack_shoot"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.97"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.95" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/quickmenu_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:image="@drawable/quick_menu"
+        app:layout_constraintBottom_toTopOf="@+id/aim_pad"
+        app:layout_constraintEnd_toEndOf="@+id/aim_pad"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="@+id/aim_pad" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/dash_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:image="@drawable/dash_guard"
+        app:layout_constraintBottom_toBottomOf="@+id/aim_pad"
+        app:layout_constraintEnd_toStartOf="@+id/aim_pad"
+        app:layout_constraintTop_toTopOf="@+id/aim_pad"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/shield_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:image="@drawable/dash_guard"
+        app:layout_constraintBottom_toBottomOf="@+id/movement_pad"
+        app:layout_constraintStart_toEndOf="@+id/movement_pad"
+        app:layout_constraintTop_toTopOf="@+id/movement_pad"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
+        android:id="@+id/movement_pad"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:image="@drawable/move_analog"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.03"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.95" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/menu_button"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        app:image="@drawable/esc_char_menu"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.97"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.050000012" />
+
+    <de.radicalfishgames.crosscode.overlay.OverlayToggle
+        android:id="@+id/overlay_toggle"
+        android:layout_width="100dp"
+        android:layout_height="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+    
+</androidx.constraintlayout.widget.ConstraintLayout>

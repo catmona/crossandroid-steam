@@ -1,26 +1,24 @@
 package de.radicalfishgames.crosscode
 
 import android.os.Bundle
-import android.os.storage.StorageManager
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_game.*
 
 
 class GameActivity : AppCompatActivity() {
 
     private lateinit var gameWrapper: GameWrapper
-    private lateinit var controllerMapper: ControllerMapper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_game)
 
-        gameWrapper = GameWrapper(findViewById(R.id.game_view))
+        gameWrapper = GameWrapper(game_view)
         gameWrapper.initWebView()
 
-        controllerMapper = ControllerMapper(gameWrapper, findViewById(R.id.root_view))
-        controllerMapper.initControls()
+        showControlLayout(CombatLayoutMapper(gameWrapper))
 
         //TODO instead of bundling all game files in the APK, put them in an Android expansion file/OBB
         // - the first attempt at this didn't work because WebView didn't interpret the mounted path
@@ -30,6 +28,13 @@ class GameActivity : AppCompatActivity() {
         // Mounting an OBB file: https://developer.android.com/reference/android/os/storage/StorageManager.html#mountObb(java.lang.String,%20java.lang.String,%20android.os.storage.OnObbStateChangeListener)
         gameWrapper.loadGame("file:///android_asset/www/node-webkit.html")
 
+    }
+
+    private fun showControlLayout(controlLayout: ControllerMapper){
+        val layoutId = controlLayout.layoutResId
+        val view = layoutInflater.inflate(layoutId, control_container)
+        controlLayout.containerView = view
+        controlLayout.initControls()
     }
 
     override fun onResume() {
