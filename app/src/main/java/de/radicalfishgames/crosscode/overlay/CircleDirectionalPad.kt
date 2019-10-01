@@ -21,13 +21,10 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
     private val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.GREEN
         style = Paint.Style.FILL
+        alpha = 30
     }
 
     init {
-        bodyPaint.apply {
-            color = Color.YELLOW
-        }
-
         onMove.add { xTouch: Float, yTouch: Float -> updateDirection(xTouch, yTouch) }
     }
 
@@ -59,11 +56,5 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
         val yDir = yDiff / radius
 
         onDirectionUpdate.forEach { it.invoke(xDir.toDouble(), yDir.toDouble()) }
-    }
-
-    override fun setBodyAlphaPercent(alpha: Double) {
-        super.setBodyAlphaPercent(alpha)
-        // Actual alpha values are from 0-255
-        innerPaint.alpha = (255 * alpha).roundToInt()
     }
 }

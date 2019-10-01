@@ -3,9 +3,7 @@ package de.radicalfishgames.crosscode.overlay
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.util.SparseArray
-import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.MotionEvent.*
 import android.view.View
@@ -25,30 +23,10 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     var onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
     var onRelease: MutableSet<() -> Unit> = HashSet()
 
-    //TODO Make this an attribute
-    private val outLineThicknessDp = 4
-
     protected var radius = 0F
 
     protected var centerX = 0F
     protected var centerY = 0F
-
-    protected val bodyPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLUE
-        style = Paint.Style.FILL
-    }
-
-    protected val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.GRAY
-        style = Paint.Style.STROKE
-        strokeWidth = outlinePx
-    }
-
-    private var outlinePx = TypedValue.applyDimension(
-        TypedValue.COMPLEX_UNIT_DIP,
-        outLineThicknessDp.toFloat(),
-        resources.displayMetrics
-    )
 
     private val imagePaint = Paint().apply {
         isDither = false
@@ -59,10 +37,7 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     private val imageBitmap: Bitmap
 
     init {
-        context.theme.obtainStyledAttributes(
-            attrs,
-            R.styleable.CircleButton,
-            0, 0).apply {
+        context.theme.obtainStyledAttributes(attrs, R.styleable.CircleButton, 0, 0).apply {
 
             try {
                 val resId = getResourceId(R.styleable.CircleButton_image, -1)
@@ -80,22 +55,6 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
     override fun onDraw(canvas: Canvas) {
 
         canvas.apply {
-
-            //Draw circle for body
-            drawCircle(
-                centerX,
-                centerY,
-                radius,
-                bodyPaint
-            )
-
-            //Draw line for the outline
-            drawCircle(
-                centerX,
-                centerY,
-                radius,
-                outlinePaint
-            )
 
             drawBitmap(
                 imageBitmap,
@@ -240,16 +199,6 @@ open class CircleButton(context: Context, attrs: AttributeSet) : View(context, a
         val yDiff = yTouch - centerY
 
         return abs(xDiff) <= radius && abs(yDiff) < radius
-    }
-
-    fun setOutlineAlphaPercent(alpha: Double){
-        // Actual alpha values are from 0-255
-        outlinePaint.alpha = (255 * alpha).roundToInt()
-    }
-
-    open fun setBodyAlphaPercent(alpha: Double){
-        // Actual alpha values are from 0-255
-        bodyPaint.alpha = (255 * alpha).roundToInt()
     }
 
     private fun onTouch(){
