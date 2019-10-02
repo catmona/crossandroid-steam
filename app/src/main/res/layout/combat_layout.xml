@@ -6,8 +6,8 @@
 
     <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
         android:id="@+id/aim_pad"
-        android:layout_width="150dp"
-        android:layout_height="150dp"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
         app:image="@drawable/attack_shoot"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -28,8 +28,8 @@
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
         android:id="@+id/dash_button"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         app:image="@drawable/dash_guard"
         app:layout_constraintBottom_toBottomOf="@+id/aim_pad"
         app:layout_constraintEnd_toStartOf="@+id/aim_pad"
@@ -38,8 +38,8 @@
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
         android:id="@+id/shield_button"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         app:image="@drawable/dash_guard"
         app:layout_constraintBottom_toBottomOf="@+id/movement_pad"
         app:layout_constraintStart_toEndOf="@+id/movement_pad"
@@ -48,8 +48,8 @@
 
     <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
         android:id="@+id/movement_pad"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="220dp"
+        android:layout_height="220dp"
         app:image="@drawable/move_analog"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
