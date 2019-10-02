@@ -1,5 +1,6 @@
 package de.radicalfishgames.crosscode
 
+import android.graphics.BitmapFactory
 import android.os.Handler
 import android.view.View
 import kotlinx.android.synthetic.main.combat_layout.*
@@ -19,6 +20,8 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
                 if(game.showControls){
 
+                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_on)
+
                     aim_pad.visibility = View.VISIBLE
                     dash_button.visibility = View.VISIBLE
                     quickmenu_button.visibility = View.VISIBLE
@@ -26,6 +29,8 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
                     movement_pad.visibility = View.VISIBLE
                     menu_button.visibility = View.VISIBLE
                 }else{
+
+                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_off)
 
                     aim_pad.visibility = View.GONE
                     dash_button.visibility = View.GONE
@@ -35,6 +40,7 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
                     menu_button.visibility = View.GONE
                 }
 
+                overlay_toggle.invalidate()
                 containerView.invalidate()
             }
         }

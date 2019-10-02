@@ -26,7 +26,7 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
 
 
     private lateinit var fullSizeRect: RectF
-    private val imageBitmap: Bitmap
+    var imageBitmap: Bitmap
 
     init {
         context.theme.obtainStyledAttributes(attrs, R.styleable.ControlView, 0, 0).apply {
