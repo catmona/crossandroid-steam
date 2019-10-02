@@ -1,12 +1,18 @@
 package de.radicalfishgames.crosscode
 
+import android.content.Context
 import android.os.Bundle
+import android.os.storage.StorageManager
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_game.*
+import java.io.File
 
 
 class GameActivity : AppCompatActivity() {
+
+    private lateinit var storageManager: StorageManager
 
     private lateinit var gameWrapper: GameWrapper
 
@@ -20,13 +26,26 @@ class GameActivity : AppCompatActivity() {
 
         showControlLayout(CombatLayoutMapper(gameWrapper))
 
-        //TODO instead of bundling all game files in the APK, put them in an Android expansion file/OBB
-        // - the first attempt at this didn't work because WebView didn't interpret the mounted path
-        // correctly.
-        // Expansion files general : https://developer.android.com/google/play/expansion-files
-        // Creating an OBB file: https://developer.android.com/studio/command-line/jobb
-        // Mounting an OBB file: https://developer.android.com/reference/android/os/storage/StorageManager.html#mountObb(java.lang.String,%20java.lang.String,%20android.os.storage.OnObbStateChangeListener)
-        gameWrapper.loadGame("file:///android_asset/www/node-webkit.html")
+        load()
+    }
+
+    private fun load() {
+
+        val version = 1
+        val obbName = "main.$version.$packageName.obb"
+
+        val obbPath = "$obbDir/$obbName"
+
+        Log.d("CrossCode", "Looking for OBB on path $obbPath")
+
+        storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
+
+        val mountedPath = storageManager.getMountedObbPath(obbPath)
+        Log.d("CrossCode", "Mounted path: $mountedPath Attempting to load.")
+
+        val launchFile = File("$mountedPath/node-webkit.html")
+
+        gameWrapper.loadGame("file:///${launchFile.absolutePath}")
 
     }
 

@@ -3,6 +3,8 @@
     android:hardwareAccelerated="true"
     package="de.radicalfishgames.crosscode">
 
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
     <supports-screens
         android:resizeable="false"
         android:anyDensity="true"
@@ -17,14 +19,17 @@
         android:theme="@style/AppTheme"
         android:hardwareAccelerated="true">
 
-        <activity android:name=".GameActivity"
-            android:screenOrientation="landscape"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode">
+        <activity android:name=".SetupActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity android:name=".GameActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode">
         </activity>
     </application>
 

@@ -15,8 +15,7 @@ class GameWrapper(private val webView: WebView) {
 
     val gamepadState: GamepadState = GamepadState {updateJSGamepad()}
 
-    var isGameReady = false
-        private set
+    private var isGameReady = false
 
     var showControls = true
 
@@ -62,6 +61,8 @@ class GameWrapper(private val webView: WebView) {
         interceptJSGamepadFunc()
         updateJSGamepad()
 
+        startCrossCode()
+
         isGameReady = true
     }
 
@@ -86,6 +87,10 @@ class GameWrapper(private val webView: WebView) {
                 null
             )
         }
+    }
+
+    private fun startCrossCode(){
+        webView.evaluateJavascript("doStartCrossCodePlz()", null)
     }
 
     companion object {

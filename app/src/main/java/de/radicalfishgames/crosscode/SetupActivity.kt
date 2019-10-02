@@ -1,0 +1,223 @@
+package de.radicalfishgames.crosscode
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.os.storage.OnObbStateChangeListener
+import android.os.storage.StorageManager
+import android.util.Log
+import android.view.View.GONE
+import android.view.View.VISIBLE
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import kotlinx.android.synthetic.main.activity_setup.*
+import java.io.File
+
+
+class SetupActivity : AppCompatActivity() {
+
+    private var userConfirmedJava = false
+    private var userConfirmedGotGameFiles = false
+    private var userConfirmedDownloadedTools = false
+    private var userConfirmedPackagedGameFiles = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setContentView(R.layout.activity_setup)
+
+        checkObbFileAccess()
+    }
+
+    private fun checkObbFileAccess() {
+        val version = 1
+        val obbName = "main.$version.$packageName.obb"
+
+        val obbPath = "$obbDir/$obbName"
+
+        val file = File(obbPath)
+
+        val exists = file.exists()
+
+        if(!exists){
+            userConfirmedJava = false
+            userConfirmedGotGameFiles = false
+            userConfirmedDownloadedTools = false
+            userConfirmedPackagedGameFiles = false
+
+            showCurrentGuide(false)
+        }else{
+
+            val storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
+            storageManager.mountObb(obbPath, null, object : OnObbStateChangeListener() {
+                override fun onObbStateChange(path: String, state: Int) {
+
+                    if(state == MOUNTED){
+                        val mountedPath = storageManager.getMountedObbPath(path)
+
+                        val launchFile = File("$mountedPath/node-webkit.html")
+                        if(!launchFile.exists()){
+                            Toast.makeText(this@SetupActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
+
+                        }else{
+                            obbFileFound()
+                        }
+
+                    } else {
+                        Toast.makeText(this@SetupActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
+
+                    }
+
+                    userConfirmedJava = false
+                    userConfirmedGotGameFiles = false
+                    userConfirmedDownloadedTools = false
+                    userConfirmedPackagedGameFiles = false
+
+                    showCurrentGuide(false)
+                }
+            })
+
+        }
+    }
+
+    private fun obbFileFound(){
+
+        Log.i("CrossCode", "OBB file found!")
+
+        val intent = Intent(this, GameActivity::class.java)
+        startActivity(intent)
+
+    }
+
+    private fun showCurrentGuide(showTransition: Boolean){
+
+        var pastStepsSuccessfull = true
+
+        val hasStoragePermission = checkStoragePermission()
+
+        if(hasStoragePermission){
+            permission_text_tv.visibility = GONE
+            ask_permission_btn.visibility = GONE
+
+            val folder = obbDir
+            if(!folder.exists()){
+                folder.mkdirs()
+            }
+
+        }else{
+            permission_text_tv.visibility = VISIBLE
+            ask_permission_btn.visibility = VISIBLE
+
+            ask_permission_btn.setOnClickListener {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 0)
+
+                }else{
+                    Toast.makeText(this, "Can't request permission. Please contact the dev.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        pastStepsSuccessfull = pastStepsSuccessfull && hasStoragePermission
+
+
+        if(pastStepsSuccessfull && userConfirmedJava){
+            check_java_text_tv.visibility = GONE
+            have_java_btn.visibility = GONE
+
+        }else if(pastStepsSuccessfull){
+
+            check_java_text_tv.visibility = VISIBLE
+            have_java_btn.visibility = VISIBLE
+
+            have_java_btn.setOnClickListener {
+                userConfirmedJava = true
+                showCurrentGuide(true)
+            }
+        }
+        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedJava
+
+
+        if(pastStepsSuccessfull && userConfirmedGotGameFiles){
+            get_assets_text_tv.visibility = GONE
+            got_assets_btn.visibility = GONE
+
+        }else if(pastStepsSuccessfull){
+
+            get_assets_text_tv.visibility = VISIBLE
+            got_assets_btn.visibility = VISIBLE
+
+            got_assets_btn.setOnClickListener {
+                userConfirmedGotGameFiles = true
+                showCurrentGuide(true)
+            }
+        }
+        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedGotGameFiles
+
+
+        if(pastStepsSuccessfull && userConfirmedDownloadedTools){
+            download_tools_text_tv.visibility = GONE
+            download_tools_btn.visibility = GONE
+
+        }else if(pastStepsSuccessfull){
+
+            download_tools_text_tv.visibility = VISIBLE
+            download_tools_btn.visibility = VISIBLE
+
+            download_tools_btn.setOnClickListener {
+                userConfirmedDownloadedTools = true
+                showCurrentGuide(true)
+            }
+        }
+        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedDownloadedTools
+
+
+        if(pastStepsSuccessfull && userConfirmedPackagedGameFiles){
+            package_assets_text_tv.visibility = GONE
+            package_assets_btn.visibility = GONE
+
+        }else if(pastStepsSuccessfull){
+
+            package_assets_text_tv.visibility = VISIBLE
+            package_assets_btn.visibility = VISIBLE
+
+            package_assets_btn.setOnClickListener {
+                userConfirmedPackagedGameFiles = true
+                showCurrentGuide(true)
+            }
+        }
+        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedPackagedGameFiles
+
+
+        if(!pastStepsSuccessfull){
+            move_files_text_tv.visibility = GONE
+            move_files_btn.visibility = GONE
+
+        }else{
+
+            move_files_text_tv.visibility = VISIBLE
+            move_files_btn.visibility = VISIBLE
+
+            move_files_btn.setOnClickListener {
+                checkObbFileAccess()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED)){
+            Toast.makeText(this, "CrossAndroid unfortunately can not function without this permission.", Toast.LENGTH_LONG).show()
+        }
+
+        showCurrentGuide(false)
+    }
+
+    private fun checkStoragePermission(): Boolean {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+}
