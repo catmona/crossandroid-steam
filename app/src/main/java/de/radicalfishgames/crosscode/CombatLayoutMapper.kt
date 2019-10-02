@@ -14,8 +14,6 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
         val handler = Handler()
 
         overlay_toggle.apply {
-            setBodyAlphaPercent(0.1)
-
             onRelease.add {
                 game.showControls = !game.showControls
 
