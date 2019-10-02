@@ -64,8 +64,12 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
             onDirectionUpdate.add { xDir, yDir ->
 
                 lastInsideInnerCircle = xDir <= 0.7 && xDir >= -0.7 && yDir <= 0.7 && yDir >= -0.7
+                val actionButtonPressed = gamepad.leftBumper.pressed
+                        || gamepad.rightBumper.pressed
+                        || gamepad.rightStick.vertical.state != 0.0
+                        || gamepad.rightStick.horizontal.state != 0.0
 
-                gamepad.rightTrigger.pressed = !lastInsideInnerCircle
+                gamepad.rightTrigger.pressed = !lastInsideInnerCircle && actionButtonPressed
 
                 val xActual = when {
                     xDir > 0.15 -> 1.0
