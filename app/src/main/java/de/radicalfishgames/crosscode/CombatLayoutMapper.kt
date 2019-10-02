@@ -126,9 +126,6 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
                     gamepad.rightCross.bottom.pressed = true
                     gamepad.rightBumper.pressed = true
 
-                    gamepad.rightStick.horizontal.state = 0.0
-                    gamepad.rightStick.vertical.state = 0.0
-
                 }else{
 
                     gamepad.rightCross.bottom.pressed = false
@@ -145,6 +142,8 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
                     gamepad.rightCross.bottom.pressed = false
                     gamepad.rightBumper.pressed = false
 
+                    gamepad.rightStick.vertical.state = 0.0
+                    gamepad.rightStick.horizontal.state = 0.0
                 }else{
                     gamepad.rightCross.bottom.pressed = false
                     gamepad.rightBumper.pressed = true
