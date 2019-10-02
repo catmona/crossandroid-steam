@@ -50,8 +50,6 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
         }
 
         movement_pad.apply {
-            innerRadiusPercent = 0.7
-            invalidate()
 
             var lastInsideInnerCircle = false
 

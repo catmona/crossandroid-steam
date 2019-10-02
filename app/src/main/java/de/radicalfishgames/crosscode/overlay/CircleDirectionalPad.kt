@@ -13,38 +13,8 @@ class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton
 
     var onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double) -> Unit> = HashSet()
 
-    //TODO Make this an attribute
-    var innerRadiusPercent = 0.35
-
-    private var innerRadius = 0F
-
-    private val innerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.GREEN
-        style = Paint.Style.FILL
-        alpha = 30
-    }
-
     init {
         onMove.add { xTouch: Float, yTouch: Float -> updateDirection(xTouch, yTouch) }
-    }
-
-    override fun onDraw(canvas: Canvas) {
-        super.onDraw(canvas)
-
-        canvas.apply {
-            drawCircle(
-                centerX,
-                centerY,
-                innerRadius,
-                innerPaint
-            )
-        }
-    }
-
-    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
-        super.onSizeChanged(width, height, oldWidth, oldHeight)
-
-        innerRadius = (radius * innerRadiusPercent).toFloat()
     }
 
     private fun updateDirection(xTouch: Float, yTouch: Float){
