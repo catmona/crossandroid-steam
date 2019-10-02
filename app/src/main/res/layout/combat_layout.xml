@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:background="@drawable/test_screenshot">
 
     <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
         android:id="@+id/aim_pad"
@@ -70,6 +71,59 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.050000012" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/cold_button"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:visibility="gone"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.06"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.01" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/neutral_button"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:visibility="gone"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintEnd_toEndOf="@+id/cold_button"
+        app:layout_constraintStart_toStartOf="@+id/cold_button"
+        app:layout_constraintTop_toBottomOf="@+id/cold_button" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/heat_button"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:visibility="gone"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintEnd_toEndOf="@+id/neutral_button"
+        app:layout_constraintStart_toStartOf="@+id/neutral_button"
+        app:layout_constraintTop_toBottomOf="@+id/neutral_button" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/wave_button"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:visibility="gone"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintBottom_toBottomOf="@+id/neutral_button"
+        app:layout_constraintEnd_toStartOf="@+id/neutral_button"
+        app:layout_constraintTop_toTopOf="@+id/neutral_button" />
+
+    <de.radicalfishgames.crosscode.overlay.CircleButton
+        android:id="@+id/shock_button"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:visibility="gone"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintBottom_toBottomOf="@+id/neutral_button"
+        app:layout_constraintStart_toEndOf="@+id/neutral_button"
+        app:layout_constraintTop_toTopOf="@+id/neutral_button" />
 
     <de.radicalfishgames.crosscode.overlay.ControlView
         android:id="@+id/overlay_toggle"

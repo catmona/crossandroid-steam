@@ -3,6 +3,8 @@ package de.radicalfishgames.crosscode
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import kotlinx.android.synthetic.main.combat_layout.*
 
 class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
@@ -22,22 +24,22 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
                     overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_on)
 
-                    aim_pad.visibility = View.VISIBLE
-                    dash_button.visibility = View.VISIBLE
-                    quickmenu_button.visibility = View.VISIBLE
-                    shield_button.visibility = View.VISIBLE
-                    movement_pad.visibility = View.VISIBLE
-                    menu_button.visibility = View.VISIBLE
+                    aim_pad.visibility = VISIBLE
+                    dash_button.visibility = VISIBLE
+                    quickmenu_button.visibility = VISIBLE
+                    shield_button.visibility = VISIBLE
+                    movement_pad.visibility = VISIBLE
+                    menu_button.visibility = VISIBLE
                 }else{
 
                     overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_off)
 
-                    aim_pad.visibility = View.GONE
-                    dash_button.visibility = View.GONE
-                    quickmenu_button.visibility = View.GONE
-                    shield_button.visibility = View.GONE
-                    movement_pad.visibility = View.GONE
-                    menu_button.visibility = View.GONE
+                    aim_pad.visibility = GONE
+                    dash_button.visibility = GONE
+                    quickmenu_button.visibility = GONE
+                    shield_button.visibility = GONE
+                    movement_pad.visibility = GONE
+                    menu_button.visibility = GONE
                 }
 
                 overlay_toggle.invalidate()
@@ -114,9 +116,21 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
             onTouch.add {
                 gamepad.leftTrigger.pressed = true
+
+                cold_button.visibility = VISIBLE
+                neutral_button.visibility = VISIBLE
+                heat_button.visibility = VISIBLE
+                wave_button.visibility = VISIBLE
+                shock_button.visibility = VISIBLE
             }
             onRelease.add {
                 gamepad.leftTrigger.pressed = false
+
+                cold_button.visibility = GONE
+                neutral_button.visibility = GONE
+                heat_button.visibility = GONE
+                wave_button.visibility = GONE
+                shock_button.visibility = GONE
             }
         }
 
