@@ -1,19 +1,16 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
-import android.content.Context.MODE_PRIVATE
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import org.json.JSONArray
-import org.json.JSONObject
 
 
 class GameWrapper(private val webView: WebView) {
 
-    val gamepadState: GamepadState = GamepadState {updateJSGamepad()}
+    val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
 
     private var isGameReady = false
 

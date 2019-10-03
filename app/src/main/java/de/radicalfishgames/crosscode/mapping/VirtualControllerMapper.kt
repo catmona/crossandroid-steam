@@ -3,7 +3,7 @@ package de.radicalfishgames.crosscode.mapping
 import android.os.Handler
 import android.view.View
 import de.radicalfishgames.crosscode.GameWrapper
-import de.radicalfishgames.crosscode.GamepadState
+import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.overlay.ControlView
 
 
@@ -11,7 +11,7 @@ abstract class VirtualControllerMapper(game: GameWrapper) : ControllerMapper(gam
 
     private val handler = Handler()
 
-    protected fun bindSimpleButton(view: ControlView, to: GamepadState.Button){
+    protected fun bindSimpleButton(view: ControlView, to: GamepadJsonBridge.Button){
         view.apply {
             onTouch.add {
                 to.pressed = true
@@ -23,7 +23,7 @@ abstract class VirtualControllerMapper(game: GameWrapper) : ControllerMapper(gam
         }
     }
 
-    protected fun fakeClick(button: GamepadState.Button){
+    protected fun fakeClick(button: GamepadJsonBridge.Button){
         button.pressed = true
 
         handler.postDelayed({

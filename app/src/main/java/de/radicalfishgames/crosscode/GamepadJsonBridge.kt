@@ -4,7 +4,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 
-class GamepadState(private val onControlUpdate: () -> Unit = {}){
+class GamepadJsonBridge(private val onControlUpdate: () -> Unit = {}){
 
     // Actual data representation in JSON
     private val jsonAxes = JSONArray()
