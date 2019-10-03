@@ -1,9 +1,12 @@
 package de.radicalfishgames.crosscode.mapping
 
+import android.graphics.BitmapFactory
 import android.view.View
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.R
+import kotlinx.android.synthetic.main.combat_layout.*
 import kotlinx.android.synthetic.main.menu_layout.*
+import kotlinx.android.synthetic.main.menu_layout.overlay_toggle
 
 
 class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
@@ -14,8 +17,37 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
     override fun initControls() {
 
         overlay_toggle.apply {
-            onRelease.add {
-                game.useControls(CombatLayoutMapper(game))
+
+            val viewsToHide = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
+                rightcross_right, rightcross_left, rightcross_top, rightcross_bottom,
+                tab_left, tab_right, help_button)
+
+            onSwipe.add { right, left, up, down ->
+                if(right || left){
+                    game.blockWebViewClicks = true
+                    game.useControls(CombatLayoutMapper(game))
+
+                }else if(up || down){
+
+                    if(game.blockWebViewClicks){
+                        game.blockWebViewClicks = false
+
+                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                            R.drawable.overlay_off
+                        )
+                        hideViews(*viewsToHide)
+                    }else{
+                        game.blockWebViewClicks = true
+
+                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                            R.drawable.overlay_on
+                        )
+                        showViews(*viewsToHide)
+
+                    }
+
+                    overlay_toggle.invalidate()
+                }
             }
         }
 

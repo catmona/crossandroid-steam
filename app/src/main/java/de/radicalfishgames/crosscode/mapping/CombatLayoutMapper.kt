@@ -23,6 +23,7 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
             onSwipe.add { right, left, up, down ->
                 if(right || left){
+                    game.blockWebViewClicks = true
                     game.useControls(MenuLayoutMapper(game))
 
                 }else if(up || down){
