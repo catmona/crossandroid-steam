@@ -2,6 +2,7 @@ package de.radicalfishgames.crosscode
 
 import android.content.Context
 import android.os.Bundle
+import android.os.storage.OnObbStateChangeListener
 import android.os.storage.StorageManager
 import android.util.Log
 import android.view.View
@@ -16,10 +17,18 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var gameWrapper: GameWrapper
 
+    private val version = 1
+    private lateinit var obbName: String
+    private lateinit var obbPath: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_game)
+
+        obbName = "main.$version.$packageName.obb"
+        obbPath = "$obbDir/$obbName"
+
 
         gameWrapper = GameWrapper(game_view)
         gameWrapper.initWebView()
@@ -30,11 +39,6 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun load() {
-
-        val version = 1
-        val obbName = "main.$version.$packageName.obb"
-
-        val obbPath = "$obbDir/$obbName"
 
         Log.d("CrossCode", "Looking for OBB on path $obbPath")
 
@@ -68,5 +72,13 @@ class GameActivity : AppCompatActivity() {
                 // Hide the nav bar and status bar
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
+            // Do nothing, we can't really do much about it if unmounting fails
+        })
     }
 }
