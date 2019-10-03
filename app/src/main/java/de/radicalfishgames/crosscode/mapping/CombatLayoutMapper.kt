@@ -49,6 +49,17 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
+        elemental_button.onSwipe.add { right, left, up, down ->
+
+            when {
+                right -> fakeClick(gamepad.leftCross.right)
+                left -> fakeClick(gamepad.leftCross.left)
+                up -> fakeClick(gamepad.leftCross.top)
+                down -> fakeClick(gamepad.leftCross.bottom)
+            }
+
+        }
+
         movement_pad.apply {
 
             var lastInsideInnerCircle = false
