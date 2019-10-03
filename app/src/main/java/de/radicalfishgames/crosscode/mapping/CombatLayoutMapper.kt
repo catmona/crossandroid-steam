@@ -22,9 +22,9 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button)
 
             onRelease.add {
-                game.showControls = !game.showControls
+                game.blockWebViewClicks = !game.blockWebViewClicks
 
-                if(game.showControls){
+                if(game.blockWebViewClicks){
 
                     overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
                         R.drawable.overlay_on

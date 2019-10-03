@@ -14,7 +14,7 @@ class GameWrapper(private val webView: WebView) {
 
     private var isGameReady = false
 
-    var showControls = true
+    var blockWebViewClicks = true
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -40,9 +40,9 @@ class GameWrapper(private val webView: WebView) {
             }
         }
 
-        // Disable clicking the game while custom controls are active
+        // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
-            showControls
+            blockWebViewClicks
         }
     }
 
