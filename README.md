@@ -7,6 +7,9 @@ The whole project is still experimental, which is why there is no
 functionality and help improve the app by reporting bugs or making
 suggestions for improvements.
 
+## Credits
+Pixelart by Ichiki Hayaite aka TheSparkstarScope
+
 ## Getting the app
 First, you can download the latest test APK from
 [here]( https://gitlab.com/namnodorel/crossandroid/-/jobs/artifacts/master/raw/app/build/outputs/apk/debug/app-debug.apk?job=assembleDebug).
