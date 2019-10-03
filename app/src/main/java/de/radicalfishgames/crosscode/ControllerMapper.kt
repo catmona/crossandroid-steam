@@ -12,5 +12,5 @@ abstract class ControllerMapper(protected val game: GameWrapper): LayoutContaine
     abstract val layoutResId: Int
 
     abstract fun initControls()
-
+    
 }

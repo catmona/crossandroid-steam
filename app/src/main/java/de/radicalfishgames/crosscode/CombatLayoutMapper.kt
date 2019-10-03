@@ -3,20 +3,23 @@ package de.radicalfishgames.crosscode
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.view.View
-import android.view.View.GONE
-import android.view.View.VISIBLE
 import kotlinx.android.synthetic.main.combat_layout.*
 
-class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
+class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
     override lateinit var containerView: View
     override val layoutResId = R.layout.combat_layout
 
     override fun initControls(){
 
-        val handler = Handler()
+        bindSimpleButton(shield_button, gamepad.leftBumper)
+        bindSimpleButton(dash_button, gamepad.leftBumper)
+        bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
 
         overlay_toggle.apply {
+
+            val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button)
+
             onRelease.add {
                 game.showControls = !game.showControls
 
@@ -24,36 +27,16 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
                     overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_on)
 
-                    aim_pad.visibility = VISIBLE
-                    dash_button.visibility = VISIBLE
-                    quickmenu_button.visibility = VISIBLE
-                    shield_button.visibility = VISIBLE
-                    movement_pad.visibility = VISIBLE
-                    menu_button.visibility = VISIBLE
+                    showViews(*viewsToHide)
                 }else{
 
                     overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_off)
 
-                    aim_pad.visibility = GONE
-                    dash_button.visibility = GONE
-                    quickmenu_button.visibility = GONE
-                    shield_button.visibility = GONE
-                    movement_pad.visibility = GONE
-                    menu_button.visibility = GONE
+                    hideViews(*viewsToHide)
                 }
 
                 overlay_toggle.invalidate()
                 containerView.invalidate()
-            }
-        }
-
-        shield_button.apply {
-
-            onTouch.add {
-                gamepad.leftBumper.pressed = true
-            }
-            onRelease.add {
-                gamepad.leftBumper.pressed = false
             }
         }
 
@@ -96,34 +79,10 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
                 // Confirm quickmenu selection
                 if(lastInsideInnerCircle && gamepad.leftTrigger.pressed){
-                    gamepad.rightCross.bottom.pressed = true
-
-                    handler.postDelayed({
-                        gamepad.rightCross.bottom.pressed = false
-                    }, FAKE_CLICK_TIME)
+                    fakeClick(gamepad.rightCross.bottom)
                 }
             }
 
-        }
-
-        dash_button.apply {
-
-            onTouch.add {
-                gamepad.leftBumper.pressed = true
-            }
-            onRelease.add {
-                gamepad.leftBumper.pressed = false
-            }
-        }
-
-        quickmenu_button.apply {
-
-            onTouch.add {
-                gamepad.leftTrigger.pressed = true
-            }
-            onRelease.add {
-                gamepad.leftTrigger.pressed = false
-            }
         }
 
         aim_pad.apply {
@@ -158,11 +117,10 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
                     gamepad.rightStick.horizontal.state = 0.0
                 }else{
                     gamepad.rightCross.bottom.pressed = false
-                    gamepad.rightBumper.pressed = true
 
                     // CrossCode expects a button press to fire, so we give it one
+                    fakeClick(gamepad.rightBumper)
                     handler.postDelayed({
-                        gamepad.rightBumper.pressed = false
 
                         gamepad.rightStick.vertical.state = 0.0
                         gamepad.rightStick.horizontal.state = 0.0
@@ -188,27 +146,13 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
                 // Open menu
                 if(openMenu){
-                    gamepad.startOrForward.pressed = true
+                    fakeClick(gamepad.startOrForward)
 
                 // Open inventory
                 }else{
-                    gamepad.selectOrBack.pressed = true
+                    fakeClick(gamepad.selectOrBack)
                 }
-
-                handler.postDelayed({
-
-                    if(openMenu){
-                        gamepad.startOrForward.pressed = false
-                    }else{
-                        gamepad.selectOrBack.pressed = false
-                    }
-
-                }, FAKE_CLICK_TIME)
             }
         }
-    }
-
-    companion object {
-        const val FAKE_CLICK_TIME = 20L
     }
 }
