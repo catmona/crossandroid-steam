@@ -120,21 +120,9 @@ class CombatLayoutMapper(game: GameWrapper) : ControllerMapper(game) {
 
             onTouch.add {
                 gamepad.leftTrigger.pressed = true
-
-                cold_button.visibility = VISIBLE
-                neutral_button.visibility = VISIBLE
-                heat_button.visibility = VISIBLE
-                wave_button.visibility = VISIBLE
-                shock_button.visibility = VISIBLE
             }
             onRelease.add {
                 gamepad.leftTrigger.pressed = false
-
-                cold_button.visibility = GONE
-                neutral_button.visibility = GONE
-                heat_button.visibility = GONE
-                wave_button.visibility = GONE
-                shock_button.visibility = GONE
             }
         }
 
