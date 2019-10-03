@@ -7,6 +7,8 @@ import android.os.storage.StorageManager
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
+import de.radicalfishgames.crosscode.mapping.ControllerMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
 

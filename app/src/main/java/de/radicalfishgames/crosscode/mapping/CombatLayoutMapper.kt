@@ -1,8 +1,9 @@
-package de.radicalfishgames.crosscode
+package de.radicalfishgames.crosscode.mapping
 
 import android.graphics.BitmapFactory
-import android.os.Handler
 import android.view.View
+import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.R
 import kotlinx.android.synthetic.main.combat_layout.*
 
 class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
@@ -25,12 +26,16 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
                 if(game.showControls){
 
-                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_on)
+                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                        R.drawable.overlay_on
+                    )
 
                     showViews(*viewsToHide)
                 }else{
 
-                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.overlay_off)
+                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                        R.drawable.overlay_off
+                    )
 
                     hideViews(*viewsToHide)
                 }
@@ -124,7 +129,9 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
                         gamepad.rightStick.vertical.state = 0.0
                         gamepad.rightStick.horizontal.state = 0.0
-                    }, FAKE_CLICK_TIME)
+                    },
+                        FAKE_CLICK_TIME
+                    )
                 }
             }
         }

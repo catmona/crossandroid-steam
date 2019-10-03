@@ -1,7 +1,9 @@
-package de.radicalfishgames.crosscode
+package de.radicalfishgames.crosscode.mapping
 
 import android.os.Handler
 import android.view.View
+import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.GamepadState
 import de.radicalfishgames.crosscode.overlay.ControlView
 
 

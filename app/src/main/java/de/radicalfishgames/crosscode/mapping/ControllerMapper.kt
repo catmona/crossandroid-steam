@@ -1,6 +1,7 @@
-package de.radicalfishgames.crosscode
+package de.radicalfishgames.crosscode.mapping
 
 import android.view.View
+import de.radicalfishgames.crosscode.GameWrapper
 import kotlinx.android.extensions.LayoutContainer
 
 
@@ -12,5 +13,5 @@ abstract class ControllerMapper(protected val game: GameWrapper): LayoutContaine
     abstract val layoutResId: Int
 
     abstract fun initControls()
-    
+
 }
