@@ -60,15 +60,18 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
 
-        fullSizeRect = RectF(0F, 0F, width.toFloat(), height.toFloat())
+        fullSizeRect = RectF(
+            paddingLeft.toFloat(),
+            paddingTop.toFloat(),
+            width.toFloat() - paddingRight,
+            height.toFloat() - paddingBottom
+        )
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
 
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
-
-        var eventPointersAreInCircle = true
 
         // Update pointer list
         when(event.action){
@@ -81,10 +84,6 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
                 pointer.y = event.getY(pointerIndex)
 
                 activePointers[pointerId] = pointer
-
-                if(!isWithinView(pointer.x, pointer.y)){
-                    eventPointersAreInCircle = false
-                }
             }
 
             // Finger(s) moved
@@ -102,10 +101,6 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
                     pointer.x = event.getX(index)
                     pointer.y = event.getY(index)
 
-                    if(!isWithinView(pointer.x, pointer.y)){
-                        eventPointersAreInCircle = false
-                    }
-
                 }
             }
 
@@ -114,10 +109,6 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
             MotionEvent.ACTION_POINTER_UP,
             MotionEvent.ACTION_CANCEL -> {
                 activePointers.remove(pointerId)
-
-                if(!isWithinView(event.getX(pointerIndex), event.getY(pointerIndex))){
-                    eventPointersAreInCircle = false
-                }
             }
         }
 
@@ -127,9 +118,9 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
         val mainPointerStillValid = hadOldMainPointer
                 && activePointers.containsKey(mainPointerId!!)
                 && isWithinView(
-            activePointers[mainPointerId!!].x,
-            activePointers[mainPointerId!!].y
-        )
+                    activePointers[mainPointerId!!].x,
+                    activePointers[mainPointerId!!].y
+                )
 
         if(!mainPointerStillValid){
             mainPointerId = null
@@ -157,12 +148,6 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
                 // Last pointer moved out of the view, release
             }else if(hadOldMainPointer){
                 onRelease()
-
-                // This event isn't relevant to the view since no pointer is inside and no pointer
-                // left the view.
-            }else{
-
-                return false
             }
 
             // All is fine with our main pointer, update its position
@@ -171,7 +156,8 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
 
         }
 
-        return eventPointersAreInCircle
+        // Return true in any case so we get notified when the pointer enters our view
+        return true
     }
 
     protected open fun isWithinView(x: Float, y: Float): Boolean {

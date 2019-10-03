@@ -1,14 +1,16 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import de.radicalfishgames.crosscode.mapping.ControllerMapper
 
 
-class GameWrapper(private val webView: WebView) {
+class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView) {
 
     val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
 
@@ -61,6 +63,12 @@ class GameWrapper(private val webView: WebView) {
         updateJSGamepad()
 
         startCrossCode()
+    }
+
+    fun useControls(controls: ControllerMapper){
+        val view = hostActivity.loadControlLayout(controls.layoutResId)
+        controls.containerView = view
+        controls.initControls()
     }
 
     private fun interceptJSGamepadFunc(){

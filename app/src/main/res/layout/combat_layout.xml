@@ -72,16 +72,21 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.050000012" />
 
-    <de.radicalfishgames.crosscode.overlay.ControlView
+    <!-- Since we can't detect gestures that started outside the view,
+            we increase the area the view can detect gestures in by adding lots of padding-->
+    <de.radicalfishgames.crosscode.overlay.SwipeControl
         android:id="@+id/overlay_toggle"
-        android:layout_width="84dp"
-        android:layout_height="26dp"
+        android:layout_width="150dp"
+        android:layout_height="65dp"
         android:alpha="0.4"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="30dp"
         app:image="@drawable/overlay_on"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.01" />
+        app:layout_constraintVertical_bias="0.0" />
     
 </androidx.constraintlayout.widget.ConstraintLayout>

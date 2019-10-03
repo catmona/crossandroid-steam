@@ -6,6 +6,7 @@ import android.os.storage.OnObbStateChangeListener
 import android.os.storage.StorageManager
 import android.util.Log
 import android.view.View
+import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
 import de.radicalfishgames.crosscode.mapping.ControllerMapper
@@ -32,10 +33,10 @@ class GameActivity : AppCompatActivity() {
         obbPath = "$obbDir/$obbName"
 
 
-        gameWrapper = GameWrapper(game_view)
+        gameWrapper = GameWrapper(this, game_view)
         gameWrapper.initWebView()
 
-        showControlLayout(CombatLayoutMapper(gameWrapper))
+        gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
 
         load()
     }
@@ -55,11 +56,9 @@ class GameActivity : AppCompatActivity() {
 
     }
 
-    private fun showControlLayout(controlLayout: ControllerMapper){
-        val layoutId = controlLayout.layoutResId
-        val view = layoutInflater.inflate(layoutId, control_container)
-        controlLayout.containerView = view
-        controlLayout.initControls()
+    fun loadControlLayout(@LayoutRes layoutId: Int): View{
+        control_container.removeAllViews()
+        return layoutInflater.inflate(layoutId, control_container)
     }
 
     override fun onResume() {

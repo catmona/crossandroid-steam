@@ -21,27 +21,31 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
             val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button)
 
-            onRelease.add {
-                game.blockWebViewClicks = !game.blockWebViewClicks
+            onSwipe.add { right, left, up, down ->
+                if(right || left){
+                    game.useControls(MenuLayoutMapper(game))
 
-                if(game.blockWebViewClicks){
+                }else if(up || down){
 
-                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                        R.drawable.overlay_on
-                    )
+                    if(game.blockWebViewClicks){
+                        game.blockWebViewClicks = false
 
-                    showViews(*viewsToHide)
-                }else{
+                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                            R.drawable.overlay_off
+                        )
+                        hideViews(*viewsToHide)
+                    }else{
+                        game.blockWebViewClicks = true
 
-                    overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                        R.drawable.overlay_off
-                    )
+                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                            R.drawable.overlay_on
+                        )
+                        showViews(*viewsToHide)
 
-                    hideViews(*viewsToHide)
+                    }
+
+                    overlay_toggle.invalidate()
                 }
-
-                overlay_toggle.invalidate()
-                containerView.invalidate()
             }
         }
 
