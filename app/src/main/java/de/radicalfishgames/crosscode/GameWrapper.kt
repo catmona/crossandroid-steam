@@ -56,11 +56,11 @@ class GameWrapper(private val webView: WebView) {
     fun onGameLoaded(){
 
         interceptJSGamepadFunc()
+        isGameReady = true
+
         updateJSGamepad()
 
         startCrossCode()
-
-        isGameReady = true
     }
 
     private fun interceptJSGamepadFunc(){
