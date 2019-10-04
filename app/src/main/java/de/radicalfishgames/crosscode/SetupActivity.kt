@@ -65,6 +65,7 @@ class SetupActivity : AppCompatActivity() {
 
                         }else{
                             obbFileFound()
+                            return
                         }
 
                     } else {
@@ -94,6 +95,8 @@ class SetupActivity : AppCompatActivity() {
     }
 
     private fun showCurrentGuide(showTransition: Boolean){
+
+        setup_container.visibility = VISIBLE
 
         var pastStepsSuccessfull = true
 
