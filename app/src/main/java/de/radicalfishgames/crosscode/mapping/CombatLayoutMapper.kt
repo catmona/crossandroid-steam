@@ -22,30 +22,34 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
             onSwipe.add { right, left, up, down ->
-                if(right || left){
-                    game.blockWebViewClicks = true
-                    game.useControls(MenuLayoutMapper(game))
+                // Do in handler to avoid a crash due to the potential layout changes
+                handler.post {
 
-                }else if(up || down){
-
-                    if(game.blockWebViewClicks){
-                        game.blockWebViewClicks = false
-
-                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                            R.drawable.overlay_off
-                        )
-                        hideViews(*viewsToHide)
-                    }else{
+                    if(right || left){
                         game.blockWebViewClicks = true
+                        game.useControls(MenuLayoutMapper(game))
 
-                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                            R.drawable.overlay_on
-                        )
-                        showViews(*viewsToHide)
+                    }else if(up || down){
 
+                        if(game.blockWebViewClicks){
+                            game.blockWebViewClicks = false
+
+                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                                R.drawable.overlay_off
+                            )
+                            hideViews(*viewsToHide)
+                        }else{
+                            game.blockWebViewClicks = true
+
+                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                                R.drawable.overlay_on
+                            )
+                            showViews(*viewsToHide)
+
+                        }
+
+                        overlay_toggle.invalidate()
                     }
-
-                    overlay_toggle.invalidate()
                 }
             }
         }

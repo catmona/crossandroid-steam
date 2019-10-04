@@ -4,9 +4,7 @@ import android.graphics.BitmapFactory
 import android.view.View
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.R
-import kotlinx.android.synthetic.main.combat_layout.*
 import kotlinx.android.synthetic.main.menu_layout.*
-import kotlinx.android.synthetic.main.menu_layout.overlay_toggle
 
 
 class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
@@ -23,30 +21,36 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                 tab_left, tab_right, help_button)
 
             onSwipe.add { right, left, up, down ->
-                if(right || left){
-                    game.blockWebViewClicks = true
-                    game.useControls(CombatLayoutMapper(game))
 
-                }else if(up || down){
+                // Do in handler to avoid a crash due to the potential layout changes
+                handler.post {
 
-                    if(game.blockWebViewClicks){
-                        game.blockWebViewClicks = false
-
-                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                            R.drawable.overlay_off
-                        )
-                        hideViews(*viewsToHide)
-                    }else{
+                    if(right || left){
                         game.blockWebViewClicks = true
+                        game.useControls(CombatLayoutMapper(game))
 
-                        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                            R.drawable.overlay_on
-                        )
-                        showViews(*viewsToHide)
+                    }else if(up || down){
 
+                        if(game.blockWebViewClicks){
+                            game.blockWebViewClicks = false
+
+                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                                R.drawable.overlay_off
+                            )
+                            hideViews(*viewsToHide)
+                        }else{
+                            game.blockWebViewClicks = true
+
+                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
+                                R.drawable.overlay_on
+                            )
+                            showViews(*viewsToHide)
+
+                        }
+
+                        overlay_toggle.invalidate()
                     }
 
-                    overlay_toggle.invalidate()
                 }
             }
         }
