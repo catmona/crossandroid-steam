@@ -22,6 +22,7 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
     private val imagePaint = Paint().apply {
         isDither = false
         isAntiAlias = false
+        isFilterBitmap = false
     }
 
 
@@ -33,7 +34,9 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
 
             try {
                 val resId = getResourceId(R.styleable.ControlView_image, -1)
-                imageBitmap = BitmapFactory.decodeResource(context.resources, resId)
+                val options = BitmapFactory.Options()
+                options.inScaled = false
+                imageBitmap = BitmapFactory.decodeResource(context.resources, resId, options)
             } finally {
                 recycle()
             }
