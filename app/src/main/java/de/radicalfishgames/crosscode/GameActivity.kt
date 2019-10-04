@@ -9,7 +9,7 @@ import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
-import de.radicalfishgames.crosscode.mapping.ControllerMapper
+import de.radicalfishgames.crosscode.mapping.NativeMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
 
@@ -18,30 +18,37 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var storageManager: StorageManager
 
-    private lateinit var gameWrapper: GameWrapper
-
     private val version = 1
     private lateinit var obbName: String
     private lateinit var obbPath: String
+
+    private lateinit var gameWrapper: GameWrapper
+    private val nativeControllerWatchDog = NativeControllerWatchDog(
+        this::onFirstNativeControllerConnected,
+        this::onNativeControllerSwitched,
+        this::onLastNativeControllerDisconnected
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_game)
 
-        obbName = "main.$version.$packageName.obb"
-        obbPath = "$obbDir/$obbName"
-
-
         gameWrapper = GameWrapper(this, game_view)
         gameWrapper.initWebView()
 
-        gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
+        nativeControllerWatchDog.startWatching()
+        if(!nativeControllerWatchDog.hasNativeController){
+            gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
+        }
 
         load()
     }
 
     private fun load() {
+
+        obbName = "main.$version.$packageName.obb"
+        obbPath = "$obbDir/$obbName"
 
         Log.d("CrossCode", "Looking for OBB on path $obbPath")
 
@@ -61,6 +68,18 @@ class GameActivity : AppCompatActivity() {
         return layoutInflater.inflate(layoutId, control_container)
     }
 
+    private fun onFirstNativeControllerConnected(){
+        gameWrapper.useControls(NativeMapper(gameWrapper, nativeControllerWatchDog.nativeControllerDeviceId))
+    }
+
+    private fun onNativeControllerSwitched(){
+        gameWrapper.useControls(NativeMapper(gameWrapper, nativeControllerWatchDog.nativeControllerDeviceId))
+    }
+
+    private fun onLastNativeControllerDisconnected(){
+        gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -78,8 +97,13 @@ class GameActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        nativeControllerWatchDog.stopWatching()
+
         storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
             // Do nothing, we can't really do much about it if unmounting fails
+            override fun onObbStateChange(path: String?, state: Int) {
+                Log.e("CrossCode", "Unmounting the game assets failed! State: $state")
+            }
         })
     }
 }

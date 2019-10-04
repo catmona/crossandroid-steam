@@ -15,9 +15,9 @@ import de.radicalfishgames.crosscode.R
 
 open class ControlView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    var onTouch: MutableSet<() -> Unit> = HashSet()
-    var onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
-    var onRelease: MutableSet<() -> Unit> = HashSet()
+    val onTouch: MutableSet<() -> Unit> = HashSet()
+    val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
+    val onRelease: MutableSet<() -> Unit> = HashSet()
 
     private val imagePaint = Paint().apply {
         isDither = false
