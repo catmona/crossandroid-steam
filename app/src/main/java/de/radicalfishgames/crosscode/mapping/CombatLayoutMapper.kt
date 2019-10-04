@@ -19,7 +19,7 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
         overlay_toggle.apply {
 
-            val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button)
+            val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
             onSwipe.add { right, left, up, down ->
                 if(right || left){
