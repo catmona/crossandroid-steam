@@ -165,7 +165,7 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                 val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
                 // Decide based on long- or short click whether to open the inventory or menu
-                val openMenu = timeDiff > (0.4 * 1000)
+                val openMenu = timeDiff > (0.2 * 1000)
 
                 // Open menu
                 if(openMenu){

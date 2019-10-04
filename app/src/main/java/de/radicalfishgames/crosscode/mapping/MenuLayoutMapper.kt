@@ -91,15 +91,55 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
+
+        tab_left.apply {
+            var startedToPressAt: Long = 0
+            onTouch.add {
+                startedToPressAt = System.currentTimeMillis()
+            }
+
+            onRelease.add {
+
+                val timeDiff = (System.currentTimeMillis() - startedToPressAt)
+
+                // Decide based on long- or short click whether to press bumper or trigger
+                val useTrigger = timeDiff > (0.2 * 1000)
+
+                if(useTrigger){
+                    fakeClick(gamepad.leftTrigger)
+
+                }else{
+                    fakeClick(gamepad.leftBumper)
+                }
+            }
+        }
+        tab_right.apply {
+            var startedToPressAt: Long = 0
+            onTouch.add {
+                startedToPressAt = System.currentTimeMillis()
+            }
+
+            onRelease.add {
+
+                val timeDiff = (System.currentTimeMillis() - startedToPressAt)
+
+                // Decide based on long- or short click whether to press bumper or trigger
+                val useTrigger = timeDiff > (0.2 * 1000)
+
+                if(useTrigger){
+                    fakeClick(gamepad.rightTrigger)
+
+                }else{
+                    fakeClick(gamepad.rightBumper)
+                }
+            }
+        }
+
         bindSimpleButton(rightcross_right, gamepad.rightCross.right)
         bindSimpleButton(rightcross_left, gamepad.rightCross.left)
         bindSimpleButton(rightcross_top, gamepad.rightCross.top)
         bindSimpleButton(rightcross_bottom, gamepad.rightCross.bottom)
 
-        bindSimpleButton(tab_left, gamepad.leftBumper)
-        bindSimpleButton(tab_right, gamepad.rightBumper)
-
         bindSimpleButton(help_button, gamepad.startOrForward)
-
     }
 }
