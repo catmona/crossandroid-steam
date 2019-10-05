@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebSettings
@@ -37,7 +38,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageFinished(view: WebView?, url: String?) {
-                onGameLoaded()
+                onPageLoaded()
             }
         }
 
@@ -53,18 +54,26 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
 
-    fun onGameLoaded(){
+    fun onPageLoaded(){
+
+        Log.d("CrossCode", "Game page loaded.")
 
         if(interceptControllerInput){
+            Log.d("CrossCode", "Intercepting JS controller input...")
+
             interceptJSGamepadFunc()
             isJSControllerReady = true
             updateJSGamepad()
         }
 
+        Log.d("CrossCode", "Starting game.")
+
         startCrossCode()
     }
 
     fun useControls(controls: ControllerMapper){
+        Log.d("CrossCode", "Switching to virtual controller ${controls.javaClass.simpleName}")
+
         val view = hostActivity.loadControlLayout(controls.layoutResId)
         controls.containerView = view
         controls.initControls()

@@ -35,17 +35,31 @@ class GameActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_game)
 
+        Log.d("CrossCode", "Registering native controller listener...")
+
         val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(nativeControllerListener, null)
 
+        Log.d("CrossCode", "Searching for native controller...")
+
         nativeControllerListener.searchForController()
         val nativeControllerActive = nativeControllerListener.hasNativeController
+
+        Log.d("CrossCode", "Native controller found: $nativeControllerActive")
+        Log.d("CrossCode, ", "Initializing WebView")
+
         gameWrapper = GameWrapper(this, game_view, !nativeControllerActive)
         gameWrapper.initWebView()
 
         if(!nativeControllerActive){
             gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
+
+        } else{
+            Log.d("CrossCode", "Using native controller for input")
+
         }
+
+        Log.d("CrossCode", "Attempting to load game files.")
 
         load()
     }
@@ -60,6 +74,7 @@ class GameActivity : AppCompatActivity() {
         storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
 
         val mountedPath = storageManager.getMountedObbPath(obbPath)
+
         Log.d("CrossCode", "Mounted path: $mountedPath Attempting to load.")
 
         val launchFile = File("$mountedPath/node-webkit.html")
@@ -72,6 +87,10 @@ class GameActivity : AppCompatActivity() {
         // Disable going back with controller B button
         if(!nativeControllerListener.hasNativeController){
             super.onBackPressed()
+
+        }else{
+
+            Log.d("CrossCode", "Blocked back-press-event because a native controller is being used.")
         }
     }
 
@@ -94,11 +113,16 @@ class GameActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+
+        Log.d("CrossCode", "Pausing game.")
+
         gameWrapper.onPause()
     }
 
     override fun onResume() {
         super.onResume()
+
+        Log.d("CrossCode", "Resuming game.")
 
         gameWrapper.onResume()
 
@@ -116,8 +140,12 @@ class GameActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
+        Log.d("CrossCode", "Unregistering native controller listeners...")
+
         val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
         inputManager.unregisterInputDeviceListener(nativeControllerListener)
+
+        Log.d("CrossCode", "Attempting to unmount game files...")
 
         storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
             // Do nothing, we can't really do much about it if unmounting fails
