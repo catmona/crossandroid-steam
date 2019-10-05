@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
+import android.hardware.input.InputManager
 import android.os.Bundle
 import android.os.storage.OnObbStateChangeListener
 import android.os.storage.StorageManager
@@ -23,7 +24,7 @@ class GameActivity : AppCompatActivity() {
     private lateinit var obbPath: String
 
     private lateinit var gameWrapper: GameWrapper
-    private val nativeControllerWatchDog = NativeControllerWatchDog(
+    private val nativeControllerWatchDog = NativeControllerListener(
         this::onFirstNativeControllerConnected,
         this::onNativeControllerSwitched,
         this::onLastNativeControllerDisconnected
@@ -37,7 +38,9 @@ class GameActivity : AppCompatActivity() {
         gameWrapper = GameWrapper(this, game_view)
         gameWrapper.initWebView()
 
-        nativeControllerWatchDog.startWatching()
+        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
+        inputManager.registerInputDeviceListener(nativeControllerWatchDog, null)
+
         if(!nativeControllerWatchDog.hasNativeController){
             gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
         }
@@ -97,7 +100,8 @@ class GameActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
 
-        nativeControllerWatchDog.stopWatching()
+        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
+        inputManager.unregisterInputDeviceListener(nativeControllerWatchDog)
 
         storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
             // Do nothing, we can't really do much about it if unmounting fails
