@@ -72,30 +72,31 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
     private fun interceptJSGamepadFunc(){
-        webView.evaluateJavascript(
-                """
+        runJS(
+            """
                     var $JS_GAMEPADS_VAR = [];
                     $JS_GAMEPADS_FUNC = function(){
                         return $JS_GAMEPADS_VAR;
                     };
                 """
-                    .trimIndent()
-                    .replace("\n", ""),
-            null
+                .trimIndent()
+                .replace("\n", "")
         )
     }
 
     private fun updateJSGamepad(){
         if(isGameReady){
-            webView.evaluateJavascript(
-                "$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];",
-                null
-            )
+            runJS("$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];")
         }
     }
 
-    private fun startCrossCode(){
-        webView.evaluateJavascript("doStartCrossCodePlz()", null)
+    private fun startCrossCode() = runJS("doStartCrossCodePlz()")
+
+    fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
+    fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
+
+    private fun runJS(js: String){
+        webView.evaluateJavascript(js, null)
     }
 
     companion object {

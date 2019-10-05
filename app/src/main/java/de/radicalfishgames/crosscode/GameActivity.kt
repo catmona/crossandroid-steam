@@ -83,8 +83,15 @@ class GameActivity : AppCompatActivity() {
         gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
     }
 
+    override fun onPause() {
+        super.onPause()
+        gameWrapper.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+
+        gameWrapper.onResume()
 
         window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 // Set the content to appear under the system bars so that the
