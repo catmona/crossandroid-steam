@@ -16,6 +16,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_setup.*
 import java.io.File
+import androidx.core.content.IntentCompat
+import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 
 
 class SetupActivity : AppCompatActivity() {
@@ -90,6 +93,7 @@ class SetupActivity : AppCompatActivity() {
         Log.i("CrossCode", "OBB file found!")
 
         val intent = Intent(this, GameActivity::class.java)
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
 
     }
