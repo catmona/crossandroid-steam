@@ -7,16 +7,20 @@ import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import de.radicalfishgames.crosscode.gamelisteners.*
 import de.radicalfishgames.crosscode.mapping.ControllerMapper
+import java.util.*
 
 
 class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView, private val interceptControllerInput: Boolean) {
 
     val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
+    var blockWebViewClicks = true
+
 
     private var isJSControllerReady = false
-
-    var blockWebViewClicks = true
+    private val gameEventListeners = listOf(
+    )
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -51,8 +55,8 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
     fun loadGame(fromLocation: String) {
+        exposeListenerInterfaces()
         webView.loadUrl(fromLocation)
-
     }
 
 
@@ -71,6 +75,8 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
         Log.d("CrossCode", "Starting game.")
 
         startCrossCode()
+
+        injectListenerJS(gameEventListeners)
     }
 
     fun useControls(controls: ControllerMapper){
@@ -81,16 +87,81 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
         controls.initControls()
     }
 
+    private fun exposeListenerInterfaces(){
+        for(listener in gameEventListeners){
+            webView.addJavascriptInterface(listener, listener.interfaceName)
+        }
+    }
+
+    private fun injectListenerJS(listeners: List<GameEventListener>){
+
+        Log.d("CrossCode", "Injecting JS listeners...")
+
+        var requiredModulesJS = ""
+        val modulesAddedAlready = LinkedList<String>()
+
+        var observerRegistrationJS = ""
+        val observerObjectsAddedAlready = LinkedList<String>()
+
+        var eventIfsJS = ""
+
+        for(listener in listeners){
+
+            if(!modulesAddedAlready.contains(listener.requiredModuleName)){
+                modulesAddedAlready.add(listener.requiredModuleName)
+
+                requiredModulesJS += ".requires(\"${listener.requiredModuleName}\")"
+            }
+
+            if(!observerObjectsAddedAlready.contains(listener.eventObjectName)){
+                observerObjectsAddedAlready.add(listener.eventObjectName)
+
+                observerRegistrationJS += "sc.Model.addObserver(sc.${listener.eventObjectName}, this);"
+            }
+
+            eventIfsJS +=
+                """
+                    if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) {
+                        ${listener.jsToExecute} 
+                    }
+                """
+        }
+
+        var jsForAllListeners =
+        """
+            ig.module("crossandroid.events.listeners")$requiredModulesJS.defines(function(){
+                sc.CrossAndroidEventListener = ig.GameAddon.extend({
+                    init: function() {
+                        $observerRegistrationJS
+                    },
+                            
+                    modelChanged(origin, eventNumber, optionalArgs){
+                        $eventIfsJS
+                    }
+                });
+                ig.addGameAddon(function() {
+                    return sc.crossAndroidEventListener = new sc.CrossAndroidEventListener
+                })
+            })
+        """
+
+        jsForAllListeners = jsForAllListeners
+            .trimIndent()
+            .replace("\n", "")
+
+        runJS(jsForAllListeners)
+    }
+
     private fun interceptJSGamepadFunc(){
         runJS(
             """
-                    var $JS_GAMEPADS_VAR = [];
-                    $JS_GAMEPADS_FUNC = function(){
-                        return $JS_GAMEPADS_VAR;
-                    };
-                """
-                .trimIndent()
-                .replace("\n", "")
+                var $JS_GAMEPADS_VAR = [];
+                $JS_GAMEPADS_FUNC = function(){
+                    return $JS_GAMEPADS_VAR;
+                };
+            """
+            .trimIndent()
+            .replace("\n", "")
         )
     }
 
