@@ -1,7 +1,6 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.WebSettings
@@ -10,11 +9,11 @@ import android.webkit.WebViewClient
 import de.radicalfishgames.crosscode.mapping.ControllerMapper
 
 
-class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView) {
+class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView, private val interceptControllerInput: Boolean) {
 
     val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
 
-    private var isGameReady = false
+    private var isJSControllerReady = false
 
     var blockWebViewClicks = true
 
@@ -49,7 +48,6 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
     fun loadGame(fromLocation: String) {
-
         webView.loadUrl(fromLocation)
 
     }
@@ -57,10 +55,11 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
 
     fun onGameLoaded(){
 
-        interceptJSGamepadFunc()
-        isGameReady = true
-
-        updateJSGamepad()
+        if(interceptControllerInput){
+            interceptJSGamepadFunc()
+            isJSControllerReady = true
+            updateJSGamepad()
+        }
 
         startCrossCode()
     }
@@ -85,7 +84,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
     private fun updateJSGamepad(){
-        if(isGameReady){
+        if(isJSControllerReady){
             runJS("$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];")
         }
     }

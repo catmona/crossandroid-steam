@@ -19,10 +19,6 @@ class NativeControllerListener(
         }
         private set(_) {}
 
-    init {
-        findNativeController()
-    }
-
     override fun onInputDeviceAdded(deviceId: Int) {
         val device = InputDevice.getDevice(deviceId)
 
@@ -43,7 +39,7 @@ class NativeControllerListener(
     override fun onInputDeviceRemoved(deviceId: Int) {
         if(deviceId == nativeControllerDeviceId){
             nativeControllerDeviceId = -1
-            findNativeController()
+            searchForController()
 
             if(!hasNativeController){
                 onLastControllerDisconnected()
@@ -51,7 +47,7 @@ class NativeControllerListener(
         }
     }
 
-    private fun findNativeController(isSwitch: Boolean = false){
+    fun searchForController(isSwitch: Boolean = false){
         InputDevice.getDeviceIds().forEach { deviceId ->
             val device = InputDevice.getDevice(deviceId)
 
@@ -69,7 +65,7 @@ class NativeControllerListener(
 
     private fun isSupportedController(device: InputDevice): Boolean{
         return device.supportsSource(InputDevice.SOURCE_GAMEPAD)
-                && device.supportsSource(InputDevice.SOURCE_DPAD)
                 && device.supportsSource(InputDevice.SOURCE_JOYSTICK)
+        // SOURCE_DPAD is apparently not how a gamepad is labelled, despite having a DPad available
     }
 }

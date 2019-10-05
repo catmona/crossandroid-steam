@@ -10,7 +10,6 @@ import android.view.View
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
-import de.radicalfishgames.crosscode.mapping.NativeMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
 
@@ -24,7 +23,8 @@ class GameActivity : AppCompatActivity() {
     private lateinit var obbPath: String
 
     private lateinit var gameWrapper: GameWrapper
-    private val nativeControllerWatchDog = NativeControllerListener(
+
+    private val nativeControllerListener = NativeControllerListener(
         this::onFirstNativeControllerConnected,
         this::onNativeControllerSwitched,
         this::onLastNativeControllerDisconnected
@@ -35,13 +35,15 @@ class GameActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_game)
 
-        gameWrapper = GameWrapper(this, game_view)
+        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
+        inputManager.registerInputDeviceListener(nativeControllerListener, null)
+
+        nativeControllerListener.searchForController()
+        val nativeControllerActive = nativeControllerListener.hasNativeController
+        gameWrapper = GameWrapper(this, game_view, !nativeControllerActive)
         gameWrapper.initWebView()
 
-        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
-        inputManager.registerInputDeviceListener(nativeControllerWatchDog, null)
-
-        if(!nativeControllerWatchDog.hasNativeController){
+        if(!nativeControllerActive){
             gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
         }
 
@@ -66,21 +68,28 @@ class GameActivity : AppCompatActivity() {
 
     }
 
+    override fun onBackPressed() {
+        // Disable going back with controller B button
+        if(!nativeControllerListener.hasNativeController){
+            super.onBackPressed()
+        }
+    }
+
     fun loadControlLayout(@LayoutRes layoutId: Int): View{
         control_container.removeAllViews()
         return layoutInflater.inflate(layoutId, control_container)
     }
 
     private fun onFirstNativeControllerConnected(){
-        gameWrapper.useControls(NativeMapper(gameWrapper, nativeControllerWatchDog.nativeControllerDeviceId))
+        // Don't do anything, since the controller input should be handled automatically
     }
 
     private fun onNativeControllerSwitched(){
-        gameWrapper.useControls(NativeMapper(gameWrapper, nativeControllerWatchDog.nativeControllerDeviceId))
+        // Don't do anything, since the controller input should be handled automatically
     }
 
     private fun onLastNativeControllerDisconnected(){
-        gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
+        // Don't do anything, since the controller input should be handled automatically
     }
 
     override fun onPause() {
@@ -108,7 +117,7 @@ class GameActivity : AppCompatActivity() {
         super.onDestroy()
 
         val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
-        inputManager.unregisterInputDeviceListener(nativeControllerWatchDog)
+        inputManager.unregisterInputDeviceListener(nativeControllerListener)
 
         storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
             // Do nothing, we can't really do much about it if unmounting fails
