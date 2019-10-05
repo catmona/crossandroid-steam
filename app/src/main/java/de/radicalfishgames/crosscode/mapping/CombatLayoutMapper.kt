@@ -8,18 +8,19 @@ import kotlinx.android.synthetic.main.combat_layout.*
 
 class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
-    override lateinit var containerView: View
     override val layoutResId = R.layout.combat_layout
 
+    private lateinit var viewsToHide: Array<View>
+
     override fun initControls(){
+
+        viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
         bindSimpleButton(shield_button, gamepad.leftBumper)
         bindSimpleButton(dash_button, gamepad.leftBumper)
         bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
 
         overlay_toggle.apply {
-
-            val viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
             onSwipe.add { right, left, up, down ->
                 // Do in handler to avoid a crash due to the potential layout changes
@@ -32,23 +33,10 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                     }else if(up || down){
 
                         if(game.blockWebViewClicks){
-                            game.blockWebViewClicks = false
-
-                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                                R.drawable.overlay_off
-                            )
-                            hideViews(*viewsToHide)
+                            disableOverlay()
                         }else{
-                            game.blockWebViewClicks = true
-
-                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                                R.drawable.overlay_on
-                            )
-                            showViews(*viewsToHide)
-
+                            enableOverlay()
                         }
-
-                        overlay_toggle.invalidate()
                     }
                 }
             }
@@ -181,5 +169,47 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                 }
             }
         }
+
+
+        game.gameEvents.apply {
+
+            clearListeners()
+
+            onMenuEnter.add {
+                game.useControls(MenuLayoutMapper(game))
+            }
+
+            onCutsceneEnter.add {
+                disableOverlay()
+            }
+
+            onCutsceneExit.add {
+                enableOverlay()
+            }
+        }
+    }
+
+    private fun disableOverlay(){
+        game.blockWebViewClicks = false
+
+        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
+            overlay_toggle.context.resources,
+            R.drawable.overlay_off
+        )
+        hideViews(*viewsToHide)
+
+        overlay_toggle.invalidate()
+    }
+
+    private fun enableOverlay(){
+        game.blockWebViewClicks = true
+
+        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
+            overlay_toggle.context.resources,
+            R.drawable.overlay_on
+        )
+        showViews(*viewsToHide)
+
+        overlay_toggle.invalidate()
     }
 }

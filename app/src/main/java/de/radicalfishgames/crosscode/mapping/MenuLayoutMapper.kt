@@ -9,7 +9,6 @@ import kotlinx.android.synthetic.main.menu_layout.*
 
 class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
-    override lateinit var containerView: View
     override val layoutResId = R.layout.menu_layout
 
     override fun initControls() {
@@ -145,5 +144,15 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
         bindSimpleButton(rightcross_bottom, gamepad.rightCross.bottom)
 
         bindSimpleButton(help_button, gamepad.startOrForward)
+
+        game.gameEvents.apply {
+
+            clearListeners()
+
+            onMenuExit.add {
+                game.useControls(CombatLayoutMapper(game))
+            }
+
+        }
     }
 }

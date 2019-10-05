@@ -15,12 +15,13 @@ import java.util.*
 class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView, private val interceptControllerInput: Boolean) {
 
     val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
+    val gameEvents = GameEventManager()
+
     var blockWebViewClicks = true
 
 
     private var isJSControllerReady = false
-    private val gameEventListeners = listOf(
-    )
+
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -50,7 +51,8 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
 
         // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
-            blockWebViewClicks
+            // Allow ACTION_UP to prevent accidentally locking into aiming when switching this boolean
+            blockWebViewClicks && motionEvent.action != MotionEvent.ACTION_UP
         }
     }
 
@@ -76,7 +78,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
 
         startCrossCode()
 
-        injectListenerJS(gameEventListeners)
+        injectListenerJS(gameEvents.listeners)
     }
 
     fun useControls(controls: ControllerMapper){
@@ -88,7 +90,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     }
 
     private fun exposeListenerInterfaces(){
-        for(listener in gameEventListeners){
+        for(listener in gameEvents.listeners){
             webView.addJavascriptInterface(listener, listener.interfaceName)
         }
     }
