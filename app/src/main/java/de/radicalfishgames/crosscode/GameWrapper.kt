@@ -21,6 +21,8 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
 
+        Log.d("CrossCode, ", "Initializing WebView")
+
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
 

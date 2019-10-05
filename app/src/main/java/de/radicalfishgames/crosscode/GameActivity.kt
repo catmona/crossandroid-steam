@@ -40,13 +40,10 @@ class GameActivity : AppCompatActivity() {
         val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(nativeControllerListener, null)
 
-        Log.d("CrossCode", "Searching for native controller...")
-
         nativeControllerListener.searchForController()
         val nativeControllerActive = nativeControllerListener.hasNativeController
 
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
-        Log.d("CrossCode, ", "Initializing WebView")
 
         gameWrapper = GameWrapper(this, game_view, !nativeControllerActive)
         gameWrapper.initWebView()
@@ -59,12 +56,12 @@ class GameActivity : AppCompatActivity() {
 
         }
 
-        Log.d("CrossCode", "Attempting to load game files.")
-
         load()
     }
 
     private fun load() {
+
+        Log.d("CrossCode", "Attempting to load game files.")
 
         obbName = "main.$version.$packageName.obb"
         obbPath = "$obbDir/$obbName"

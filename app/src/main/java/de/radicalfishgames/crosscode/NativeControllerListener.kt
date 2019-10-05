@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.hardware.input.InputManager
+import android.util.Log
 import android.view.InputDevice
 
 
@@ -48,6 +49,8 @@ class NativeControllerListener(
     }
 
     fun searchForController(isSwitch: Boolean = false){
+        Log.d("CrossCode", "Searching for native controller...")
+
         InputDevice.getDeviceIds().forEach { deviceId ->
             val device = InputDevice.getDevice(deviceId)
 
