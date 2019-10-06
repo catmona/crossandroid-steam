@@ -14,14 +14,13 @@ import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import kotlinx.android.synthetic.main.activity_setup.*
+import kotlinx.android.synthetic.main.activity_launch.*
 import java.io.File
-import androidx.core.content.IntentCompat
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 
 
-class SetupActivity : AppCompatActivity() {
+class LaunchActivity : AppCompatActivity() {
 
     private var userConfirmedJava = false
     private var userConfirmedGotGameFiles = false
@@ -31,7 +30,7 @@ class SetupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_setup)
+        setContentView(R.layout.activity_launch)
 
         checkObbFileAccess()
     }
@@ -64,7 +63,7 @@ class SetupActivity : AppCompatActivity() {
 
                         val launchFile = File("$mountedPath/node-webkit.html")
                         if(!launchFile.exists()){
-                            Toast.makeText(this@SetupActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@LaunchActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
 
                         }else{
                             obbFileFound()
@@ -72,7 +71,7 @@ class SetupActivity : AppCompatActivity() {
                         }
 
                     } else {
-                        Toast.makeText(this@SetupActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
 
                     }
 

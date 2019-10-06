@@ -20,7 +20,7 @@
         android:theme="@style/AppTheme"
         android:hardwareAccelerated="true">
 
-        <activity android:name=".SetupActivity">
+        <activity android:name=".LaunchActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
