@@ -11,7 +11,7 @@ class MenuFullEnter(eventManager: GameEventManager) : GameEventListener(eventMan
     override val eventObjectName: String = "menu"
     override val eventType: String = "MENU_EVENT.FULL_MENU_ENTER"
 
-    override val jsToExecute: String =
+    override val onEventJS: String =
         """
             $interfaceName.reportFullMenuOpen();
         """
@@ -30,7 +30,7 @@ class MenuExit(eventManager: GameEventManager) : GameEventListener(eventManager)
     override val eventObjectName: String = "menu"
     override val eventType: String = "MENU_EVENT.EXIT_MENU"
 
-    override val jsToExecute: String =
+    override val onEventJS: String =
         """
             $interfaceName.reportMenuExit();
         """

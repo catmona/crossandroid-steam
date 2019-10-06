@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import android.view.View
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import kotlinx.android.synthetic.main.combat_layout.*
 
 class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
@@ -11,6 +12,8 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
     override val layoutResId = R.layout.combat_layout
 
     private lateinit var viewsToHide: Array<View>
+
+    private var currentElement = ElementMode.NEUTRAL
 
     override fun initControls(){
 
@@ -44,12 +47,29 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
         elemental_button.onSwipe.add { right, left, up, down ->
 
-            when {
-                right -> fakeClick(gamepad.leftCross.right)
-                left -> fakeClick(gamepad.leftCross.left)
-                up -> fakeClick(gamepad.leftCross.top)
-                down -> fakeClick(gamepad.leftCross.bottom)
+            // Switch buttons, because with our method you go back to neutral by swiping in the
+            // opposite direction as before. Eg Neutral -> Heat: Swipe Down and then Heat -> Neutral: Swipe Up
+            when (currentElement) {
+                ElementMode.NEUTRAL -> when {
+                    right -> fakeClick(gamepad.leftCross.right)
+                    left -> fakeClick(gamepad.leftCross.left)
+                    up -> fakeClick(gamepad.leftCross.top)
+                    down -> fakeClick(gamepad.leftCross.bottom)
+                }
+                ElementMode.HEAT, ElementMode.COLD -> when {
+                    right -> fakeClick(gamepad.leftCross.right)
+                    left -> fakeClick(gamepad.leftCross.left)
+                    up -> fakeClick(gamepad.leftCross.bottom)
+                    down -> fakeClick(gamepad.leftCross.top)
+                }
+                ElementMode.SHOCK, ElementMode.WAVE -> when {
+                    right -> fakeClick(gamepad.leftCross.left)
+                    left -> fakeClick(gamepad.leftCross.right)
+                    up -> fakeClick(gamepad.leftCross.top)
+                    down -> fakeClick(gamepad.leftCross.bottom)
+                }
             }
+
 
         }
 
@@ -185,6 +205,26 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
             onCutsceneExit.add {
                 enableOverlay()
+            }
+
+            onElementChange.add { elementMode ->
+
+                currentElement = elementMode
+
+                val elementUIImageResID = when(elementMode){
+                    ElementMode.NEUTRAL -> R.drawable.element_neutral
+                    ElementMode.HEAT -> R.drawable.element_heat
+                    ElementMode.COLD -> R.drawable.element_cold
+                    ElementMode.SHOCK -> R.drawable.element_shock
+                    ElementMode.WAVE -> R.drawable.element_wave
+                }
+
+                elemental_button.imageBitmap = BitmapFactory.decodeResource(
+                    elemental_button.context.resources,
+                    elementUIImageResID
+                )
+
+                elemental_button.invalidate()
             }
         }
     }

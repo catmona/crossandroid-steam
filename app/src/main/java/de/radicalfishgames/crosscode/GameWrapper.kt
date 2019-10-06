@@ -7,7 +7,8 @@ import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import de.radicalfishgames.crosscode.gamelisteners.*
+import de.radicalfishgames.crosscode.gamelisteners.GameEventListener
+import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.mapping.ControllerMapper
 import java.util.*
 
@@ -124,7 +125,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
             eventIfsJS +=
                 """
                     if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) {
-                        ${listener.jsToExecute} 
+                        ${listener.onEventJS} 
                     }
                 """
         }
@@ -136,7 +137,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
                     init: function() {
                         $observerRegistrationJS
                     },
-                            
+                    
                     modelChanged(origin, eventNumber, optionalArgs){
                         $eventIfsJS
                     }

@@ -56,7 +56,7 @@
         android:paddingTop="30dp"
         android:paddingEnd="30dp"
         android:paddingBottom="5dp"
-        app:image="@drawable/tmp_button"
+        app:image="@drawable/element_neutral"
         app:layout_constraintBottom_toTopOf="@+id/movement_pad"
         app:layout_constraintEnd_toEndOf="@+id/movement_pad"
         app:layout_constraintHorizontal_bias="0.0"

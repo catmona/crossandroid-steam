@@ -8,9 +8,11 @@ class GameEventManager {
     val listeners = listOf(
         MenuFullEnter(this),
         MenuExit(this),
-        GameStateChange(this),
+        GameStateChangeCutscene(this),
         MessageRing(this),
-        MessageEnd(this)
+        MessageEnd(this),
+        ElementModeChange(this),
+        ElementLoad(this)
     )
 
     val onMenuEnter: MutableSet<() -> Unit> = HashSet()
@@ -18,6 +20,8 @@ class GameEventManager {
 
     val onCutsceneEnter: MutableSet<() -> Unit> = HashSet()
     val onCutsceneExit: MutableSet<() -> Unit> = HashSet()
+
+    val onElementChange: MutableSet<(element: ElementMode) -> Unit> = HashSet()
 
     private var wasLastGameStateCutscene = false
     // Post events to the original thread instead of staying in the JS one, so
@@ -40,7 +44,7 @@ class GameEventManager {
         }
     }
 
-    fun onGameStateChange(isCutscene: Boolean){
+    fun onCutsceneStateChange(isCutscene: Boolean){
         handler.post {
             if(isCutscene != wasLastGameStateCutscene){
                 wasLastGameStateCutscene = isCutscene
@@ -54,6 +58,14 @@ class GameEventManager {
                         it.invoke()
                     }
                 }
+            }
+        }
+    }
+
+    fun onElementModeChange(elementMode: ElementMode){
+        handler.post {
+            onElementChange.forEach {
+                it.invoke(elementMode)
             }
         }
     }

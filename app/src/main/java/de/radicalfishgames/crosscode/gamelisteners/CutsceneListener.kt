@@ -3,7 +3,7 @@ package de.radicalfishgames.crosscode.gamelisteners
 import android.webkit.JavascriptInterface
 
 
-class GameStateChange(eventManager: GameEventManager) : GameEventListener(eventManager) {
+class GameStateChangeCutscene(eventManager: GameEventManager) : GameEventListener(eventManager) {
 
     override val interfaceName: String = "CACutsceneListener"
 
@@ -11,14 +11,14 @@ class GameStateChange(eventManager: GameEventManager) : GameEventListener(eventM
     override val eventObjectName: String = "model"
     override val eventType: String = "GAME_MODEL_MSG.STATE_CHANGED"
 
-    override val jsToExecute: String =
+    override val onEventJS: String =
         """
             $interfaceName.reportGameState(origin.isCutscene());
         """
 
     @JavascriptInterface
     fun reportGameState(isCutscene: Boolean){
-        eventManager.onGameStateChange(isCutscene)
+        eventManager.onCutsceneStateChange(isCutscene)
     }
 
 }
@@ -31,7 +31,7 @@ class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManag
     override val eventObjectName: String = "message"
     override val eventType: String = "MESSAGE_EVENT.RING_PRIVATE"
 
-    override val jsToExecute: String =
+    override val onEventJS: String =
         """
             $interfaceName.reportRing();
         """
@@ -40,7 +40,7 @@ class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManag
     fun reportRing(){
         // Report a message ring as cutscene, since conversations are also cutscenes
         // and direct links are basically the same thing
-        eventManager.onGameStateChange(true)
+        eventManager.onCutsceneStateChange(true)
     }
 
 }
@@ -53,7 +53,7 @@ class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManage
     override val eventObjectName: String = "message"
     override val eventType: String = "MESSAGE_EVENT.END_PRIVATE"
 
-    override val jsToExecute: String =
+    override val onEventJS: String =
         """
             $interfaceName.reportMessageEnd();
         """
@@ -62,7 +62,7 @@ class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManage
     fun reportMessageEnd(){
         // Report a message ring as cutscene, since conversations are also cutscenes
         // and direct links are basically the same thing
-        eventManager.onGameStateChange(false)
+        eventManager.onCutsceneStateChange(false)
     }
 
 }

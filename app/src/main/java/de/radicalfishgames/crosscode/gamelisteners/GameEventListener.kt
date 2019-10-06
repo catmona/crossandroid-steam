@@ -8,5 +8,5 @@ abstract class GameEventListener(protected val eventManager: GameEventManager) {
     abstract val eventObjectName: String
     abstract val eventType: String
 
-    abstract val jsToExecute: String
+    abstract val onEventJS: String
 }
