@@ -4,20 +4,24 @@ import android.graphics.BitmapFactory
 import android.view.View
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.R
+import kotlinx.android.synthetic.main.combat_layout.*
 import kotlinx.android.synthetic.main.menu_layout.*
+import kotlinx.android.synthetic.main.menu_layout.overlay_toggle
 
 
 class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
     override val layoutResId = R.layout.menu_layout
 
+    private lateinit var viewsToHide: Array<View>
+
     override fun initControls() {
 
-        overlay_toggle.apply {
+        viewsToHide = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
+            rightcross_right, rightcross_left, rightcross_top, rightcross_bottom,
+            tab_left, tab_right, help_button)
 
-            val viewsToHide = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
-                rightcross_right, rightcross_left, rightcross_top, rightcross_bottom,
-                tab_left, tab_right, help_button)
+        overlay_toggle.apply {
 
             onSwipe.add { right, left, up, down ->
 
@@ -31,30 +35,20 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                     }else if(up || down){
 
                         if(game.blockWebViewClicks){
-                            game.blockWebViewClicks = false
-
-                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                                R.drawable.overlay_off
-                            )
-                            hideViews(*viewsToHide)
+                            disableOverlay()
                         }else{
-                            game.blockWebViewClicks = true
-
-                            overlay_toggle.imageBitmap = BitmapFactory.decodeResource(context.resources,
-                                R.drawable.overlay_on
-                            )
-                            showViews(*viewsToHide)
+                            enableOverlay()
 
                         }
 
-                        overlay_toggle.invalidate()
                     }
 
                 }
             }
         }
 
-        bindSimpleButton(leftcross_left, gamepad.leftCross.left)
+        // TODO Just make this into a pad
+
         leftcross_left.apply {
             onTouch.add {
                 gamepad.leftStick.horizontal.state = -1.0
@@ -64,7 +58,6 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
-        bindSimpleButton(leftcross_right, gamepad.leftCross.right)
         leftcross_right.apply {
             onTouch.add {
                 gamepad.leftStick.horizontal.state = 1.0
@@ -74,7 +67,6 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
-        bindSimpleButton(leftcross_top, gamepad.leftCross.top)
         leftcross_top.apply {
             onTouch.add {
                 gamepad.leftStick.vertical.state = -1.0
@@ -84,7 +76,6 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
-        bindSimpleButton(leftcross_bottom, gamepad.leftCross.bottom)
         leftcross_bottom.apply {
             onTouch.add {
                 gamepad.leftStick.vertical.state = 1.0
@@ -153,6 +144,37 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
                 game.useControls(CombatLayoutMapper(game))
             }
 
+            onCutsceneEnter.add {
+                disableOverlay()
+            }
+
+            onCutsceneExit.add {
+                enableOverlay()
+            }
         }
+    }
+
+    private fun disableOverlay(){
+        game.blockWebViewClicks = false
+
+        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
+            overlay_toggle.context.resources,
+            R.drawable.overlay_off
+        )
+        hideViews(*viewsToHide)
+
+        overlay_toggle.invalidate()
+    }
+
+    private fun enableOverlay(){
+        game.blockWebViewClicks = true
+
+        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
+            overlay_toggle.context.resources,
+            R.drawable.overlay_on
+        )
+        showViews(*viewsToHide)
+
+        overlay_toggle.invalidate()
     }
 }
