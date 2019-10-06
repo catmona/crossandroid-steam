@@ -1,51 +1,30 @@
 package de.radicalfishgames.crosscode.mapping
 
-import android.graphics.BitmapFactory
 import android.view.View
-import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
-import kotlinx.android.synthetic.main.combat_layout.*
+import de.radicalfishgames.crosscode.features.VirtualControllerFeature
+import de.radicalfishgames.crosscode.overlay.SwipeControl
 import kotlinx.android.synthetic.main.menu_layout.*
-import kotlinx.android.synthetic.main.menu_layout.overlay_toggle
 
 
-class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
+class MenuLayoutMapper(feature: VirtualControllerFeature,
+                       gamepad: GamepadJsonBridge
+) : VirtualControllerMapper(feature, gamepad) {
 
     override val layoutResId = R.layout.menu_layout
 
-    private lateinit var viewsToHide: Array<View>
+    override lateinit var overlayToggle: SwipeControl
+    override lateinit var overlayViews: Array<View>
 
     override fun initControls() {
 
-        viewsToHide = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
+        overlayToggle = overlay_toggle
+
+        overlayViews = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
             rightcross_right, rightcross_left, rightcross_top, rightcross_bottom,
             tab_left, tab_right, help_button)
 
-        overlay_toggle.apply {
-
-            onSwipe.add { right, left, up, down ->
-
-                // Do in handler to avoid a crash due to the potential layout changes
-                handler.post {
-
-                    if(right || left){
-                        game.blockWebViewClicks = true
-                        game.useControls(CombatLayoutMapper(game))
-
-                    }else if(up || down){
-
-                        if(game.blockWebViewClicks){
-                            disableOverlay()
-                        }else{
-                            enableOverlay()
-
-                        }
-
-                    }
-
-                }
-            }
-        }
 
         // TODO Just make this into a pad
 
@@ -136,45 +115,6 @@ class MenuLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
         bindSimpleButton(help_button, gamepad.startOrForward)
 
-        game.gameEvents.apply {
-
-            clearListeners()
-
-            onMenuExit.add {
-                game.useControls(CombatLayoutMapper(game))
-            }
-
-            onCutsceneEnter.add {
-                disableOverlay()
-            }
-
-            onCutsceneExit.add {
-                enableOverlay()
-            }
-        }
-    }
-
-    private fun disableOverlay(){
-        game.blockWebViewClicks = false
-
-        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
-            overlay_toggle.context.resources,
-            R.drawable.overlay_off
-        )
-        hideViews(*viewsToHide)
-
-        overlay_toggle.invalidate()
-    }
-
-    private fun enableOverlay(){
-        game.blockWebViewClicks = true
-
-        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
-            overlay_toggle.context.resources,
-            R.drawable.overlay_on
-        )
-        showViews(*viewsToHide)
-
-        overlay_toggle.invalidate()
+        super.initControls()
     }
 }

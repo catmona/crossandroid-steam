@@ -7,21 +7,18 @@ import android.view.View
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import de.radicalfishgames.crosscode.gamelisteners.GameEventListener
+import de.radicalfishgames.crosscode.features.Feature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import de.radicalfishgames.crosscode.mapping.ControllerMapper
 import java.util.*
+import kotlin.reflect.KClass
 
 
-class GameWrapper(private val hostActivity: GameActivity, private val webView: WebView, private val interceptControllerInput: Boolean) {
+class GameWrapper(private val webView: WebView) {
 
-    val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateJSGamepad()}
-    val gameEvents = GameEventManager()
+    val events = GameEventManager()
+    val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
-
-
-    private var isJSControllerReady = false
 
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
@@ -67,110 +64,24 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
 
         Log.d("CrossCode", "Game page loaded.")
 
-        if(interceptControllerInput){
-            Log.d("CrossCode", "Intercepting JS controller input...")
-
-            interceptJSGamepadFunc()
-            isJSControllerReady = true
-            updateJSGamepad()
-        }
-
         Log.d("CrossCode", "Starting game.")
 
         startCrossCode()
 
-        injectListenerJS(gameEvents.listeners)
+        runJS(events.getListenerJS())
+
+        for(feature in features){
+            feature.initialize()
+        }
     }
 
-    fun useControls(controls: ControllerMapper){
-        Log.d("CrossCode", "Switching to virtual controller ${controls.javaClass.simpleName}")
-
-        val view = hostActivity.loadControlLayout(controls.layoutResId)
-        controls.containerView = view
-        controls.initControls()
+    fun <T : Feature> getFeature(ofType: KClass<T>): T {
+        return features.first { ofType.isInstance(it) } as T
     }
 
     private fun exposeListenerInterfaces(){
-        for(listener in gameEvents.listeners){
+        for(listener in events.listeners){
             webView.addJavascriptInterface(listener, listener.interfaceName)
-        }
-    }
-
-    private fun injectListenerJS(listeners: List<GameEventListener>){
-
-        Log.d("CrossCode", "Injecting JS listeners...")
-
-        var requiredModulesJS = ""
-        val modulesAddedAlready = LinkedList<String>()
-
-        var observerRegistrationJS = ""
-        val observerObjectsAddedAlready = LinkedList<String>()
-
-        var eventIfsJS = ""
-
-        for(listener in listeners){
-
-            if(!modulesAddedAlready.contains(listener.requiredModuleName)){
-                modulesAddedAlready.add(listener.requiredModuleName)
-
-                requiredModulesJS += ".requires(\"${listener.requiredModuleName}\")"
-            }
-
-            if(!observerObjectsAddedAlready.contains(listener.eventObjectName)){
-                observerObjectsAddedAlready.add(listener.eventObjectName)
-
-                observerRegistrationJS += "sc.Model.addObserver(sc.${listener.eventObjectName}, this);"
-            }
-
-            eventIfsJS +=
-                """
-                    if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) {
-                        ${listener.onEventJS} 
-                    }
-                """
-        }
-
-        var jsForAllListeners =
-        """
-            ig.module("crossandroid.events.listeners")$requiredModulesJS.defines(function(){
-                sc.CrossAndroidEventListener = ig.GameAddon.extend({
-                    init: function() {
-                        $observerRegistrationJS
-                    },
-                    
-                    modelChanged(origin, eventNumber, optionalArgs){
-                        $eventIfsJS
-                    }
-                });
-                ig.addGameAddon(function() {
-                    return sc.crossAndroidEventListener = new sc.CrossAndroidEventListener
-                })
-            })
-        """
-
-        jsForAllListeners = jsForAllListeners
-            .trimIndent()
-            .replace("\n", "")
-
-        runJS(jsForAllListeners)
-    }
-
-    private fun interceptJSGamepadFunc(){
-        runJS(
-            """
-                var $JS_GAMEPADS_VAR = [];
-                $JS_GAMEPADS_FUNC = function(){
-                    return $JS_GAMEPADS_VAR;
-                };
-            """
-            .trimIndent()
-            .replace("\n", "")
-        )
-    }
-
-    private fun updateJSGamepad(){
-        if(isJSControllerReady){
-            runJS("$JS_GAMEPADS_VAR = [JSON.parse('${gamepadState.asJsonString}')];")
         }
     }
 
@@ -179,12 +90,7 @@ class GameWrapper(private val hostActivity: GameActivity, private val webView: W
     fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
     fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
 
-    private fun runJS(js: String){
+    fun runJS(js: String){
         webView.evaluateJavascript(js, null)
-    }
-
-    companion object {
-        const val JS_GAMEPADS_VAR = "injectedGamepads"
-        const val JS_GAMEPADS_FUNC = "navigator.getGamepads"
     }
 }

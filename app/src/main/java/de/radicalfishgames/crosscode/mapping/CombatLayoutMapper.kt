@@ -2,48 +2,33 @@ package de.radicalfishgames.crosscode.mapping
 
 import android.graphics.BitmapFactory
 import android.view.View
-import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.ElementMode
+import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
+import de.radicalfishgames.crosscode.overlay.SwipeControl
 import kotlinx.android.synthetic.main.combat_layout.*
 
-class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
+class CombatLayoutMapper(feature: VirtualControllerFeature,
+                         gamepad: GamepadJsonBridge
+) : VirtualControllerMapper(feature, gamepad) {
 
     override val layoutResId = R.layout.combat_layout
 
-    private lateinit var viewsToHide: Array<View>
+    override lateinit var overlayToggle: SwipeControl
+    override lateinit var overlayViews: Array<View>
 
     private var currentElement = ElementMode.NEUTRAL
 
     override fun initControls(){
 
-        viewsToHide = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
+        overlayToggle = overlay_toggle
+        overlayViews = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
         bindSimpleButton(shield_button, gamepad.leftBumper)
         bindSimpleButton(dash_button, gamepad.leftBumper)
         bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
-
-        overlay_toggle.apply {
-
-            onSwipe.add { right, left, up, down ->
-                // Do in handler to avoid a crash due to the potential layout changes
-                handler.post {
-
-                    if(right || left){
-                        game.blockWebViewClicks = true
-                        game.useControls(MenuLayoutMapper(game))
-
-                    }else if(up || down){
-
-                        if(game.blockWebViewClicks){
-                            disableOverlay()
-                        }else{
-                            enableOverlay()
-                        }
-                    }
-                }
-            }
-        }
 
         elemental_button.onSwipe.add { right, left, up, down ->
 
@@ -190,22 +175,11 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
             }
         }
 
+        super.initControls()
+    }
 
-        game.gameEvents.apply {
-
-            clearListeners()
-
-            onMenuEnter.add {
-                game.useControls(MenuLayoutMapper(game))
-            }
-
-            onCutsceneEnter.add {
-                disableOverlay()
-            }
-
-            onCutsceneExit.add {
-                enableOverlay()
-            }
+    override fun registerGameEventListeners(eventManager: GameEventManager) {
+        eventManager.apply {
 
             onElementChange.add { elementMode ->
 
@@ -226,30 +200,7 @@ class CombatLayoutMapper(game: GameWrapper) : VirtualControllerMapper(game) {
 
                 elemental_button.invalidate()
             }
+
         }
-    }
-
-    private fun disableOverlay(){
-        game.blockWebViewClicks = false
-
-        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
-            overlay_toggle.context.resources,
-            R.drawable.overlay_off
-        )
-        hideViews(*viewsToHide)
-
-        overlay_toggle.invalidate()
-    }
-
-    private fun enableOverlay(){
-        game.blockWebViewClicks = true
-
-        overlay_toggle.imageBitmap = BitmapFactory.decodeResource(
-            overlay_toggle.context.resources,
-            R.drawable.overlay_on
-        )
-        showViews(*viewsToHide)
-
-        overlay_toggle.invalidate()
     }
 }

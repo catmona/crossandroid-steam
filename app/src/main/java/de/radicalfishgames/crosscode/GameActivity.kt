@@ -1,14 +1,16 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
-import android.hardware.input.InputManager
 import android.os.Bundle
 import android.os.storage.OnObbStateChangeListener
 import android.os.storage.StorageManager
 import android.util.Log
+import android.view.InputDevice
 import android.view.View
-import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
+import de.radicalfishgames.crosscode.features.AutoLayoutSwitchFeature
+import de.radicalfishgames.crosscode.features.CutsceneLayoutDisableFeature
+import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
@@ -24,42 +26,44 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var gameWrapper: GameWrapper
 
-    private val nativeControllerListener = NativeControllerListener(
-        this::onFirstNativeControllerConnected,
-        this::onNativeControllerSwitched,
-        this::onLastNativeControllerDisconnected
-    )
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_game)
 
-        Log.d("CrossCode", "Registering native controller listener...")
-
-        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
-        inputManager.registerInputDeviceListener(nativeControllerListener, null)
-
-        nativeControllerListener.searchForController()
-        val nativeControllerActive = nativeControllerListener.hasNativeController
-
-        Log.d("CrossCode", "Native controller found: $nativeControllerActive")
-
-        gameWrapper = GameWrapper(this, game_view, !nativeControllerActive)
-        gameWrapper.initWebView()
-
-        if(!nativeControllerActive){
-            gameWrapper.useControls(CombatLayoutMapper(gameWrapper))
-
-        } else{
-            Log.d("CrossCode", "Using native controller for input")
-
-        }
-
-        load()
+        startGame()
     }
 
-    private fun load() {
+    private fun startGame(){
+
+        val nativeControllerActive = isNativeControllerActive()
+        Log.d("CrossCode", "Native controller found: $nativeControllerActive")
+
+
+        gameWrapper = GameWrapper(game_view)
+        gameWrapper.initWebView()
+
+
+        val virtualControllerFeat = VirtualControllerFeature(gameWrapper, this)
+        virtualControllerFeat.enabled = !nativeControllerActive
+
+        val autoLayoutSwitchFeat = AutoLayoutSwitchFeature(gameWrapper, this)
+        val cutsceneLayoutSwitchFeat = CutsceneLayoutDisableFeature(gameWrapper, this)
+
+        gameWrapper.features.addAll(listOf(virtualControllerFeat, autoLayoutSwitchFeat, cutsceneLayoutSwitchFeat))
+
+
+
+        val gameFilePath = loadGameFiles()
+        Log.d("CrossCode", "Game path: $gameFilePath Attempting to load.")
+
+        val launchFile = File("$gameFilePath/node-webkit.html")
+
+        gameWrapper.loadGame("file:///${launchFile.absolutePath}")
+
+    }
+
+    private fun loadGameFiles(): String {
 
         Log.d("CrossCode", "Attempting to load game files.")
 
@@ -70,19 +74,12 @@ class GameActivity : AppCompatActivity() {
 
         storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
 
-        val mountedPath = storageManager.getMountedObbPath(obbPath)
-
-        Log.d("CrossCode", "Mounted path: $mountedPath Attempting to load.")
-
-        val launchFile = File("$mountedPath/node-webkit.html")
-
-        gameWrapper.loadGame("file:///${launchFile.absolutePath}")
-
+        return storageManager.getMountedObbPath(obbPath)
     }
 
     override fun onBackPressed() {
         // Disable going back with controller B button
-        if(!nativeControllerListener.hasNativeController){
+        if(!isNativeControllerActive()){
             super.onBackPressed()
 
         }else{
@@ -91,21 +88,24 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    fun loadControlLayout(@LayoutRes layoutId: Int): View{
-        control_container.removeAllViews()
-        return layoutInflater.inflate(layoutId, control_container)
+    private fun isNativeControllerActive(): Boolean{
+        Log.d("CrossCode", "Searching for native controller...")
+
+        InputDevice.getDeviceIds().forEach { deviceId ->
+            val device = InputDevice.getDevice(deviceId)
+
+            if(isController(device)){
+                return true
+            }
+        }
+
+        return false
     }
 
-    private fun onFirstNativeControllerConnected(){
-        // Don't do anything, since the controller input should be handled automatically
-    }
-
-    private fun onNativeControllerSwitched(){
-        // Don't do anything, since the controller input should be handled automatically
-    }
-
-    private fun onLastNativeControllerDisconnected(){
-        // Don't do anything, since the controller input should be handled automatically
+    private fun isController(device: InputDevice): Boolean{
+        return device.supportsSource(InputDevice.SOURCE_GAMEPAD)
+                && device.supportsSource(InputDevice.SOURCE_JOYSTICK)
+        // SOURCE_DPAD is apparently not how a gamepad is labelled, despite having a DPad available
     }
 
     override fun onPause() {
@@ -136,11 +136,6 @@ class GameActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-
-        Log.d("CrossCode", "Unregistering native controller listeners...")
-
-        val inputManager = getSystemService(Context.INPUT_SERVICE) as InputManager
-        inputManager.unregisterInputDeviceListener(nativeControllerListener)
 
         Log.d("CrossCode", "Attempting to unmount game files...")
 

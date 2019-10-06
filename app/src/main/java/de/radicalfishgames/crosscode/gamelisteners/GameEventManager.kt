@@ -1,6 +1,9 @@
 package de.radicalfishgames.crosscode.gamelisteners
 
 import android.os.Handler
+import android.util.Log
+import java.util.*
+import kotlin.collections.HashSet
 
 
 class GameEventManager {
@@ -28,7 +31,66 @@ class GameEventManager {
     // the event handlers can modify the View
     private val handler = Handler()
 
-    fun onMenuEnter(){
+    fun getListenerJS() : String{
+
+        Log.d("CrossCode", "Injecting JS listeners...")
+
+        var requiredModulesJS = ""
+        val modulesAddedAlready = LinkedList<String>()
+
+        var observerRegistrationJS = ""
+        val observerObjectsAddedAlready = LinkedList<String>()
+
+        var eventIfsJS = ""
+
+        for(listener in listeners){
+
+            if(!modulesAddedAlready.contains(listener.requiredModuleName)){
+                modulesAddedAlready.add(listener.requiredModuleName)
+
+                requiredModulesJS += ".requires(\"${listener.requiredModuleName}\")"
+            }
+
+            if(!observerObjectsAddedAlready.contains(listener.eventObjectName)){
+                observerObjectsAddedAlready.add(listener.eventObjectName)
+
+                observerRegistrationJS += "sc.Model.addObserver(sc.${listener.eventObjectName}, this);"
+            }
+
+            eventIfsJS +=
+                """
+                    if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) {
+                        ${listener.onEventJS} 
+                    }
+                """
+        }
+
+        var jsForAllListeners =
+            """
+            ig.module("crossandroid.events.listeners")$requiredModulesJS.defines(function(){
+                sc.CrossAndroidEventListener = ig.GameAddon.extend({
+                    init: function() {
+                        $observerRegistrationJS
+                    },
+                    
+                    modelChanged(origin, eventNumber, optionalArgs){
+                        $eventIfsJS
+                    }
+                });
+                ig.addGameAddon(function() {
+                    return sc.crossAndroidEventListener = new sc.CrossAndroidEventListener
+                })
+            })
+        """
+
+        jsForAllListeners = jsForAllListeners
+            .trimIndent()
+            .replace("\n", "")
+
+        return jsForAllListeners
+    }
+
+    internal fun onMenuEnter(){
         handler.post {
             onMenuEnter.forEach {
                 it.invoke()
@@ -36,7 +98,7 @@ class GameEventManager {
         }
     }
 
-    fun onMenuExit(){
+    internal fun onMenuExit(){
         handler.post {
             onMenuExit.forEach {
                 it.invoke()
@@ -44,7 +106,7 @@ class GameEventManager {
         }
     }
 
-    fun onCutsceneStateChange(isCutscene: Boolean){
+    internal fun onCutsceneStateChange(isCutscene: Boolean){
         handler.post {
             if(isCutscene != wasLastGameStateCutscene){
                 wasLastGameStateCutscene = isCutscene
@@ -62,18 +124,11 @@ class GameEventManager {
         }
     }
 
-    fun onElementModeChange(elementMode: ElementMode){
+    internal fun onElementModeChange(elementMode: ElementMode){
         handler.post {
             onElementChange.forEach {
                 it.invoke(elementMode)
             }
         }
-    }
-
-    fun clearListeners(){
-        onMenuEnter.clear()
-        onMenuExit.clear()
-        onCutsceneEnter.clear()
-        onCutsceneExit.clear()
     }
 }
