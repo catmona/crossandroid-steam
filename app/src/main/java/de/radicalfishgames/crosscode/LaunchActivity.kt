@@ -18,6 +18,7 @@ import kotlinx.android.synthetic.main.activity_launch.*
 import java.io.File
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 
 
 class LaunchActivity : AppCompatActivity() {
@@ -32,10 +33,33 @@ class LaunchActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_launch)
 
-        checkObbFileAccess()
+        launch_button.setOnClickListener {
+            launchGameActivity()
+        }
+
+        preferences_button.setOnClickListener {
+            launchPreferencesActivity()
+        }
+
+        tryToMountObb()
     }
 
-    private fun checkObbFileAccess() {
+    private fun tryToMountObb() {
+
+        if(!checkStoragePermission()) {
+            Log.i("CrossCode", "No storage permission!")
+
+            userConfirmedJava = false
+            userConfirmedGotGameFiles = false
+            userConfirmedDownloadedTools = false
+            userConfirmedPackagedGameFiles = false
+
+            showCurrentGuide(false)
+            return
+        }
+
+        Log.i("CrossCode", "Attempting to mount OBB...")
+
         val version = 1
         val obbName = "main.$version.$packageName.obb"
 
@@ -46,12 +70,15 @@ class LaunchActivity : AppCompatActivity() {
         val exists = file.exists()
 
         if(!exists){
+            Log.i("CrossCode", "OBB file not found!")
+
             userConfirmedJava = false
             userConfirmedGotGameFiles = false
             userConfirmedDownloadedTools = false
             userConfirmedPackagedGameFiles = false
 
             showCurrentGuide(false)
+            return
         }else{
 
             val storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
@@ -72,6 +99,7 @@ class LaunchActivity : AppCompatActivity() {
 
                     } else {
                         Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
+                        mounting_progress_bar.visibility = GONE
 
                     }
 
@@ -91,15 +119,16 @@ class LaunchActivity : AppCompatActivity() {
 
         Log.i("CrossCode", "OBB file found!")
 
-        val intent = Intent(this, GameActivity::class.java)
-        intent.addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK)
-        startActivity(intent)
-
+        mounting_progress_bar.visibility = GONE
+        launch_button.isEnabled = true
     }
 
     private fun showCurrentGuide(showTransition: Boolean){
 
+        Log.i("CrossCode", "Showing user guide on installing the OBB.")
+
         setup_container.visibility = VISIBLE
+        launch_container.visibility = GONE
 
         var pastStepsSuccessfull = true
 
@@ -208,7 +237,10 @@ class LaunchActivity : AppCompatActivity() {
             move_files_btn.visibility = VISIBLE
 
             move_files_btn.setOnClickListener {
-                checkObbFileAccess()
+                setup_container.visibility = GONE
+                launch_container.visibility = VISIBLE
+
+                tryToMountObb()
             }
         }
     }
@@ -225,5 +257,16 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun checkStoragePermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun launchGameActivity(){
+        val intent = Intent(this, GameActivity::class.java)
+        intent.addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+    }
+
+    private fun launchPreferencesActivity(){
+        val intent = Intent(this, PreferencesActivity::class.java)
+        startActivity(intent)
     }
 }

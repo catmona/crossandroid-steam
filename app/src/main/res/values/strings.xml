@@ -17,4 +17,10 @@
     <string name="move_files_title">Step Seven: Move the files to your phone</string>
     <string name="move_files_explanation">Almost done!\n\nThe tool should have created a file called \"main.1.de.radicalfishgames.crosscode.obb\" - this is the file this app can read. Now we just need to move it to the right place on your phone.\n\nTo do this, connect your phone to your PC.\nIf your PC doesn\'t display the phone as connected, pull down the notification bar of the phone and tap the \"Phone is charging via USB\" notification. Select \"File transfer\" in the menu that pops up. You PC should now be able to \"see\" the phone.\n\nNow, move the file \"main.1.de.radicalfishgames.crosscode.obb\" from your PC to the folder \"Android/obb/de.radicalfishgames.crosscode\" on your phone.\n\nThat\'s it. You are done!\n\nYou can now delete the folder that you created at the beginning of this guide.</string>
     <string name="finish_guide">Finish</string>
+    <string name="launch_game">Launch CrossCode</string>
+    <string name="preferences">Preferences</string>
+    <string name="switch_layout_automatically">Auto-Switch overlays</string>
+    <string name="switch_layout_automatically_summary">Switch between combat/menu overlay automatically</string>
+    <string name="disable_overlay_cutscenes">Disable overlay in cutscenes</string>
+    <string name="disable_overlay_cutscenes_automatically_summary">Disable overlay automatically during cutscenes, conversations and Direct Links</string>
 </resources>

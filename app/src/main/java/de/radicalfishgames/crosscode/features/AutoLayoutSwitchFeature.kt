@@ -11,26 +11,24 @@ class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
                               hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
+    override val enabled = hostActivity.preferences.getBoolean("switch_layout_automatically", true)
+
     override fun onPostGamePageLoad() {
 
         val virtualControllerFeature = gameWrapper.getFeature(VirtualControllerFeature::class)
 
-        if(!virtualControllerFeature.enabled){
+        if(!virtualControllerFeature.enabled || !enabled){
             return
         }
 
         gameWrapper.getFeature(GameEventManager::class).apply {
 
             onMenuEnter.add {
-                if(enabled){
-                    virtualControllerFeature.switchToLayout(MenuLayoutMapper::class)
-                }
+                virtualControllerFeature.switchToLayout(MenuLayoutMapper::class)
             }
 
             onMenuExit.add {
-                if(enabled){
-                    virtualControllerFeature.switchToLayout(CombatLayoutMapper::class)
-                }
+                virtualControllerFeature.switchToLayout(CombatLayoutMapper::class)
             }
         }
 

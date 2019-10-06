@@ -28,6 +28,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".preferences.PreferencesActivity" />
+
         <activity android:name=".GameActivity"
             android:screenOrientation="landscape"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode">

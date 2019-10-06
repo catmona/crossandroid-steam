@@ -19,6 +19,8 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
                                hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
+    override val enabled = !hostActivity.isNativeControllerActive()
+
     private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
 
     // Controller layout instance store so we don't have to initialize a new one with every change

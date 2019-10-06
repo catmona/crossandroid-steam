@@ -14,6 +14,8 @@ class GameEventManager(
     hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
+    override val enabled = true
+
     private val listeners = listOf(
         MenuFullEnter(this),
         MenuExit(this),

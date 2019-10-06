@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.storage.OnObbStateChangeListener
 import android.os.storage.StorageManager
@@ -27,6 +28,10 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var gameWrapper: GameWrapper
 
+    // This SharedPreferences files is the one the preference activity automatically generates
+    val preferences: SharedPreferences
+         get() = getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -48,7 +53,6 @@ class GameActivity : AppCompatActivity() {
         val eventListenerFeature = GameEventManager(gameWrapper, this)
 
         val virtualControllerFeat = VirtualControllerFeature(gameWrapper, this)
-        virtualControllerFeat.enabled = !nativeControllerActive
 
         val autoLayoutSwitchFeat = AutoLayoutSwitchFeature(gameWrapper, this)
         val cutsceneLayoutSwitchFeat = CutsceneLayoutDisableFeature(gameWrapper, this)
@@ -96,7 +100,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    private fun isNativeControllerActive(): Boolean{
+    fun isNativeControllerActive(): Boolean{
         Log.d("CrossCode", "Searching for native controller...")
 
         InputDevice.getDeviceIds().forEach { deviceId ->

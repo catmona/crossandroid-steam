@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="switch_layout_automatically"
+        android:summary="@string/switch_layout_automatically_summary"
+        android:title="@string/switch_layout_automatically" />
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="disable_overlay_cutscenes"
+        android:summary="@string/disable_overlay_cutscenes_automatically_summary"
+        android:title="@string/disable_overlay_cutscenes" />
+
+</PreferenceScreen>
