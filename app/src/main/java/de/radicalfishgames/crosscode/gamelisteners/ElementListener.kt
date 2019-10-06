@@ -11,11 +11,6 @@ class ElementModeChange(eventManager: GameEventManager) : GameEventListener(even
     override val eventObjectName: String = "model.player"
     override val eventType: String = "PLAYER_MSG.ELEMENT_MODE_CHANGE"
 
-    override val preLoadJS: String =
-        """
-            $interfaceName.reportElementalModeChanged(sc.$eventObjectName.currentElementMode);
-        """
-
     override val onEventJS: String =
         """
             $interfaceName.reportElementalModeChanged(origin.currentElementMode);
