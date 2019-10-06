@@ -24,7 +24,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
     private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
 
     // Controller layout instance store so we don't have to initialize a new one with every change
-    private val controllerInstances = setOf(
+    internal val controllerInstances = setOf(
         CombatLayoutMapper(this, gamepadState),
         MenuLayoutMapper(this, gamepadState)
     )

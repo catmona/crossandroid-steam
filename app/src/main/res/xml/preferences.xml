@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <SwitchPreference
         android:defaultValue="true"
@@ -11,5 +12,13 @@
         android:key="disable_overlay_cutscenes"
         android:summary="@string/disable_overlay_cutscenes_automatically_summary"
         android:title="@string/disable_overlay_cutscenes" />
+
+    <SeekBarPreference
+        android:defaultValue="0"
+        android:key="overlay_transparency"
+        android:max="100"
+        app:showSeekBarValue="true"
+        app:summary="@string/overlay_transparency_summary"
+        app:title="@string/overlay_transparency_title" />
 
 </PreferenceScreen>

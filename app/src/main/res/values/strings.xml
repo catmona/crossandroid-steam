@@ -23,4 +23,6 @@
     <string name="switch_layout_automatically_summary">Switch between combat/menu overlay automatically</string>
     <string name="disable_overlay_cutscenes">Disable overlay in cutscenes</string>
     <string name="disable_overlay_cutscenes_automatically_summary">Disable overlay automatically during cutscenes, conversations and Direct Links</string>
+    <string name="overlay_transparency_title">Overlay Transparency</string>
+    <string name="overlay_transparency_summary">Set the transparency of the overlay from 0 (fully visible) to 100 (fully invisible)</string>
 </resources>

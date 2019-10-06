@@ -11,6 +11,7 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.AutoLayoutSwitchFeature
 import de.radicalfishgames.crosscode.features.CutsceneLayoutDisableFeature
+import de.radicalfishgames.crosscode.features.OverlayTransparencyFeature
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
@@ -57,11 +58,14 @@ class GameActivity : AppCompatActivity() {
         val autoLayoutSwitchFeat = AutoLayoutSwitchFeature(gameWrapper, this)
         val cutsceneLayoutSwitchFeat = CutsceneLayoutDisableFeature(gameWrapper, this)
 
+        val overlayTransparencyFeat = OverlayTransparencyFeature(gameWrapper, this)
+
         gameWrapper.features.addAll(listOf(
             eventListenerFeature,
             virtualControllerFeat,
             autoLayoutSwitchFeat,
-            cutsceneLayoutSwitchFeat
+            cutsceneLayoutSwitchFeat,
+            overlayTransparencyFeat
         ))
 
 
