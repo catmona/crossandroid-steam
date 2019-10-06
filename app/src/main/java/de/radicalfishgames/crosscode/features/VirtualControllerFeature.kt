@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.GamepadJsonBridge
+import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
 import de.radicalfishgames.crosscode.mapping.MenuLayoutMapper
 import de.radicalfishgames.crosscode.mapping.VirtualControllerMapper
@@ -32,7 +33,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
     private var isControllerReady = false
 
 
-    override fun initialize() {
+    override fun onPostGamePageLoad() {
         if(!enabled){
             return
         }
@@ -67,7 +68,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
             controller.containerView = view
             controller.initControls()
 
-            controller.registerGameEventListeners(gameWrapper.events)
+            controller.registerGameEventListeners(gameWrapper.getFeature(GameEventManager::class))
 
         }
     }

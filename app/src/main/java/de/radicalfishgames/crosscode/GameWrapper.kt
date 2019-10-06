@@ -15,7 +15,6 @@ import kotlin.reflect.KClass
 
 class GameWrapper(private val webView: WebView) {
 
-    val events = GameEventManager()
     val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
@@ -55,7 +54,10 @@ class GameWrapper(private val webView: WebView) {
     }
 
     fun loadGame(fromLocation: String) {
-        exposeListenerInterfaces()
+        for(feature in features){
+            feature.onPreGamePageLoad()
+        }
+
         webView.loadUrl(fromLocation)
     }
 
@@ -68,10 +70,8 @@ class GameWrapper(private val webView: WebView) {
 
         startCrossCode()
 
-        runJS(events.getListenerJS())
-
         for(feature in features){
-            feature.initialize()
+            feature.onPostGamePageLoad()
         }
     }
 
@@ -79,11 +79,8 @@ class GameWrapper(private val webView: WebView) {
         return features.first { ofType.isInstance(it) } as T
     }
 
-    private fun exposeListenerInterfaces(){
-        for(listener in events.listeners){
-            webView.addJavascriptInterface(listener, listener.interfaceName)
-        }
-    }
+    @SuppressLint("JavascriptInterface")
+    fun exposeJSInterface(obj: Any, name:String) = webView.addJavascriptInterface(obj, name)
 
     private fun startCrossCode() = runJS("doStartCrossCodePlz()")
 

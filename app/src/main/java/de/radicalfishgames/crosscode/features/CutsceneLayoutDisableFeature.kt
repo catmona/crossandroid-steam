@@ -2,13 +2,14 @@ package de.radicalfishgames.crosscode.features
 
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 
 
 class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
                                    hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
-    override fun initialize() {
+    override fun onPostGamePageLoad() {
 
         val virtualControllerFeature = gameWrapper.getFeature(VirtualControllerFeature::class)
 
@@ -16,7 +17,7 @@ class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
             return
         }
 
-        gameWrapper.events.apply {
+        gameWrapper.getFeature(GameEventManager::class).apply {
 
             onCutsceneEnter.add {
                 if(enabled){

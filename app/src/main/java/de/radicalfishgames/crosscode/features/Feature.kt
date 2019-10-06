@@ -8,7 +8,8 @@ abstract class Feature(protected val gameWrapper: GameWrapper, protected val hos
 
     var enabled = true
 
-    abstract fun initialize()
+    open fun onPreGamePageLoad() {}
+    open fun onPostGamePageLoad() {}
 
     protected fun runJS(js: String) = gameWrapper.runJS(js)
 }

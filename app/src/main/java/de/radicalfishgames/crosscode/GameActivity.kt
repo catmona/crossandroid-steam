@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.AutoLayoutSwitchFeature
 import de.radicalfishgames.crosscode.features.CutsceneLayoutDisableFeature
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
+import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
@@ -44,13 +45,20 @@ class GameActivity : AppCompatActivity() {
         gameWrapper.initWebView()
 
 
+        val eventListenerFeature = GameEventManager(gameWrapper, this)
+
         val virtualControllerFeat = VirtualControllerFeature(gameWrapper, this)
         virtualControllerFeat.enabled = !nativeControllerActive
 
         val autoLayoutSwitchFeat = AutoLayoutSwitchFeature(gameWrapper, this)
         val cutsceneLayoutSwitchFeat = CutsceneLayoutDisableFeature(gameWrapper, this)
 
-        gameWrapper.features.addAll(listOf(virtualControllerFeat, autoLayoutSwitchFeat, cutsceneLayoutSwitchFeat))
+        gameWrapper.features.addAll(listOf(
+            eventListenerFeature,
+            virtualControllerFeat,
+            autoLayoutSwitchFeat,
+            cutsceneLayoutSwitchFeat
+        ))
 
 
 

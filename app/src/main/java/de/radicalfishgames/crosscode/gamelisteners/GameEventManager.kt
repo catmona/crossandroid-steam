@@ -2,13 +2,19 @@ package de.radicalfishgames.crosscode.gamelisteners
 
 import android.os.Handler
 import android.util.Log
+import de.radicalfishgames.crosscode.GameActivity
+import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.features.Feature
 import java.util.*
 import kotlin.collections.HashSet
 
 
-class GameEventManager {
+class GameEventManager(
+    gameWrapper: GameWrapper,
+    hostActivity: GameActivity
+) : Feature(gameWrapper, hostActivity) {
 
-    val listeners = listOf(
+    private val listeners = listOf(
         MenuFullEnter(this),
         MenuExit(this),
         GameStateChangeCutscene(this),
@@ -31,7 +37,13 @@ class GameEventManager {
     // the event handlers can modify the View
     private val handler = Handler()
 
-    fun getListenerJS() : String{
+    override fun onPreGamePageLoad() {
+        for(listener in listeners){
+            gameWrapper.exposeJSInterface(listener, listener.interfaceName)
+        }
+    }
+
+    override fun onPostGamePageLoad() {
 
         Log.d("CrossCode", "Injecting JS listeners...")
 
@@ -87,7 +99,7 @@ class GameEventManager {
             .trimIndent()
             .replace("\n", "")
 
-        return jsForAllListeners
+        runJS(jsForAllListeners)
     }
 
     internal fun onMenuEnter(){
