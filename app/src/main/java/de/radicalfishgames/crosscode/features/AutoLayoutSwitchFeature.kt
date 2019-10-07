@@ -11,7 +11,7 @@ class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
                               hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
-    override val enabled = hostActivity.preferences.getBoolean("switch_layout_automatically", true)
+    private val enabled = hostActivity.preferences.getBoolean("switch_layout_automatically", true)
 
     override fun onPostGamePageLoad() {
 

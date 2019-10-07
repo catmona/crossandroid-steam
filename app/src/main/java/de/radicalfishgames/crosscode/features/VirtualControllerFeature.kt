@@ -19,7 +19,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
                                hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
-    override val enabled = !hostActivity.isNativeControllerActive()
+    internal val enabled = !hostActivity.isNativeControllerActive()
 
     private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
 

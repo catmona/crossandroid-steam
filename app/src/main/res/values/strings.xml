@@ -25,4 +25,8 @@
     <string name="disable_overlay_cutscenes_automatically_summary">Disable overlay automatically during cutscenes, conversations and Direct Links</string>
     <string name="overlay_transparency_title">Overlay Transparency</string>
     <string name="overlay_transparency_summary">Set the transparency of the overlay from 0 (fully visible) to 100 (fully invisible)</string>
+    <string name="import_save_title">Import Save String</string>
+    <string name="import_save_summary">Paste a Save String here, and it will be imported to the game when it next starts (one at a time only)</string>
+    <string name="export_save_title">Show Exported Save String</string>
+    <string name="export_save_summary">Display a dialog with the Save String of the latest Save on game start</string>
 </resources>

@@ -9,7 +9,7 @@ class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
                                    hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
-    override val enabled = hostActivity.preferences.getBoolean("disable_overlay_cutscenes", true)
+    private val enabled = hostActivity.preferences.getBoolean("disable_overlay_cutscenes", true)
 
     override fun onPostGamePageLoad() {
 

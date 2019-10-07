@@ -5,9 +5,7 @@ import de.radicalfishgames.crosscode.GameWrapper
 
 
 abstract class Feature(protected val gameWrapper: GameWrapper, protected val hostActivity: GameActivity) {
-
-    abstract val enabled: Boolean
-
+    
     open fun onPreGamePageLoad() {}
     open fun onPostGamePageLoad() {}
 

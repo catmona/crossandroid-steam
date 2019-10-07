@@ -11,7 +11,7 @@ class OverlayTransparencyFeature(
 
     private val transparency = hostActivity.preferences.getInt("overlay_transparency", 0)
 
-    override val enabled = transparency > 0
+    private val enabled = transparency > 0
 
     override fun onPostGamePageLoad() {
 
