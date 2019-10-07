@@ -22,6 +22,12 @@
         app:summary="@string/overlay_transparency_summary"
         app:title="@string/overlay_transparency_title" />
 
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="vibration_on_rumble"
+        android:summary="@string/vibration_on_rumble_summary"
+        android:title="@string/vibration_on_rumble_title" />
+
     <EditTextPreference
         android:key="save_to_import"
         android:summary="@string/import_save_summary"

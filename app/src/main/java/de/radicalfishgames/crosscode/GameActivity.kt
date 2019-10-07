@@ -59,13 +59,16 @@ class GameActivity : AppCompatActivity() {
 
         val importExportFeat = ImportExportFeature(gameWrapper, this)
 
+        val hapticFeedbackFeat = HapticFeedbackFeature(gameWrapper, this)
+
         gameWrapper.features.addAll(listOf(
             eventListenerFeature,
             virtualControllerFeat,
             autoLayoutSwitchFeat,
             cutsceneLayoutSwitchFeat,
             overlayTransparencyFeat,
-            importExportFeat
+            importExportFeat,
+            hapticFeedbackFeat
         ))
 
 
