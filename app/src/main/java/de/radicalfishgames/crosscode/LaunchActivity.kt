@@ -18,6 +18,7 @@ import kotlinx.android.synthetic.main.activity_launch.*
 import java.io.File
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.os.Handler
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 
 
@@ -27,6 +28,8 @@ class LaunchActivity : AppCompatActivity() {
     private var userConfirmedGotGameFiles = false
     private var userConfirmedDownloadedTools = false
     private var userConfirmedPackagedGameFiles = false
+
+    private val handler = Handler()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +44,9 @@ class LaunchActivity : AppCompatActivity() {
             launchPreferencesActivity()
         }
 
-        tryToMountObb()
+        handler.post {
+            tryToMountObb()
+        }
     }
 
     private fun tryToMountObb() {
@@ -240,7 +245,9 @@ class LaunchActivity : AppCompatActivity() {
                 setup_container.visibility = GONE
                 launch_container.visibility = VISIBLE
 
-                tryToMountObb()
+                handler.post {
+                    tryToMountObb()
+                }
             }
         }
     }
