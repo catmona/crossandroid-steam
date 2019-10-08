@@ -31,4 +31,5 @@
     <string name="export_save_summary">Display a dialog with the Save String of the latest Save on game start</string>
     <string name="vibration_on_rumble_title">Enable Haptic Feedback</string>
     <string name="vibration_on_rumble_summary">Vibrate when the screen shakes in-game</string>
+    <string name="about_app">About</string>
 </resources>

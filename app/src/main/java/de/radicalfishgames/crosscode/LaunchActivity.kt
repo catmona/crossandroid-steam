@@ -19,7 +19,9 @@ import java.io.File
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.os.Handler
+import de.namnodorel.creditz.views.*
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
+import java.util.*
 
 
 class LaunchActivity : AppCompatActivity() {
@@ -42,6 +44,10 @@ class LaunchActivity : AppCompatActivity() {
 
         preferences_button.setOnClickListener {
             launchPreferencesActivity()
+        }
+
+        about_button.setOnClickListener {
+            launchAboutActivity()
         }
 
         handler.post {
@@ -274,6 +280,27 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun launchPreferencesActivity(){
         val intent = Intent(this, PreferencesActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun launchAboutActivity(){
+        val intent = Intent(this, AboutActivity::class.java)
+
+        val config = CreditzConfig()
+
+        config.aboutTitle = "CrossAndroid"
+        config.aboutDescription = "A port/wrapper app to run CrossCode on Android devices developed by Namnodorel."
+        config.theme = R.style.AppTheme
+
+        val infoButtons = LinkedList<InfoButton>()
+        infoButtons.add(InfoButton("Project Page", "https://gitlab.com/Namnodorel/crossandroid/"))
+        config.infoButtons = infoButtons
+
+        val contributors = LinkedList<ContributorInfo>()
+        contributors.add(ContributorInfo("Ichiki Hayaite aka TheSparkstarScope", "Contributed the awesome pixelart"))
+        config.contributors = contributors
+
+        intent.putExtra(AboutActivity.CREDITZ_CONFIG, config)
         startActivity(intent)
     }
 }
