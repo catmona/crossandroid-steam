@@ -32,4 +32,6 @@
     <string name="vibration_on_rumble_title">Enable Haptic Feedback</string>
     <string name="vibration_on_rumble_summary">Vibrate when the screen shakes in-game</string>
     <string name="about_app">About</string>
+    <string name="overlay_size_title">Overlay Size</string>
+    <string name="overlay_size_summary">Scale the overlay size</string>
 </resources>

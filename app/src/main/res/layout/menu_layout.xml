@@ -21,11 +21,10 @@
         android:id="@+id/leftcross_right"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_marginStart="60dp"
         app:image="@drawable/gamepad_cross_right"
-        app:layout_constraintBottom_toBottomOf="@+id/leftcross_left"
-        app:layout_constraintStart_toEndOf="@+id/leftcross_left"
-        app:layout_constraintTop_toTopOf="@+id/leftcross_left" />
+        app:layout_constraintBottom_toTopOf="@+id/leftcross_bottom"
+        app:layout_constraintStart_toEndOf="@+id/leftcross_top"
+        app:layout_constraintTop_toBottomOf="@+id/leftcross_top" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
         android:id="@+id/leftcross_top"
@@ -33,7 +32,6 @@
         android:layout_height="60dp"
         app:image="@drawable/gamepad_cross_top"
         app:layout_constraintBottom_toTopOf="@+id/leftcross_left"
-        app:layout_constraintEnd_toStartOf="@+id/leftcross_right"
         app:layout_constraintStart_toEndOf="@+id/leftcross_left" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
@@ -41,8 +39,6 @@
         android:layout_width="60dp"
         android:layout_height="60dp"
         app:image="@drawable/gamepad_cross_bottom"
-        app:layout_constraintEnd_toStartOf="@+id/leftcross_right"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/leftcross_left"
         app:layout_constraintTop_toBottomOf="@+id/leftcross_left" />
 
@@ -68,10 +64,9 @@
         android:id="@+id/rightcross_left"
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:layout_marginEnd="60dp"
         app:image="@drawable/gamepad_x"
-        app:layout_constraintEnd_toStartOf="@+id/rightcross_right"
-        app:layout_constraintTop_toTopOf="@+id/rightcross_right" />
+        app:layout_constraintEnd_toStartOf="@+id/rightcross_top"
+        app:layout_constraintTop_toBottomOf="@+id/rightcross_top" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
         android:id="@+id/help_button"

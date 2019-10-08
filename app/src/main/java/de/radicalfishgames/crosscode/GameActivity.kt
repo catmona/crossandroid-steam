@@ -47,28 +47,16 @@ class GameActivity : AppCompatActivity() {
         gameWrapper = GameWrapper(game_view)
         gameWrapper.initWebView()
 
-
-        val eventListenerFeature = GameEventManager(gameWrapper, this)
-
-        val virtualControllerFeat = VirtualControllerFeature(gameWrapper, this)
-
-        val autoLayoutSwitchFeat = AutoLayoutSwitchFeature(gameWrapper, this)
-        val cutsceneLayoutSwitchFeat = CutsceneLayoutDisableFeature(gameWrapper, this)
-
-        val overlayTransparencyFeat = OverlayTransparencyFeature(gameWrapper, this)
-
-        val importExportFeat = ImportExportFeature(gameWrapper, this)
-
-        val hapticFeedbackFeat = HapticFeedbackFeature(gameWrapper, this)
-
+        // Order is important, since some of these depend on one another and this is also the initialization order
         gameWrapper.features.addAll(listOf(
-            eventListenerFeature,
-            virtualControllerFeat,
-            autoLayoutSwitchFeat,
-            cutsceneLayoutSwitchFeat,
-            overlayTransparencyFeat,
-            importExportFeat,
-            hapticFeedbackFeat
+            GameEventManager(gameWrapper, this),
+            VirtualControllerFeature(gameWrapper, this),
+            AutoLayoutSwitchFeature(gameWrapper, this),
+            CutsceneLayoutDisableFeature(gameWrapper, this),
+            OverlayTransparencyFeature(gameWrapper, this),
+            ImportExportFeature(gameWrapper, this),
+            HapticFeedbackFeature(gameWrapper, this),
+            OverlayScaleFeature(gameWrapper, this)
         ))
 
 

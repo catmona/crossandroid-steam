@@ -18,8 +18,8 @@ abstract class VirtualControllerMapper(protected val feature: VirtualControllerF
     abstract val layoutResId: Int
 
     private var isOverlayHidden = false
-    protected abstract val overlayToggle: SwipeControl
-    protected abstract val overlayViews: Array<View>
+    internal abstract val overlayToggle: SwipeControl
+    internal abstract val overlayViews: Array<View>
 
     private val handler = Handler()
 
