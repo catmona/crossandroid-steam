@@ -61,18 +61,6 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun tryToMountObb() {
 
-        if(!checkStoragePermission()) {
-            Log.i("CrossCode", "No storage permission!")
-
-            userConfirmedJava = false
-            userConfirmedGotGameFiles = false
-            userConfirmedDownloadedTools = false
-            userConfirmedPackagedGameFiles = false
-
-            showCurrentGuide(false)
-            return
-        }
-
         Log.i("CrossCode", "Attempting to mount OBB...")
 
         val version = 1
@@ -80,62 +68,80 @@ class LaunchActivity : AppCompatActivity() {
 
         val obbPath = "$obbDir/$obbName"
 
-        val file = File(obbPath)
-
-        val exists = file.exists()
-
-        if(!exists){
-            Log.i("CrossCode", "OBB file not found!")
-
-            userConfirmedJava = false
-            userConfirmedGotGameFiles = false
-            userConfirmedDownloadedTools = false
-            userConfirmedPackagedGameFiles = false
-
-            showCurrentGuide(false)
+        if(!isMountingPossible(obbPath)){
+            mountFailed()
             return
+        }
+
+        val storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
+        if(storageManager.isObbMounted(obbPath)){
+            obbFilesFound(storageManager.getMountedObbPath(obbPath))
+
         }else{
-
-            val storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
-            storageManager.mountObb(obbPath, null, object : OnObbStateChangeListener() {
-                override fun onObbStateChange(path: String, state: Int) {
-
-                    if(state == MOUNTED || state == ERROR_ALREADY_MOUNTED){
-                        val mountedPath = storageManager.getMountedObbPath(path)
-
-                        val launchFile = File("$mountedPath/node-webkit.html")
-                        if(!launchFile.exists()){
-                            Toast.makeText(this@LaunchActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
-
-                        }else{
-                            obbFileFound()
-                            return
-                        }
-
-                    } else {
-                        Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
-                        mounting_progress_bar.visibility = GONE
-
-                    }
-
-                    userConfirmedJava = false
-                    userConfirmedGotGameFiles = false
-                    userConfirmedDownloadedTools = false
-                    userConfirmedPackagedGameFiles = false
-
-                    showCurrentGuide(false)
-                }
-            })
-
+            mountObb(obbPath, storageManager)
         }
     }
 
-    private fun obbFileFound(){
+    private fun isMountingPossible(obbPath: String): Boolean{
+        if(!hasStoragePermission()){
+            Log.i("CrossCode", "No storage permission!")
+
+            return false
+        }else if(!File(obbPath).exists()){
+            Log.i("CrossCode", "OBB file not found!")
+
+            return false
+        }
+
+        return true
+    }
+
+    private fun mountObb(path: String, storageManager: StorageManager){
+        storageManager.mountObb(path, null, object : OnObbStateChangeListener() {
+            override fun onObbStateChange(path: String, state: Int) {
+
+                if(state == MOUNTED || state == ERROR_ALREADY_MOUNTED){
+                    val mountedPath = storageManager.getMountedObbPath(path)
+
+                    obbFilesFound(mountedPath)
+
+                } else {
+                    Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
+                    mounting_progress_bar.visibility = GONE
+
+                    mountFailed()
+                }
+            }
+        })
+    }
+
+    private fun obbFilesFound(path: String){
+        val launchFile = File("$path/node-webkit.html")
+        if(!launchFile.exists()){
+            Toast.makeText(this@LaunchActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
+
+            mountFailed()
+        }else{
+            gameFilesIntact()
+            return
+        }
+    }
+
+    private fun gameFilesIntact(){
 
         Log.i("CrossCode", "OBB file found!")
 
         mounting_progress_bar.visibility = GONE
         launch_button.isEnabled = true
+    }
+
+    private fun mountFailed(){
+        userConfirmedJava = false
+        userConfirmedGotGameFiles = false
+        userConfirmedDownloadedTools = false
+        userConfirmedPackagedGameFiles = false
+
+        showCurrentGuide(false)
     }
 
     private fun showCurrentGuide(showTransition: Boolean){
@@ -147,7 +153,7 @@ class LaunchActivity : AppCompatActivity() {
 
         var pastStepsSuccessfull = true
 
-        val hasStoragePermission = checkStoragePermission()
+        val hasStoragePermission = hasStoragePermission()
 
         if(hasStoragePermission){
             permission_text_tv.visibility = GONE
@@ -272,7 +278,7 @@ class LaunchActivity : AppCompatActivity() {
         showCurrentGuide(false)
     }
 
-    private fun checkStoragePermission(): Boolean {
+    private fun hasStoragePermission(): Boolean {
         return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
     }
 

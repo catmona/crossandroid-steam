@@ -11,7 +11,6 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.*
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
 import kotlinx.android.synthetic.main.activity_game.*
 import java.io.File
 
@@ -64,7 +63,7 @@ class GameActivity : AppCompatActivity() {
 
 
 
-        val gameFilePath = loadGameFiles()
+        val gameFilePath = getGamePath()
         Log.d("CrossCode", "Game path: $gameFilePath Attempting to load.")
 
         val launchFile = File("$gameFilePath/node-webkit.html")
@@ -73,15 +72,11 @@ class GameActivity : AppCompatActivity() {
 
     }
 
-    private fun loadGameFiles(): String {
-
-        Log.d("CrossCode", "Attempting to load game files.")
+    private fun getGamePath(): String {
 
         obbName = "main.$version.$packageName.obb"
         obbPath = "$obbDir/$obbName"
-
-        Log.d("CrossCode", "Looking for OBB on path $obbPath")
-
+        
         storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
 
         return storageManager.getMountedObbPath(obbPath)
