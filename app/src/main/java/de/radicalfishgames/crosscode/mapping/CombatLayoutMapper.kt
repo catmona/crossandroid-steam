@@ -11,7 +11,8 @@ import de.radicalfishgames.crosscode.overlay.SwipeControl
 import kotlinx.android.synthetic.main.combat_layout.*
 
 class CombatLayoutMapper(feature: VirtualControllerFeature,
-                         gamepad: GamepadJsonBridge
+                         gamepad: GamepadJsonBridge,
+                         private val alwaysSprint: Boolean
 ) : VirtualControllerMapper(feature, gamepad) {
 
     override val layoutResId = R.layout.combat_layout
@@ -73,15 +74,15 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                 gamepad.rightTrigger.pressed = !lastInsideInnerCircle && actionButtonPressed
 
                 val xActual = when {
-                    xDir > 0.15 -> 1.0
-                    xDir < -0.15 -> -1.0
-                    else -> 0.0
+                    alwaysSprint && xDir > 0.15 -> 1.0
+                    alwaysSprint && xDir < -0.15 -> -1.0
+                    else -> xDir * 1.3
                 }
 
                 val yActual = when {
-                    yDir > 0.15 -> 1.0
-                    yDir < -0.15 -> -1.0
-                    else -> 0.0
+                    alwaysSprint && yDir > 0.15 -> 1.0
+                    alwaysSprint && yDir < -0.15 -> -1.0
+                    else -> yDir * 1.3
                 }
 
                 gamepad.leftStick.horizontal.state = xActual

@@ -34,4 +34,6 @@
     <string name="about_app">About</string>
     <string name="overlay_size_title">Overlay Size</string>
     <string name="overlay_size_summary">Scale the overlay size</string>
+    <string name="always_sprint_title">Always Sprint</string>
+    <string name="always_sprint_summary">Enable this to always run as fast as possible, no matter where you touch the movement pad.</string>
 </resources>
