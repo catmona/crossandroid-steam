@@ -96,7 +96,7 @@ class LaunchActivity : AppCompatActivity() {
             storageManager.mountObb(obbPath, null, object : OnObbStateChangeListener() {
                 override fun onObbStateChange(path: String, state: Int) {
 
-                    if(state == MOUNTED){
+                    if(state == MOUNTED || state == ERROR_ALREADY_MOUNTED){
                         val mountedPath = storageManager.getMountedObbPath(path)
 
                         val launchFile = File("$mountedPath/node-webkit.html")
