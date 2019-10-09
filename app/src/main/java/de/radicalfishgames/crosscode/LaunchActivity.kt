@@ -49,6 +49,10 @@ class LaunchActivity : AppCompatActivity() {
         about_button.setOnClickListener {
             launchAboutActivity()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         handler.post {
             tryToMountObb()

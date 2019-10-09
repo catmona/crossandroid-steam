@@ -158,7 +158,9 @@ class GameActivity : AppCompatActivity() {
         storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
             // Do nothing, we can't really do much about it if unmounting fails
             override fun onObbStateChange(path: String?, state: Int) {
-                Log.e("CrossCode", "Unmounting the game assets failed! State: $state")
+                if(state != UNMOUNTED){
+                    Log.e("CrossCode", "Unmounting the game assets failed! State: $state")
+                }
             }
         })
     }
