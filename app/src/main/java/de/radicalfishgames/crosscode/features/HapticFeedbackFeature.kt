@@ -8,6 +8,7 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
+import java.lang.RuntimeException
 import kotlin.math.ceil
 
 
@@ -46,20 +47,31 @@ class HapticFeedbackFeature(
 
     @JavascriptInterface
     fun reportRumble(strength: Double){
+        try {
 
-        if(strength > 15){
-            Log.e("CrossCode", "Received a rumble strength that is larger than rumbles should get!")
-            return
-        }
+            if(strength > 15){
+                Log.e("CrossCode", "Received a rumble strength that is larger than rumbles should get!")
+                return
+            }
 
-        val vibrationAmplitude = ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH)).toInt()
-        val vibrationDuration = ceil(MAX_VIB_DURATION_MILLIS * (strength / MAX_RUMBLE_STRENGTH)).toLong()
+            val vibrationAmplitude = ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH)).toInt()
+            val vibrationDuration = ceil(MAX_VIB_DURATION_MILLIS * (strength / MAX_RUMBLE_STRENGTH)).toLong()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, vibrationAmplitude))
+            if(vibrationAmplitude == 0 || vibrationDuration == 0L){
+                Log.w("CrossCode", "Rumble strength is too small!")
+                return
+            }
 
-        } else {
-            vibrator.vibrate(vibrationDuration)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, vibrationAmplitude))
+
+            } else {
+                vibrator.vibrate(vibrationDuration)
+            }
+
+        } catch (ex: Exception) {
+            hostActivity.errorHandler.uncaughtException(Thread.currentThread(), ex)
+            throw ex
         }
     }
 

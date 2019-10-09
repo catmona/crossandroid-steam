@@ -18,6 +18,8 @@ import java.io.File
 
 class GameActivity : AppCompatActivity() {
 
+    val errorHandler = ErrorHandler(this)
+
     private lateinit var storageManager: StorageManager
 
     private val version = 1
@@ -39,6 +41,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun startGame(){
+        Thread.setDefaultUncaughtExceptionHandler(errorHandler)
 
         val nativeControllerActive = isNativeControllerActive()
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")

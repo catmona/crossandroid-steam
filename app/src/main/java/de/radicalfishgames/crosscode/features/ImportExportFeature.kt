@@ -1,5 +1,6 @@
 package de.radicalfishgames.crosscode.features
 
+import android.R.attr.host
 import android.content.ClipboardManager
 import android.content.DialogInterface
 import android.webkit.JavascriptInterface
@@ -68,18 +69,25 @@ class ImportExportFeature(
 
     @JavascriptInterface
     fun showExportedSave(saveString: String){
-        MaterialAlertDialogBuilder(hostActivity)
-            .setTitle("Exported Save String")
-            .setMessage("Your exported Save String is ready.")
-            .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
-                val clipboard = hostActivity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("Save String", saveString)
-                clipboard.primaryClip = clip
-                hostActivity.goIntoFullScreen()
-            }
-            .setOnDismissListener {
-                hostActivity.goIntoFullScreen()
-            }
-            .show()
+        try {
+
+            MaterialAlertDialogBuilder(hostActivity)
+                .setTitle("Exported Save String")
+                .setMessage("Your exported Save String is ready.")
+                .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
+                    val clipboard = hostActivity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("Save String", saveString)
+                    clipboard.primaryClip = clip
+                    hostActivity.goIntoFullScreen()
+                }
+                .setOnDismissListener {
+                    hostActivity.goIntoFullScreen()
+                }
+                .show()
+
+        }catch (ex: Exception){
+            hostActivity.errorHandler.uncaughtException(Thread.currentThread(), ex)
+            throw ex
+        }
     }
 }
