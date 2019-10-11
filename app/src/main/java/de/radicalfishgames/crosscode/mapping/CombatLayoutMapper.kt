@@ -21,6 +21,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
     override lateinit var overlayViews: Array<View>
 
     private var currentElement = ElementMode.NEUTRAL
+    private var combatArtsTriggered = false
 
     override fun initControls(){
 
@@ -28,7 +29,11 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
         overlayViews = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
         bindSimpleButton(shield_button, gamepad.leftBumper)
+        shield_button.onTouch.add { updateCombatArts() }
+
         bindSimpleButton(dash_button, gamepad.leftBumper)
+        dash_button.onTouch.add { updateCombatArts() }
+
         bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
 
         elemental_button.onSwipe.add { right, left, up, down ->
@@ -66,12 +71,9 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
             onDirectionUpdate.add { xDir, yDir ->
 
                 lastInsideInnerCircle = xDir <= 0.7 && xDir >= -0.7 && yDir <= 0.7 && yDir >= -0.7
-                val actionButtonPressed = gamepad.leftBumper.pressed
-                        || gamepad.rightBumper.pressed
-                        || gamepad.rightStick.vertical.state != 0.0
-                        || gamepad.rightStick.horizontal.state != 0.0
 
-                gamepad.rightTrigger.pressed = !lastInsideInnerCircle && actionButtonPressed
+                combatArtsTriggered = !lastInsideInnerCircle
+                updateCombatArts()
 
                 val xActual = when {
                     alwaysSprint && xDir > 0.15 -> 1.0
@@ -91,7 +93,8 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
             onRelease.add {
 
-                gamepad.rightTrigger.pressed = false
+                combatArtsTriggered = false
+                updateCombatArts()
 
                 gamepad.leftStick.vertical.state = 0.0
                 gamepad.leftStick.horizontal.state = 0.0
@@ -124,6 +127,8 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                     gamepad.rightStick.horizontal.state = xDir
                     gamepad.rightStick.vertical.state = yDir
                 }
+
+                updateCombatArts()
             }
 
             onRelease.add {
@@ -134,6 +139,9 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
                     gamepad.rightStick.vertical.state = 0.0
                     gamepad.rightStick.horizontal.state = 0.0
+
+                    updateCombatArts()
+
                 }else{
                     gamepad.rightCross.bottom.pressed = false
 
@@ -143,6 +151,8 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
                         gamepad.rightStick.vertical.state = 0.0
                         gamepad.rightStick.horizontal.state = 0.0
+
+                        updateCombatArts()
                     },
                         FAKE_CLICK_TIME
                     )
@@ -177,6 +187,15 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
         }
 
         super.initControls()
+    }
+
+    private fun updateCombatArts(){
+        val actionButtonPressed = gamepad.leftBumper.pressed
+                || gamepad.rightBumper.pressed
+                || gamepad.rightStick.vertical.state != 0.0
+                || gamepad.rightStick.horizontal.state != 0.0
+
+        gamepad.rightTrigger.pressed = combatArtsTriggered && actionButtonPressed
     }
 
     override fun registerGameEventListeners(eventManager: GameEventManager) {
