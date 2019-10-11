@@ -19,8 +19,12 @@ import java.io.File
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.os.Handler
+import android.view.View
+import android.view.ViewStub
+import android.widget.ScrollView
 import de.namnodorel.creditz.views.*
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
+import kotlinx.android.synthetic.main.guide_layout.*
 import java.util.*
 
 
@@ -148,7 +152,13 @@ class LaunchActivity : AppCompatActivity() {
 
         Log.i("CrossCode", "Showing user guide on installing the OBB.")
 
-        setup_container.visibility = VISIBLE
+        val setupContainer: View
+        if(findViewById<ScrollView>(R.id.setup_container) == null){
+            setupContainer = findViewById<ViewStub>(R.id.setup_container_stub).inflate()
+        }else{
+            setupContainer = findViewById<ScrollView>(R.id.setup_container)
+        }
+
         launch_container.visibility = GONE
 
         var pastStepsSuccessfull = true
@@ -258,7 +268,7 @@ class LaunchActivity : AppCompatActivity() {
             move_files_btn.visibility = VISIBLE
 
             move_files_btn.setOnClickListener {
-                setup_container.visibility = GONE
+                setupContainer.visibility = GONE
                 launch_container.visibility = VISIBLE
 
                 handler.post {
