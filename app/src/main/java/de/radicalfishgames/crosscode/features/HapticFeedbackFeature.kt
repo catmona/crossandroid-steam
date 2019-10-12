@@ -66,6 +66,7 @@ class HapticFeedbackFeature(
                 vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, vibrationAmplitude))
 
             } else {
+                @Suppress("DEPRECATION")
                 vibrator.vibrate(vibrationDuration)
             }
 

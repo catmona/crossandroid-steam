@@ -6,41 +6,17 @@
     android:layout_height="match_parent"
     android:alpha="0.5">
 
-    <de.radicalfishgames.crosscode.overlay.CircleButton
-        android:id="@+id/leftcross_left"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        app:image="@drawable/gamepad_cross_left"
+    <de.radicalfishgames.crosscode.overlay.CircleDirectionalPad
+        android:id="@+id/menu_directions"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:image="@drawable/tmp_button"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.8" />
-
-    <de.radicalfishgames.crosscode.overlay.CircleButton
-        android:id="@+id/leftcross_right"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        app:image="@drawable/gamepad_cross_right"
-        app:layout_constraintBottom_toTopOf="@+id/leftcross_bottom"
-        app:layout_constraintStart_toEndOf="@+id/leftcross_top"
-        app:layout_constraintTop_toBottomOf="@+id/leftcross_top" />
-
-    <de.radicalfishgames.crosscode.overlay.CircleButton
-        android:id="@+id/leftcross_top"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        app:image="@drawable/gamepad_cross_top"
-        app:layout_constraintBottom_toTopOf="@+id/leftcross_left"
-        app:layout_constraintStart_toEndOf="@+id/leftcross_left" />
-
-    <de.radicalfishgames.crosscode.overlay.CircleButton
-        android:id="@+id/leftcross_bottom"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
-        app:image="@drawable/gamepad_cross_bottom"
-        app:layout_constraintStart_toEndOf="@+id/leftcross_left"
-        app:layout_constraintTop_toBottomOf="@+id/leftcross_left" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.01"
+        app:layout_constraintVertical_bias="0.95" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton
         android:id="@+id/tab_left"
@@ -48,7 +24,7 @@
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         app:image="@drawable/gamepad_leftbumper"
-        app:layout_constraintBottom_toTopOf="@+id/leftcross_top"
+        app:layout_constraintBottom_toTopOf="@+id/menu_directions"
         app:layout_constraintStart_toStartOf="parent" />
 
     <de.radicalfishgames.crosscode.overlay.CircleButton

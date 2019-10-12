@@ -21,46 +21,33 @@ class MenuLayoutMapper(feature: VirtualControllerFeature,
 
         overlayToggle = overlay_toggle
 
-        overlayViews = arrayOf(leftcross_left, leftcross_right, leftcross_top, leftcross_bottom,
+        overlayViews = arrayOf(menu_directions,
             rightcross_right, rightcross_left, rightcross_top, rightcross_bottom,
             tab_left, tab_right, help_button)
 
 
-        // TODO Just make this into a pad
+        menu_directions.apply {
+            onDirectionUpdate.add { xDir, yDir ->
 
-        leftcross_left.apply {
-            onTouch.add {
-                gamepad.leftStick.horizontal.state = -1.0
-            }
-            onRelease.add {
-                gamepad.leftStick.horizontal.state = 0.0
-            }
-        }
+                val xActual = when {
+                    xDir > 0.15 -> 1.0
+                    xDir < -0.15 -> -1.0
+                    else -> 0.0
+                }
 
-        leftcross_right.apply {
-            onTouch.add {
-                gamepad.leftStick.horizontal.state = 1.0
-            }
-            onRelease.add {
-                gamepad.leftStick.horizontal.state = 0.0
-            }
-        }
+                val yActual = when {
+                    yDir > 0.15 -> 1.0
+                    yDir < -0.15 -> -1.0
+                    else -> 0.0
+                }
 
-        leftcross_top.apply {
-            onTouch.add {
-                gamepad.leftStick.vertical.state = -1.0
+                gamepad.leftStick.horizontal.state = xActual
+                gamepad.leftStick.vertical.state = yActual
             }
+
             onRelease.add {
                 gamepad.leftStick.vertical.state = 0.0
-            }
-        }
-
-        leftcross_bottom.apply {
-            onTouch.add {
-                gamepad.leftStick.vertical.state = 1.0
-            }
-            onRelease.add {
-                gamepad.leftStick.vertical.state = 0.0
+                gamepad.leftStick.horizontal.state = 0.0
             }
         }
 
