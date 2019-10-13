@@ -136,6 +136,23 @@ class GameEventManager(
         }
     }
 
+    internal fun onDirectLinkStateChange(isInDirectLink: Boolean){
+        handler.post {
+            // If we already are in a cutscene when a direct link started, ignore this event
+            if(!wasLastGameStateCutscene) {
+                if(isInDirectLink){
+                    onCutsceneEnter.forEach {
+                        it.invoke()
+                    }
+                }else if(!isInDirectLink){
+                    onCutsceneExit.forEach {
+                        it.invoke()
+                    }
+                }
+            }
+        }
+    }
+
     internal fun onElementModeChange(elementMode: ElementMode){
         handler.post {
             onElementChange.forEach {

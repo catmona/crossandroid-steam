@@ -38,9 +38,8 @@ class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManag
 
     @JavascriptInterface
     fun reportRing(){
-        // Report a message ring as cutscene, since conversations are also cutscenes
-        // and direct links are basically the same thing
-        eventManager.onCutsceneStateChange(true)
+        // Report a message ring
+        eventManager.onDirectLinkStateChange(true)
     }
 
 }
@@ -60,9 +59,8 @@ class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManage
 
     @JavascriptInterface
     fun reportMessageEnd(){
-        // Report a message ring as cutscene, since conversations are also cutscenes
-        // and direct links are basically the same thing
-        eventManager.onCutsceneStateChange(false)
+        // Report a message end
+        eventManager.onDirectLinkStateChange(false)
     }
 
 }

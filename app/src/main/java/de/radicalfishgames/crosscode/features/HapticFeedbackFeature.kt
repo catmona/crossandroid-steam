@@ -10,6 +10,7 @@ import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import java.lang.RuntimeException
 import kotlin.math.ceil
+import kotlin.math.min
 
 
 class HapticFeedbackFeature(
@@ -39,14 +40,14 @@ class HapticFeedbackFeature(
             ig.Rumble.RumbleHandle.inject({
                 _updatePosition: function(arg) {
                     this.parent(arg);
-                    $JS_INTERFACE_NAME.reportRumble(arg);
+                    $JS_INTERFACE_NAME.reportRumble(arg, this.shakeDuration);
                 }
             });
         """)
     }
 
     @JavascriptInterface
-    fun reportRumble(strength: Double){
+    fun reportRumble(strength: Double, effectDuration: Double){
         try {
 
             if(strength > 15){
@@ -54,7 +55,12 @@ class HapticFeedbackFeature(
                 return
             }
 
-            val vibrationAmplitude = ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH)).toInt()
+            if(effectDuration > 0.2){
+                // Effect is too slow - less of a screen shake and more of a screen-wobbling
+                return
+            }
+
+            val vibrationAmplitude = min(ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH) * NORMAL_EFFECT_DURATION/effectDuration), 255.0).toInt()
             val vibrationDuration = ceil(MAX_VIB_DURATION_MILLIS * (strength / MAX_RUMBLE_STRENGTH)).toLong()
 
             if(vibrationAmplitude == 0 || vibrationDuration == 0L){
@@ -82,5 +88,6 @@ class HapticFeedbackFeature(
         const val MAX_RUMBLE_STRENGTH = 15.0
         const val MAX_VIB_AMPLITUDE = 255
         const val MAX_VIB_DURATION_MILLIS = 40
+        const val NORMAL_EFFECT_DURATION = 0.2
     }
 }
