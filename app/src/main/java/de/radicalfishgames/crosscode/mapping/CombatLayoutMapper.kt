@@ -162,13 +162,23 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
                 if(currentInsideInnerCircle){
 
-                    val actionButtonPressed = (currentInsideInnerCircle != lastInsideInnerCircle)
-                            || gamepad.leftBumper.pressed
-                            || dashState != NONE
+                    val actionButtonPressed = gamepad.leftBumper.pressed || dashState != NONE
 
-                    if(actionButtonPressed){
-                        // Trigger combat arts for everything except melee
+                    if(actionButtonPressed) {
+                        // Trigger combat arts for dash/guard
                         gamepad.rightTrigger.pressed = true
+
+                    }else if(gamepad.rightStick.vertical.state != 0.0 || gamepad.rightStick.horizontal.state != 0.0){
+
+                        // Trigger combat arts for throwing - the delay is there to avoid triggering the art accidentally
+                        if(!longPressPending){
+                            longPressHandler.postDelayed({
+                                if(gamepad.rightStick.vertical.state != 0.0 || gamepad.rightStick.horizontal.state != 0.0){
+                                    gamepad.rightTrigger.pressed = true
+                                }
+                            }, 150L)
+                            longPressPending = true
+                        }
 
                     }else{
                         gamepad.rightCross.bottom.pressed = true
@@ -179,7 +189,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                     if(!longPressPending){
                         longPressHandler.postDelayed({
                             gamepad.rightTrigger.pressed = true
-                        }, 150L)
+                        }, 300L)
                         longPressPending = true
                     }
                 }else{
