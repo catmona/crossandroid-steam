@@ -111,6 +111,7 @@ class LaunchActivity : AppCompatActivity() {
 
                 } else {
                     Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
+                    Log.e("CrossCode", "Mount failed: $state")
                     mounting_progress_bar.visibility = GONE
 
                     mountFailed()

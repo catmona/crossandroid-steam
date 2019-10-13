@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.mapping
 
 import android.graphics.BitmapFactory
+import android.os.Handler
 import android.view.View
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
@@ -9,6 +10,7 @@ import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.overlay.SwipeControl
 import kotlinx.android.synthetic.main.combat_layout.*
+import kotlin.math.pow
 
 class CombatLayoutMapper(feature: VirtualControllerFeature,
                          gamepad: GamepadJsonBridge,
@@ -21,7 +23,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
     override lateinit var overlayViews: Array<View>
 
     private var currentElement = ElementMode.NEUTRAL
-    private var combatArtsTriggered = false
+    private var dashState = NONE
 
     override fun initControls(){
 
@@ -29,10 +31,8 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
         overlayViews = arrayOf(aim_pad, dash_button, quickmenu_button, shield_button, movement_pad, menu_button, elemental_button)
 
         bindSimpleButton(shield_button, gamepad.leftBumper)
-        shield_button.onTouch.add { updateCombatArts() }
 
         bindSimpleButton(dash_button, gamepad.leftBumper)
-        dash_button.onTouch.add { updateCombatArts() }
 
         bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
 
@@ -70,10 +70,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
             onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = xDir <= 0.7 && xDir >= -0.7 && yDir <= 0.7 && yDir >= -0.7
-
-                combatArtsTriggered = !lastInsideInnerCircle
-                updateCombatArts()
+                val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.7.pow(2)
 
                 val xActual = when {
                     alwaysSprint && xDir > 0.15 -> 1.0
@@ -89,20 +86,65 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
                 gamepad.leftStick.horizontal.state = xActual
                 gamepad.leftStick.vertical.state = yActual
+
+                if(dashState == NONE && !currentInsideInnerCircle){
+                    dashState = DASHING
+
+                    handler.postDelayed({
+                        gamepad.leftBumper.pressed = true
+
+                        handler.postDelayed({
+
+                            if(dashState == DASHING_MOVE_END){
+                                gamepad.leftStick.vertical.state = 0.0
+                                gamepad.leftStick.horizontal.state = 0.0
+
+                                gamepad.leftBumper.pressed = false
+
+                                dashState = NONE
+
+                            }else if(lastInsideInnerCircle){
+                                gamepad.leftBumper.pressed = false
+
+                                dashState = NONE
+
+                            }else{
+                                dashState = DASHED
+                            }
+                        }, FAKE_CLICK_TIME)
+                    }, 60L)
+
+                }
+
+                if(currentInsideInnerCircle && dashState == DASHED){
+                    gamepad.leftBumper.pressed = false
+
+                    dashState = NONE
+
+                }
+
+                lastInsideInnerCircle = currentInsideInnerCircle
             }
 
             onRelease.add {
 
-                combatArtsTriggered = false
-                updateCombatArts()
+                if(dashState != DASHING){
+                    gamepad.leftStick.vertical.state = 0.0
+                    gamepad.leftStick.horizontal.state = 0.0
 
-                gamepad.leftStick.vertical.state = 0.0
-                gamepad.leftStick.horizontal.state = 0.0
+                    gamepad.leftBumper.pressed = false
+
+                    dashState = NONE
+                }  else {
+                    dashState = DASHING_MOVE_END
+                }
 
                 // Confirm quickmenu selection
                 if(lastInsideInnerCircle && gamepad.leftTrigger.pressed){
                     fakeClick(gamepad.rightCross.bottom)
                 }
+
+                lastInsideInnerCircle = false
             }
 
         }
@@ -111,14 +153,35 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
             var lastInsideInnerCircle = false
 
+            var longPressPending = false
+            val longPressHandler = Handler()
+
             onDirectionUpdate.add { xDir, yDir ->
 
-                lastInsideInnerCircle = xDir <= 0.3 && xDir >= -0.3 && yDir <= 0.3 && yDir >= -0.3
+                val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.3.pow(2)
 
-                if(lastInsideInnerCircle){
-                    gamepad.rightCross.bottom.pressed = true
-                    gamepad.rightBumper.pressed = true
+                if(currentInsideInnerCircle){
 
+                    val actionButtonPressed = (currentInsideInnerCircle != lastInsideInnerCircle)
+                            || gamepad.leftBumper.pressed
+                            || dashState != NONE
+
+                    if(actionButtonPressed){
+                        // Trigger combat arts for everything except melee
+                        gamepad.rightTrigger.pressed = true
+
+                    }else{
+                        gamepad.rightCross.bottom.pressed = true
+                        gamepad.rightBumper.pressed = true
+                    }
+
+                    // Trigger combat arts for melee
+                    if(!longPressPending){
+                        longPressHandler.postDelayed({
+                            gamepad.rightTrigger.pressed = true
+                        }, 150L)
+                        longPressPending = true
+                    }
                 }else{
 
                     gamepad.rightCross.bottom.pressed = false
@@ -126,12 +189,20 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
 
                     gamepad.rightStick.horizontal.state = xDir
                     gamepad.rightStick.vertical.state = yDir
+
+                    longPressHandler.removeCallbacksAndMessages(null)
+                    longPressPending = false
+                    gamepad.rightTrigger.pressed = false
                 }
 
-                updateCombatArts()
+                lastInsideInnerCircle = currentInsideInnerCircle
             }
 
             onRelease.add {
+
+                longPressHandler.removeCallbacksAndMessages(null)
+                longPressPending = false
+                gamepad.rightTrigger.pressed = false
 
                 if(lastInsideInnerCircle){
                     gamepad.rightCross.bottom.pressed = false
@@ -140,22 +211,14 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                     gamepad.rightStick.vertical.state = 0.0
                     gamepad.rightStick.horizontal.state = 0.0
 
-                    updateCombatArts()
-
                 }else{
                     gamepad.rightCross.bottom.pressed = false
 
                     // CrossCode expects a button press to fire, so we give it one
-                    fakeClick(gamepad.rightBumper)
-                    handler.postDelayed({
-
+                    fakeClick(gamepad.rightBumper) {
                         gamepad.rightStick.vertical.state = 0.0
                         gamepad.rightStick.horizontal.state = 0.0
-
-                        updateCombatArts()
-                    },
-                        FAKE_CLICK_TIME
-                    )
+                    }
                 }
             }
         }
@@ -189,15 +252,6 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
         super.initControls()
     }
 
-    private fun updateCombatArts(){
-        val actionButtonPressed = gamepad.leftBumper.pressed
-                || gamepad.rightBumper.pressed
-                || gamepad.rightStick.vertical.state != 0.0
-                || gamepad.rightStick.horizontal.state != 0.0
-
-        gamepad.rightTrigger.pressed = combatArtsTriggered && actionButtonPressed
-    }
-
     override fun registerGameEventListeners(eventManager: GameEventManager) {
         eventManager.apply {
 
@@ -222,5 +276,12 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
             }
 
         }
+    }
+
+    companion object {
+        const val NONE = 0
+        const val DASHING = 1
+        const val DASHING_MOVE_END = 2
+        const val DASHED = 3
     }
 }

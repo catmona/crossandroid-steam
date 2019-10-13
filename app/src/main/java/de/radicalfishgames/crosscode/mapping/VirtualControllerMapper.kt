@@ -99,13 +99,15 @@ abstract class VirtualControllerMapper(protected val feature: VirtualControllerF
         }
     }
 
-    protected fun fakeClick(button: GamepadJsonBridge.Button){
+    protected fun fakeClick(button: GamepadJsonBridge.Button) = fakeClick(button) {}
+
+    protected fun fakeClick(button: GamepadJsonBridge.Button, callback: () -> Unit){
         button.pressed = true
 
         handler.postDelayed({
 
             button.pressed = false
-
+            callback.invoke()
         }, FAKE_CLICK_TIME)
     }
 
