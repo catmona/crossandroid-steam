@@ -10,6 +10,7 @@ import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import de.radicalfishgames.crosscode.overlay.SwipeControl
 import kotlinx.android.synthetic.main.combat_layout.*
+import kotlin.math.min
 import kotlin.math.pow
 
 class CombatLayoutMapper(feature: VirtualControllerFeature,
@@ -75,13 +76,13 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                 val xActual = when {
                     alwaysSprint && xDir > 0.15 -> 1.0
                     alwaysSprint && xDir < -0.15 -> -1.0
-                    else -> xDir * 1.3
+                    else -> min(xDir * 1.3, 1.0)
                 }
 
                 val yActual = when {
                     alwaysSprint && yDir > 0.15 -> 1.0
                     alwaysSprint && yDir < -0.15 -> -1.0
-                    else -> yDir * 1.3
+                    else -> min(yDir * 1.3, 1.0)
                 }
 
                 gamepad.leftStick.horizontal.state = xActual
@@ -199,8 +200,11 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                     gamepad.rightCross.bottom.pressed = false
                     gamepad.rightBumper.pressed = false
 
-                    gamepad.rightStick.horizontal.state = xDir
-                    gamepad.rightStick.vertical.state = yDir
+                    // Increase the results we send to the game, because it has some degree
+                    // of "dead zones", which can lead to lost aim, failed combat arts and frustration
+                    // with this control scheme.
+                    gamepad.rightStick.horizontal.state = min(xDir * 1.2, 1.0)
+                    gamepad.rightStick.vertical.state = min(yDir * 1.2, 1.0)
 
                     longPressHandler.removeCallbacksAndMessages(null)
                     longPressPending = false
@@ -227,7 +231,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                         handler.postDelayed({
                             gamepad.rightStick.vertical.state = 0.0
                             gamepad.rightStick.horizontal.state = 0.0
-                        }, 250L)
+                        }, 300L)
                     }else{
                         gamepad.rightStick.vertical.state = 0.0
                         gamepad.rightStick.horizontal.state = 0.0
