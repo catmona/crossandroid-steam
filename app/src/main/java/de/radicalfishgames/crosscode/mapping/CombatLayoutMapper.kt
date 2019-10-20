@@ -15,7 +15,8 @@ import kotlin.math.pow
 
 class CombatLayoutMapper(feature: VirtualControllerFeature,
                          gamepad: GamepadJsonBridge,
-                         private val alwaysSprint: Boolean
+                         private val alwaysSprint: Boolean,
+                         private val dashOnlyOnTap: Boolean
 ) : VirtualControllerMapper(feature, gamepad) {
 
     override val layoutResId = R.layout.combat_layout
@@ -68,10 +69,12 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
         movement_pad.apply {
 
             var lastInsideInnerCircle = false
+            var hasBeenInsideInnerCircle = false
 
             onDirectionUpdate.add { xDir, yDir ->
 
                 val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.7.pow(2)
+                hasBeenInsideInnerCircle = hasBeenInsideInnerCircle || currentInsideInnerCircle
 
                 val xActual = when {
                     alwaysSprint && xDir > 0.15 -> 1.0
@@ -88,7 +91,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                 gamepad.leftStick.horizontal.state = xActual
                 gamepad.leftStick.vertical.state = yActual
 
-                if(dashState == NONE && !currentInsideInnerCircle){
+                if(dashState == NONE && !currentInsideInnerCircle && (!dashOnlyOnTap || !hasBeenInsideInnerCircle)){
                     dashState = DASHING
 
                     handler.postDelayed({
@@ -146,6 +149,7 @@ class CombatLayoutMapper(feature: VirtualControllerFeature,
                 }
 
                 lastInsideInnerCircle = false
+                hasBeenInsideInnerCircle = false
             }
 
         }

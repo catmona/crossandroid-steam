@@ -36,4 +36,6 @@
     <string name="overlay_size_summary">Scale the overlay size</string>
     <string name="always_sprint_title">Always Sprint</string>
     <string name="always_sprint_summary">Enable this to always run as fast as possible, no matter where you touch the movement pad.</string>
+    <string name="disable_swipe_dash_title">Dash only on tap</string>
+    <string name="disable_swipe_dash_summary">Only dash when the dash area is tapped (not swiped into) to avoid dashing by accident</string>
 </resources>

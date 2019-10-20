@@ -24,10 +24,11 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
     private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
 
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
+    private val dashOnlyOnTap = hostActivity.preferences.getBoolean("disable_swipe_dash", false)
 
     // Controller layout instance store so we don't have to initialize a new one with every change
     internal val controllerInstances = setOf(
-        CombatLayoutMapper(this, gamepadState, combatAlwaysSprint),
+        CombatLayoutMapper(this, gamepadState, combatAlwaysSprint, dashOnlyOnTap),
         MenuLayoutMapper(this, gamepadState)
     )
 
