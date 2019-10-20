@@ -56,8 +56,9 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
 
         initializeLayouts()
 
-        currentLayout = CombatLayout
-        layoutViews[CombatLayout]!!.visibility = View.VISIBLE
+        currentLayout = DirectLayout
+        gameWrapper.blockWebViewClicks = false
+        layoutViews[DirectLayout]!!.visibility = View.VISIBLE
 
         isControllerReady = true
     }
