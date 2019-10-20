@@ -3,8 +3,8 @@ package de.radicalfishgames.crosscode.features
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
-import de.radicalfishgames.crosscode.mapping.MenuLayoutMapper
+import de.radicalfishgames.crosscode.layouts.CombatLayout
+import de.radicalfishgames.crosscode.layouts.MenuLayout
 
 
 class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
@@ -24,11 +24,11 @@ class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
         gameWrapper.getFeature(GameEventManager::class).apply {
 
             onMenuEnter.add {
-                virtualControllerFeature.switchToLayout(MenuLayoutMapper::class)
+                virtualControllerFeature.switchToLayout(MenuLayout)
             }
 
             onMenuExit.add {
-                virtualControllerFeature.switchToLayout(CombatLayoutMapper::class)
+                virtualControllerFeature.switchToLayout(CombatLayout)
             }
         }
 

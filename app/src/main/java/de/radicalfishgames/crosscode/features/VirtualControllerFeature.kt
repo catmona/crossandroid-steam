@@ -7,12 +7,11 @@ import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import de.radicalfishgames.crosscode.mapping.CombatLayoutMapper
-import de.radicalfishgames.crosscode.mapping.MenuLayoutMapper
-import de.radicalfishgames.crosscode.mapping.VirtualControllerMapper
+import de.radicalfishgames.crosscode.layouts.CombatLayout
+import de.radicalfishgames.crosscode.layouts.DirectLayout
+import de.radicalfishgames.crosscode.layouts.MenuLayout
+import de.radicalfishgames.crosscode.layouts.VirtualControllerLayout
 import kotlinx.android.synthetic.main.activity_game.*
-import java.lang.IllegalArgumentException
-import kotlin.reflect.KClass
 
 
 class VirtualControllerFeature(gameWrapper: GameWrapper,
@@ -26,14 +25,11 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
     private val dashOnlyOnTap = hostActivity.preferences.getBoolean("disable_swipe_dash", false)
 
-    // Controller layout instance store so we don't have to initialize a new one with every change
-    internal val controllerInstances = setOf(
-        CombatLayoutMapper(this, gamepadState, combatAlwaysSprint, dashOnlyOnTap),
-        MenuLayoutMapper(this, gamepadState)
-    )
-
-    lateinit var currentController: VirtualControllerMapper
+    private val availableLayouts = setOf(CombatLayout, MenuLayout, DirectLayout)
+    lateinit var currentLayout: VirtualControllerLayout
         private set
+
+    val layoutViews = HashMap<VirtualControllerLayout, ViewGroup>()
 
     private var isControllerReady = false
 
@@ -55,50 +51,43 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
                 .replace("\n", "")
         )
 
-        initializeControllers()
-        currentController = getControllerInstance(CombatLayoutMapper::class)
-        currentController.containerView.visibility = View.VISIBLE
+        CombatLayout.alwaysSprint = combatAlwaysSprint
+        CombatLayout.dashOnlyOnTap = dashOnlyOnTap
+
+        initializeLayouts()
+
+        currentLayout = CombatLayout
+        layoutViews[CombatLayout]!!.visibility = View.VISIBLE
 
         isControllerReady = true
     }
 
-    private fun initializeControllers(){
-        for(controller in controllerInstances){
+    private fun initializeLayouts(){
+
+        for(controller in availableLayouts){
 
             val parentView = hostActivity.layoutInflater.inflate(controller.layoutResId, hostActivity.control_container) as ViewGroup
-            val view = parentView.getChildAt(parentView.childCount - 1)
+            val view = parentView.getChildAt(parentView.childCount - 1) as ViewGroup
 
             // Hide all controllers by default and only show them when they are needed
             view.visibility = View.GONE
-            controller.containerView = view
-            controller.initControls()
+            layoutViews[controller] = view
 
-            controller.registerGameEventListeners(gameWrapper.getFeature(GameEventManager::class))
-
+            controller.bindControls(gamepadState, view, this, gameWrapper.getFeature(GameEventManager::class))
         }
     }
 
-    fun switchToLayout(newLayout: KClass<out VirtualControllerMapper>){
+    fun switchToLayout(newLayout: VirtualControllerLayout){
         if(!enabled){
             return
         }
-        Log.d("CrossCode", "Switching to virtual controller ${newLayout.java.simpleName}")
+        Log.d("CrossCode", "Switching to virtual controller ${newLayout.javaClass.simpleName}")
 
-        currentController.containerView.visibility = View.GONE
-        currentController = getControllerInstance(newLayout)
-        currentController.containerView.visibility = View.VISIBLE
-    }
+        layoutViews[currentLayout]!!.visibility = View.GONE
+        currentLayout = newLayout
+        layoutViews[currentLayout]!!.visibility = View.VISIBLE
 
-    private fun getControllerInstance(controllerType: KClass<out VirtualControllerMapper>): VirtualControllerMapper{
-        // Reuse already initialized instances
-
-        for(instance in controllerInstances){
-            if(controllerType.isInstance(instance)){
-                return instance
-            }
-        }
-
-        throw IllegalArgumentException("Requested unknown virtual controller type ${controllerType.simpleName}")
+        gameWrapper.blockWebViewClicks = !currentLayout.allowWebViewInteraction
     }
 
     private fun updateGamepadJS(){
@@ -111,14 +100,6 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
 
             runJS("$JS_GAMEPADS_VAR = [JSON.parse('$jsonGamepad')];")
         }
-    }
-
-    internal fun disableWebViewInteraction(){
-        gameWrapper.blockWebViewClicks = true
-    }
-    
-    internal fun enableWebViewInteraction(){
-        gameWrapper.blockWebViewClicks = false
     }
 
     companion object {

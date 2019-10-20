@@ -1,5 +1,6 @@
 package de.radicalfishgames.crosscode.features
 
+import androidx.core.view.forEach
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import kotlin.math.ceil
@@ -22,14 +23,14 @@ class OverlayScaleFeature(
             return
         }
 
-        virtualControllerFeature.controllerInstances.forEach { layout ->
-            layout.overlayViews.forEach { view ->
+        virtualControllerFeature.layoutViews.values.forEach { layoutViewGroup ->
+            layoutViewGroup.forEach { view ->
                 val layoutParams = view.layoutParams
                 layoutParams.width = ceil(layoutParams.width * scaleFactor).toInt()
                 layoutParams.height = ceil(layoutParams.height * scaleFactor).toInt()
                 view.layoutParams = layoutParams
             }
-            layout.containerView.invalidate()
+            layoutViewGroup.invalidate()
         }
     }
 }

@@ -21,8 +21,8 @@ class OverlayTransparencyFeature(
             return
         }
 
-        virtualControllerFeat.controllerInstances.forEach {
-            it.containerView.alpha = 1F - (transparency / 100F)
+        virtualControllerFeat.layoutViews.values.forEach { layoutViewGroup ->
+            layoutViewGroup.alpha = 1F - (transparency / 100F)
         }
     }
 }

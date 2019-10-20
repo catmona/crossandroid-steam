@@ -3,6 +3,7 @@ package de.radicalfishgames.crosscode.features
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
+import de.radicalfishgames.crosscode.layouts.DirectLayout
 
 
 class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
@@ -22,11 +23,12 @@ class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
         gameWrapper.getFeature(GameEventManager::class).apply {
 
             onCutsceneEnter.add {
-                virtualControllerFeature.currentController.disableOverlay()
+                DirectLayout.layoutToEnable = virtualControllerFeature.currentLayout
+                virtualControllerFeature.switchToLayout(DirectLayout)
             }
 
             onCutsceneExit.add {
-                virtualControllerFeature.currentController.enableOverlay()
+                virtualControllerFeature.switchToLayout(DirectLayout.layoutToEnable)
             }
 
         }
