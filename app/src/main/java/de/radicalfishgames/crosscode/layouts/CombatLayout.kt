@@ -193,7 +193,7 @@ object CombatLayout : VirtualControllerLayout() {
                 var lastInsideInnerCircle = false
 
                 var longPressPending = false
-                var throwArtPending = false
+                var combatArtPending = false
                 val longPressHandler = Handler()
 
                 onDirectionUpdate.add { xDir, yDir ->
@@ -202,22 +202,26 @@ object CombatLayout : VirtualControllerLayout() {
 
                     if(currentInsideInnerCircle){
 
-                        val actionButtonPressed = gamepad.leftBumper.pressed || dashState != NONE
+                        val actionButtonPressed = gamepad.leftBumper.pressed
+                                || dashState != NONE
+                                || gamepad.rightStick.vertical.state != 0.0
+                                || gamepad.rightStick.horizontal.state != 0.0
 
-                        if(actionButtonPressed) {
-                            // Trigger combat arts for dash/guard
-                            gamepad.rightTrigger.pressed = true
+                        if(actionButtonPressed){
 
-                        }else if(gamepad.rightStick.vertical.state != 0.0 || gamepad.rightStick.horizontal.state != 0.0){
-
-                            // Trigger combat arts for throwing - the delay is there to avoid triggering the art accidentally
+                            // Trigger combat arts - the delay is there to avoid triggering the art accidentally
                             if(!longPressPending){
                                 longPressHandler.postDelayed({
-                                    if(gamepad.rightStick.vertical.state != 0.0 || gamepad.rightStick.horizontal.state != 0.0){
+                                    val actionButtonStillPressed = gamepad.leftBumper.pressed
+                                            || dashState != NONE
+                                            || gamepad.rightStick.vertical.state != 0.0
+                                            || gamepad.rightStick.horizontal.state != 0.0
+
+                                    if(actionButtonStillPressed){
                                         gamepad.rightTrigger.pressed = true
-                                        throwArtPending = true
+                                        combatArtPending = true
                                     }
-                                }, 150L)
+                                }, 100L)
                                 longPressPending = true
                             }
 
@@ -264,8 +268,8 @@ object CombatLayout : VirtualControllerLayout() {
 
                         // If we are executing a throw art, delay resetting the direction
                         // to avoid accidentally switching to a melee art
-                        if(throwArtPending){
-                            throwArtPending = false
+                        if(combatArtPending){
+                            combatArtPending = false
                             CombatLayout.handler.postDelayed({
                                 gamepad.rightStick.vertical.state = 0.0
                                 gamepad.rightStick.horizontal.state = 0.0
