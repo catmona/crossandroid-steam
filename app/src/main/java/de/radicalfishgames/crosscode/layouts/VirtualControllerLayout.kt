@@ -45,7 +45,7 @@ abstract class VirtualControllerLayout {
     }
 
     companion object {
-        const val FAKE_CLICK_TIME = 20L
+        const val FAKE_CLICK_TIME = 40L
     }
 
 }
