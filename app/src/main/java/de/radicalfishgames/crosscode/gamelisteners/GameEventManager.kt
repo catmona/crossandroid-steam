@@ -24,13 +24,13 @@ class GameEventManager(
         ElementLoad(this)
     )
 
-    val onMenuEnter: MutableSet<() -> Unit> = HashSet()
-    val onMenuExit: MutableSet<() -> Unit> = HashSet()
+    private val onMenuEnter: MutableSet<() -> Unit> = HashSet()
+    private val onMenuExit: MutableSet<() -> Unit> = HashSet()
 
-    val onCutsceneEnter: MutableSet<() -> Unit> = HashSet()
-    val onCutsceneExit: MutableSet<() -> Unit> = HashSet()
+    private val onCutsceneEnter: MutableSet<() -> Unit> = HashSet()
+    private val onCutsceneExit: MutableSet<() -> Unit> = HashSet()
 
-    val onElementChange: MutableSet<(element: ElementMode) -> Unit> = HashSet()
+    private val onElementChange: MutableSet<(element: ElementMode) -> Unit> = HashSet()
 
     private var wasLastGameStateCutscene = false
     // Post events to the original thread instead of staying in the JS one, so
@@ -102,6 +102,8 @@ class GameEventManager(
         runJS(jsForAllListeners)
     }
 
+    fun onMenuEnter(run: () -> Unit) = onMenuEnter.add(run)
+
     internal fun onMenuEnter(){
         handler.post {
             onMenuEnter.forEach {
@@ -110,6 +112,8 @@ class GameEventManager(
         }
     }
 
+    fun onMenuExit(run: () -> Unit) = onMenuExit.add(run)
+
     internal fun onMenuExit(){
         handler.post {
             onMenuExit.forEach {
@@ -117,6 +121,9 @@ class GameEventManager(
             }
         }
     }
+
+    fun onCutsceneEnter(run: () -> Unit) = onCutsceneEnter.add(run)
+    fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
 
     internal fun onCutsceneStateChange(isCutscene: Boolean){
         handler.post {
@@ -152,6 +159,8 @@ class GameEventManager(
             }
         }
     }
+
+    fun onElementChange(run: (element: ElementMode) -> Unit) = onElementChange.add(run)
 
     internal fun onElementModeChange(elementMode: ElementMode){
         handler.post {

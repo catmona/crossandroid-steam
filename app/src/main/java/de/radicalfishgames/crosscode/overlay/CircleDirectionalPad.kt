@@ -11,11 +11,13 @@ import kotlin.math.roundToInt
 
 class CircleDirectionalPad(context: Context, attrs: AttributeSet) : CircleButton(context, attrs) {
 
-    val onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double) -> Unit> = HashSet()
+    private val onDirectionUpdate: MutableSet<(xDirection: Double, yDirection: Double) -> Unit> = HashSet()
 
     init {
-        onMove.add { xTouch: Float, yTouch: Float -> updateDirection(xTouch, yTouch) }
+        onMove { xTouch: Float, yTouch: Float -> updateDirection(xTouch, yTouch) }
     }
+
+    fun onDirectionUpdate(run: (xDirection: Double, yDirection: Double) -> Unit) = onDirectionUpdate.add(run)
 
     private fun updateDirection(xTouch: Float, yTouch: Float){
         val xDiff = xTouch - centerX

@@ -22,11 +22,11 @@ abstract class VirtualControllerLayout {
 
     protected fun bindSimpleButton(view: ControlView, to: GamepadJsonBridge.Button){
         view.apply {
-            onTouch.add {
+            onTouch {
                 to.pressed = true
             }
 
-            onRelease.add {
+            onRelease {
                 to.pressed = false
             }
         }

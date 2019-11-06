@@ -7,7 +7,7 @@ import kotlin.math.abs
 
 class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context, attrs) {
 
-    var onSwipe: MutableSet<(right: Boolean, left: Boolean, up: Boolean, down: Boolean) -> Unit> = HashSet()
+    private var onSwipe: MutableSet<(right: Boolean, left: Boolean, up: Boolean, down: Boolean) -> Unit> = HashSet()
 
     private var downX: Float? = null
     private var downY: Float? = null
@@ -16,7 +16,7 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
     private var latestY: Float? = null
 
     init {
-        onMove.add { x: Float, y: Float ->
+        onMove { x: Float, y: Float ->
             if(downX == null || downY == null){
                 downX = x
                 downY = y
@@ -28,7 +28,7 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
             }
         }
 
-        onRelease.add {
+        onRelease {
 
             if(latestX != null && latestY != null && downX != null && downY != null){
                 val xDiff = latestX!! - downX!!
@@ -67,6 +67,8 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
     private fun isSwipeDown(xDiff: Float, yDiff: Float): Boolean {
         return (abs(xDiff) / abs(yDiff)) < RATIO_MAX && yDiff > 0
     }
+
+    fun onSwipe(run: (right: Boolean, left: Boolean, up: Boolean, down: Boolean) -> Unit) = onSwipe.add(run)
 
     private fun onSwipe(right: Boolean, left: Boolean, up: Boolean, down: Boolean){
         onSwipe.forEach {

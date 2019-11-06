@@ -8,7 +8,6 @@ import android.util.Log
 import android.webkit.JavascriptInterface
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
-import java.lang.RuntimeException
 import kotlin.math.ceil
 import kotlin.math.min
 

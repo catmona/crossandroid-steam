@@ -23,11 +23,11 @@ class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
 
         gameWrapper.getFeature(GameEventManager::class).apply {
 
-            onMenuEnter.add {
+            onMenuEnter {
                 virtualControllerFeature.switchToLayout(MenuLayout)
             }
 
-            onMenuExit.add {
+            onMenuExit {
                 virtualControllerFeature.switchToLayout(CombatLayout)
             }
         }

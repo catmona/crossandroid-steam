@@ -15,9 +15,9 @@ import de.radicalfishgames.crosscode.R
 
 open class ControlView(context: Context, attrs: AttributeSet) : View(context, attrs) {
 
-    val onTouch: MutableSet<() -> Unit> = HashSet()
-    val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
-    val onRelease: MutableSet<() -> Unit> = HashSet()
+    private val onTouch: MutableSet<() -> Unit> = HashSet()
+    private val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
+    private val onRelease: MutableSet<() -> Unit> = HashSet()
 
     private val imagePaint = Paint().apply {
         isDither = false
@@ -167,9 +167,13 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
         return true
     }
 
+    fun onTouch(run: () -> Unit) = onTouch.add(run)
+
     private fun onTouch(){
         onTouch.forEach { it.invoke() }
     }
+
+    fun onMove(run: (x: Float, y: Float) -> Unit) = onMove.add(run)
 
     private fun onMove(){
         onMove.forEach { it.invoke(
@@ -177,6 +181,8 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
             activePointers[mainPointerId!!].y
         ) }
     }
+
+    fun onRelease(run: () -> Unit) = onRelease.add(run)
 
     private fun onRelease(){
         onRelease.forEach { it.invoke() }

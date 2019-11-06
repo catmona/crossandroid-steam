@@ -1,19 +1,13 @@
 package de.radicalfishgames.crosscode.features
 
-import android.R.attr.host
+import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context.CLIPBOARD_SERVICE
 import android.content.DialogInterface
 import android.webkit.JavascriptInterface
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
-import android.R.attr.label
-import android.content.ClipData
-import android.content.Context
-import android.content.Context.CLIPBOARD_SERVICE
-import androidx.core.content.ContextCompat.getSystemService
-
-
 
 
 class ImportExportFeature(

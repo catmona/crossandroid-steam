@@ -34,18 +34,16 @@ object CombatLayout : VirtualControllerLayout() {
 
         layoutView.apply {
 
-            overlay_toggle.apply {
-                onSwipe.add { right, left, up, down ->
-                    // Do in handler to avoid a crash due to the potential layout changes
-                    handler.post {
+            overlay_toggle.onSwipe { right, left, up, down ->
+                // Do in handler to avoid a crash due to the potential layout changes
+                handler.post {
 
-                        if(right || left){
-                            feature.switchToLayout(MenuLayout)
+                    if(right || left){
+                        feature.switchToLayout(MenuLayout)
 
-                        }else if(up || down){
-                            DirectLayout.layoutToEnable = CombatLayout
-                            feature.switchToLayout(DirectLayout)
-                        }
+                    }else if(up || down){
+                        DirectLayout.layoutToEnable = CombatLayout
+                        feature.switchToLayout(DirectLayout)
                     }
                 }
             }
@@ -54,7 +52,7 @@ object CombatLayout : VirtualControllerLayout() {
             bindSimpleButton(dash_button, gamepad.leftBumper)
             bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
 
-            elemental_button.onSwipe.add { right, left, up, down ->
+            elemental_button.onSwipe { right, left, up, down ->
 
                 // Switch buttons, because with our method you go back to neutral by swiping in the
                 // opposite direction as before. Eg Neutral -> Heat: Swipe Down and then Heat -> Neutral: Swipe Up
@@ -80,7 +78,7 @@ object CombatLayout : VirtualControllerLayout() {
                 }
             }
 
-            eventManager.onElementChange.add { elementMode ->
+            eventManager.onElementChange { elementMode ->
 
                 currentElement = elementMode
 
@@ -105,7 +103,7 @@ object CombatLayout : VirtualControllerLayout() {
                 var lastInsideInnerCircle = false
                 var hasBeenInsideInnerCircle = false
 
-                onDirectionUpdate.add { xDir, yDir ->
+                onDirectionUpdate { xDir, yDir ->
 
                     val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.7.pow(2)
                     hasBeenInsideInnerCircle = hasBeenInsideInnerCircle || currentInsideInnerCircle
@@ -164,7 +162,7 @@ object CombatLayout : VirtualControllerLayout() {
                     lastInsideInnerCircle = currentInsideInnerCircle
                 }
 
-                onRelease.add {
+                onRelease {
 
                     if(dashState != DASHING){
                         gamepad.leftStick.vertical.state = 0.0
@@ -196,7 +194,7 @@ object CombatLayout : VirtualControllerLayout() {
                 var combatArtPending = false
                 val longPressHandler = Handler()
 
-                onDirectionUpdate.add { xDir, yDir ->
+                onDirectionUpdate { xDir, yDir ->
 
                     val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.3.pow(2)
 
@@ -256,7 +254,7 @@ object CombatLayout : VirtualControllerLayout() {
                     lastInsideInnerCircle = currentInsideInnerCircle
                 }
 
-                onRelease.add {
+                onRelease {
 
                     longPressHandler.removeCallbacksAndMessages(null)
                     longPressPending = false
@@ -294,12 +292,12 @@ object CombatLayout : VirtualControllerLayout() {
             menu_button.apply {
 
                 var startedToPressAt: Long = 0
-                onTouch.add {
+                onTouch {
                     startedToPressAt = System.currentTimeMillis()
 
                 }
 
-                onRelease.add {
+                onRelease {
 
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 

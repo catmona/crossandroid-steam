@@ -21,17 +21,11 @@ object DirectLayout : VirtualControllerLayout() {
         feature: VirtualControllerFeature,
         eventManager: GameEventManager
     ) {
-        layoutView.apply {
-
-            overlay_toggle.apply {
-                onRelease.add {
-                    // Do in handler to avoid a crash due to the potential layout changes
-                    handler.post {
-                        feature.switchToLayout(layoutToEnable)
-                    }
-                }
+        layoutView.overlay_toggle.onRelease {
+            // Do in handler to avoid a crash due to the potential layout changes
+            handler.post {
+                feature.switchToLayout(layoutToEnable)
             }
-
         }
     }
 }

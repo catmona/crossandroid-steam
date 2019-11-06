@@ -16,24 +16,22 @@ object MenuLayout : VirtualControllerLayout() {
 
         layoutView.apply {
 
-            overlay_toggle.apply {
-                onSwipe.add { right, left, up, down ->
-                    // Do in handler to avoid a crash due to the potential layout changes
-                    handler.post {
+            overlay_toggle.onSwipe { right, left, up, down ->
+                // Do in handler to avoid a crash due to the potential layout changes
+                handler.post {
 
-                        if(right || left){
-                            feature.switchToLayout(CombatLayout)
+                    if(right || left){
+                        feature.switchToLayout(CombatLayout)
 
-                        }else if(up || down){
-                            DirectLayout.layoutToEnable = MenuLayout
-                            feature.switchToLayout(DirectLayout)
-                        }
+                    }else if(up || down){
+                        DirectLayout.layoutToEnable = MenuLayout
+                        feature.switchToLayout(DirectLayout)
                     }
                 }
             }
 
             menu_directions.apply {
-                onDirectionUpdate.add { xDir, yDir ->
+                onDirectionUpdate { xDir, yDir ->
 
                     val xActual = when {
                         xDir > 0.15 -> 1.0
@@ -51,7 +49,7 @@ object MenuLayout : VirtualControllerLayout() {
                     gamepad.leftStick.vertical.state = yActual
                 }
 
-                onRelease.add {
+                onRelease {
                     gamepad.leftStick.vertical.state = 0.0
                     gamepad.leftStick.horizontal.state = 0.0
                 }
@@ -60,11 +58,11 @@ object MenuLayout : VirtualControllerLayout() {
 
             tab_left.apply {
                 var startedToPressAt: Long = 0
-                onTouch.add {
+                onTouch {
                     startedToPressAt = System.currentTimeMillis()
                 }
 
-                onRelease.add {
+                onRelease {
 
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
@@ -81,11 +79,11 @@ object MenuLayout : VirtualControllerLayout() {
             }
             tab_right.apply {
                 var startedToPressAt: Long = 0
-                onTouch.add {
+                onTouch {
                     startedToPressAt = System.currentTimeMillis()
                 }
 
-                onRelease.add {
+                onRelease {
 
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
