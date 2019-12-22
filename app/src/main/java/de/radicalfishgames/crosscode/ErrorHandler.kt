@@ -19,7 +19,7 @@ class ErrorHandler(val hostActivity: Activity) : Thread.UncaughtExceptionHandler
             .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
                 val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("CrossAndroid Error", errorToString(e))
-                clipboard.primaryClip = clip
+                clipboard.setPrimaryClip(clip)
             }
             .show()
     }

@@ -71,7 +71,7 @@ class ImportExportFeature(
                 .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
                     val clipboard = hostActivity.getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
                     val clip = ClipData.newPlainText("Save String", saveString)
-                    clipboard.primaryClip = clip
+                    clipboard.setPrimaryClip(clip)
                     hostActivity.goIntoFullScreen()
                 }
                 .setOnDismissListener {
