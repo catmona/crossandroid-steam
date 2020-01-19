@@ -57,6 +57,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
         initializeLayouts()
 
         currentLayout = DirectLayout
+        DirectLayout.layoutToEnable = MenuLayout
         gameWrapper.blockWebViewClicks = false
         layoutViews[DirectLayout]!!.visibility = View.VISIBLE
 
