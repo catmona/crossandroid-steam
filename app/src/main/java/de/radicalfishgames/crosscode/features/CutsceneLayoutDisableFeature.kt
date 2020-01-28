@@ -22,15 +22,31 @@ class CutsceneLayoutDisableFeature(gameWrapper: GameWrapper,
 
         gameWrapper.getFeature(GameEventManager::class).apply {
 
+            var inCutscene = false
+
             onCutsceneEnter {
                 DirectLayout.layoutToEnable = virtualControllerFeature.currentLayout
                 virtualControllerFeature.switchToLayout(DirectLayout)
+
+                inCutscene = true
             }
 
             onCutsceneExit{
                 virtualControllerFeature.switchToLayout(DirectLayout.layoutToEnable)
+
+                inCutscene = false
             }
 
+            onDirectLinkRing {
+                DirectLayout.layoutToEnable = virtualControllerFeature.currentLayout
+                virtualControllerFeature.switchToLayout(DirectLayout)
+            }
+
+            onDirectLinkEnd {
+                if(!inCutscene){
+                    virtualControllerFeature.switchToLayout(DirectLayout.layoutToEnable)
+                }
+            }
         }
 
     }

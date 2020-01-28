@@ -30,9 +30,11 @@ class GameEventManager(
     private val onCutsceneEnter: MutableSet<() -> Unit> = HashSet()
     private val onCutsceneExit: MutableSet<() -> Unit> = HashSet()
 
+    private val onDirectLinkRing: MutableSet<() -> Unit> = HashSet()
+    private val onDirectLinkEnd: MutableSet<() -> Unit> = HashSet()
+
     private val onElementChange: MutableSet<(element: ElementMode) -> Unit> = HashSet()
 
-    private var wasLastGameStateCutscene = false
     // Post events to the original thread instead of staying in the JS one, so
     // the event handlers can modify the View
     private val handler = Handler()
@@ -123,39 +125,41 @@ class GameEventManager(
     }
 
     fun onCutsceneEnter(run: () -> Unit) = onCutsceneEnter.add(run)
-    fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
 
-    internal fun onCutsceneStateChange(isCutscene: Boolean){
+    internal fun onCutsceneEnter(){
         handler.post {
-            if(isCutscene != wasLastGameStateCutscene){
-                wasLastGameStateCutscene = isCutscene
-
-                if(isCutscene){
-                    onCutsceneEnter.forEach {
-                        it.invoke()
-                    }
-                }else if(!isCutscene){
-                    onCutsceneExit.forEach {
-                        it.invoke()
-                    }
-                }
+            onCutsceneEnter.forEach {
+                it.invoke()
             }
         }
     }
 
-    internal fun onDirectLinkStateChange(isInDirectLink: Boolean){
+    fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
+
+    internal fun onCutsceneExit(){
         handler.post {
-            // If we already are in a cutscene when a direct link started, ignore this event
-            if(!wasLastGameStateCutscene) {
-                if(isInDirectLink){
-                    onCutsceneEnter.forEach {
-                        it.invoke()
-                    }
-                }else if(!isInDirectLink){
-                    onCutsceneExit.forEach {
-                        it.invoke()
-                    }
-                }
+            onCutsceneExit.forEach {
+                it.invoke()
+            }
+        }
+    }
+
+    fun onDirectLinkRing(run: () -> Unit) = onDirectLinkRing.add(run)
+
+    internal fun onDirectLinkRing(){
+        handler.post {
+            onDirectLinkRing.forEach {
+                it.invoke()
+            }
+        }
+    }
+
+    fun onDirectLinkEnd(run: () -> Unit) = onDirectLinkEnd.add(run)
+
+    internal fun onDirectLinkEnd(){
+        handler.post {
+            onDirectLinkEnd.forEach {
+                it.invoke()
             }
         }
     }

@@ -13,12 +13,31 @@ class GameStateChangeCutscene(eventManager: GameEventManager) : GameEventListene
 
     override val onEventJS: String =
         """
-            $interfaceName.reportGameState(origin.isCutscene());
+            if(origin.isCutscene()){
+                $interfaceName.reportCutsceneEnter();
+            }else{
+                $interfaceName.reportCutsceneExit();
+            }
         """
 
     @JavascriptInterface
-    fun reportGameState(isCutscene: Boolean){
-        eventManager.onCutsceneStateChange(isCutscene)
+    fun reportCutsceneEnter(){
+        eventManager.onCutsceneEnter()
+
+        isInCutscene = true
+    }
+
+    @JavascriptInterface
+    fun reportCutsceneExit(){
+        if(isInCutscene){
+            eventManager.onCutsceneExit()
+        }
+
+        isInCutscene = false
+    }
+
+    companion object {
+        var isInCutscene = false
     }
 
 }
@@ -39,7 +58,7 @@ class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManag
     @JavascriptInterface
     fun reportRing(){
         // Report a message ring
-        eventManager.onDirectLinkStateChange(true)
+        eventManager.onDirectLinkRing()
     }
 
 }
@@ -60,7 +79,7 @@ class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManage
     @JavascriptInterface
     fun reportMessageEnd(){
         // Report a message end
-        eventManager.onDirectLinkStateChange(false)
+        eventManager.onDirectLinkEnd()
     }
 
 }
