@@ -3,36 +3,40 @@ package de.radicalfishgames.crosscode.gamelisteners
 import android.webkit.JavascriptInterface
 
 
-class MenuEvent(eventManager: GameEventManager) : GameEventListener(eventManager) {
+class MenuFullEnter(eventManager: GameEventManager) : GameEventListener(eventManager) {
 
     override val interfaceName: String = "CAMenuListenerFullEnter"
 
-    override val requiredModuleName: String = "game.feature.model.game-model"
-    override val eventObjectName: String = "model"
-    override val eventType: String = "GAME_MODEL_MSG.SUB_STATE_CHANGED"
+    override val requiredModuleName: String = "game.feature.menu.menu-model"
+    override val eventObjectName: String = "menu"
+    override val eventType: String = "MENU_EVENT.FULL_MENU_ENTER"
 
     override val onEventJS: String =
         """
-            if(origin.isMenu() || origin.isOnMapMenu()){
-                $interfaceName.reportMenuOpen();
-            }else{
-                $interfaceName.reportMenuClosed();
-            }
+            $interfaceName.reportFullMenuOpen();
         """
 
-    private var menuIsOpen = false
-
     @JavascriptInterface
-    fun reportMenuOpen(){
+    fun reportFullMenuOpen(){
         eventManager.onMenuEnter()
-        menuIsOpen = true
     }
+}
+
+class MenuExit(eventManager: GameEventManager) : GameEventListener(eventManager) {
+
+    override val interfaceName: String = "CAMenuListenerExit"
+
+    override val requiredModuleName: String = "game.feature.menu.menu-model"
+    override val eventObjectName: String = "menu"
+    override val eventType: String = "MENU_EVENT.EXIT_MENU"
+
+    override val onEventJS: String =
+        """
+            $interfaceName.reportMenuExit();
+        """
 
     @JavascriptInterface
-    fun reportMenuClosed(){
-        if(menuIsOpen){
-            eventManager.onMenuExit()
-            menuIsOpen = false
-        }
+    fun reportMenuExit(){
+        eventManager.onMenuExit()
     }
 }

@@ -15,16 +15,14 @@ class GameEventManager(
 ) : Feature(gameWrapper, hostActivity) {
     
     private val listeners = listOf(
-        GameStart(this),
-        MenuEvent(this),
+        MenuFullEnter(this),
+        MenuExit(this),
         GameStateChangeCutscene(this),
         MessageRing(this),
         MessageEnd(this),
         ElementModeChange(this),
         ElementLoad(this)
     )
-
-    private val onGameStart: MutableSet<() -> Unit> = HashSet()
 
     private val onMenuEnter: MutableSet<() -> Unit> = HashSet()
     private val onMenuExit: MutableSet<() -> Unit> = HashSet()
@@ -102,16 +100,6 @@ class GameEventManager(
             .replace("\n", "")
 
         runJS(jsForAllListeners)
-    }
-
-    fun onGameStart(run: () -> Unit) = onGameStart.add(run)
-
-    internal fun onGameStart(){
-        handler.post {
-            onGameStart.forEach {
-                it.invoke()
-            }
-        }
     }
 
     fun onMenuEnter(run: () -> Unit) = onMenuEnter.add(run)

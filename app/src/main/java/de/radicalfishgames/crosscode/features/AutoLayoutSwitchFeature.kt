@@ -30,10 +30,6 @@ class AutoLayoutSwitchFeature(gameWrapper: GameWrapper,
             onMenuExit {
                 virtualControllerFeature.switchToLayout(CombatLayout)
             }
-
-            onGameStart {
-                virtualControllerFeature.switchToLayout(CombatLayout)
-            }
         }
 
     }
