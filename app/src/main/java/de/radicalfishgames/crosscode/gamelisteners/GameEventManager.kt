@@ -17,6 +17,7 @@ class GameEventManager(
     private val listeners = listOf(
         MenuFullEnter(this),
         MenuExit(this),
+        TradeMenu(this),
         GameStateChangeCutscene(this),
         MessageRing(this),
         MessageEnd(this),
