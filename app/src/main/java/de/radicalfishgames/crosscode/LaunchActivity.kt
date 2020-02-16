@@ -121,9 +121,11 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     private fun obbFilesFound(path: String){
-        val launchFile = File("$path/node-webkit.html")
-        if(!launchFile.exists()){
-            Toast.makeText(this@LaunchActivity, "Assets in incorrect format", Toast.LENGTH_LONG).show()
+        val normalLaunchFile = File("$path/node-webkit.html")
+        val modLoaderLaunchFile = File("$path/ccloader/index.html")
+
+        if(!(normalLaunchFile.exists() || modLoaderLaunchFile.exists())){
+            Toast.makeText(this@LaunchActivity, "Can't find node-webkit.html or ccloader/index.html in OBB", Toast.LENGTH_LONG).show()
 
             mountFailed()
         }else{

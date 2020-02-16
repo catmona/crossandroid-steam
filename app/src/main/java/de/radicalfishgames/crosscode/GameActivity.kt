@@ -45,8 +45,13 @@ class GameActivity : AppCompatActivity() {
         val nativeControllerActive = isNativeControllerActive()
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
 
+        val gameFilePath = getGamePath()
+        val modLoaderPresent = gameFilePath.contains("ccloader")
 
-        gameWrapper = GameWrapper(game_view)
+        Log.d("CrossCode", "Game path: $gameFilePath Attempting to load.")
+
+
+        gameWrapper = GameWrapper(game_view, modLoaderPresent, storageManager.getMountedObbPath(obbPath))
         gameWrapper.initWebView()
 
         // Order is important, since some of these depend on one another and this is also the initialization order
@@ -61,14 +66,7 @@ class GameActivity : AppCompatActivity() {
             OverlayScaleFeature(gameWrapper, this)
         ))
 
-
-
-        val gameFilePath = getGamePath()
-        Log.d("CrossCode", "Game path: $gameFilePath Attempting to load.")
-
-        val launchFile = File("$gameFilePath/node-webkit.html")
-
-        gameWrapper.loadGame("file:///${launchFile.absolutePath}")
+        gameWrapper.loadGame("file:///$gameFilePath")
 
     }
 
@@ -76,10 +74,26 @@ class GameActivity : AppCompatActivity() {
 
         obbName = "main.$version.$packageName.obb"
         obbPath = "$obbDir/$obbName"
-        
+
         storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
 
-        return storageManager.getMountedObbPath(obbPath)
+        val gameDir = storageManager.getMountedObbPath(obbPath)
+
+        val normalLaunchFile = File("$gameDir/node-webkit.html")
+        val modLoaderLaunchFile = File("$gameDir/ccloader/index.html")
+
+        val launchFile: File
+        if(modLoaderLaunchFile.exists()){
+            launchFile = modLoaderLaunchFile
+
+            Log.d("CrossCode", "Modloader found!")
+        }else{
+            launchFile = normalLaunchFile
+
+            Log.d("CrossCode", "")
+        }
+
+        return launchFile.absolutePath
     }
 
     override fun onBackPressed() {
