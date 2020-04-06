@@ -8,6 +8,7 @@ import android.os.storage.StorageManager
 import android.util.Log
 import android.view.InputDevice
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.*
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
@@ -85,6 +86,8 @@ class GameActivity : AppCompatActivity() {
         val launchFile: File
         if(modLoaderLaunchFile.exists()){
             launchFile = modLoaderLaunchFile
+
+            Toast.makeText(this, "Warning: Newer versions of the modloader currently don't work with CrossAndroid!", Toast.LENGTH_LONG).show()
 
             Log.d("CrossCode", "Modloader found!")
         }else{
