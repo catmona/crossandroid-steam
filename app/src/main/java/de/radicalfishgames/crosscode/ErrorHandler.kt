@@ -14,7 +14,7 @@ class ErrorHandler(val hostActivity: Activity) : Thread.UncaughtExceptionHandler
 
     override fun uncaughtException(t: Thread, e: Throwable) {
         MaterialAlertDialogBuilder(hostActivity)
-            .setTitle("Critical Problem")
+            .setTitle("Crash")
             .setMessage("Looks like there was an error in the app! Please report the log message you can copy below.")
             .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
                 val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
