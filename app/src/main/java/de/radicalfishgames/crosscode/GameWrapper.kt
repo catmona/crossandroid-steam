@@ -140,7 +140,7 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
     fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
     fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
 
-    fun runJS(js: String){
-        webView.evaluateJavascript(js, null)
+    fun runJS(js: String, callback: ValueCallback<String>? = null){
+        webView.evaluateJavascript(js, callback)
     }
 }

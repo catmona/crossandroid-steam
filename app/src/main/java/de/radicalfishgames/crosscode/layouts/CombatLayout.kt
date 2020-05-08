@@ -3,13 +3,13 @@ package de.radicalfishgames.crosscode.layouts
 import android.graphics.BitmapFactory
 import android.os.Handler
 import android.view.View
+import android.webkit.ValueCallback
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 import kotlinx.android.synthetic.main.combat_layout.view.*
-import kotlinx.android.synthetic.main.combat_layout.view.overlay_toggle
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -29,6 +29,7 @@ object CombatLayout : VirtualControllerLayout() {
     private const val DASHED = 3
 
     private var dashState = NONE
+    private var interactingWithSth = false
 
     override fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager){
 
@@ -227,9 +228,28 @@ object CombatLayout : VirtualControllerLayout() {
                             gamepad.rightCross.bottom.pressed = true
                             gamepad.rightBumper.pressed = true
 
+                            // Check whether the player is interacting with a pushpullable box
+                            // Since this result might not be there in time before the combat
+                            // art gets triggered, the button is also reset manually if there is
+                            // a need.
+                            feature.runJS(
+                                """window.variable = ig.game.playerEntity.interactObject === null;""",
+                                ValueCallback { result ->
+                                    interactingWithSth = !result.toBoolean()
+                                    if(interactingWithSth){
+                                        gamepad.rightTrigger.pressed = false
+                                    }
+                                }
+                            )
+
                             // Trigger combat arts for melee
                             if(!longPressPending){
+
                                 longPressHandler.postDelayed({
+                                    if(interactingWithSth){
+                                        return@postDelayed;
+                                    }
+
                                     gamepad.rightTrigger.pressed = true
                                 }, 300L)
                                 longPressPending = true
@@ -259,6 +279,8 @@ object CombatLayout : VirtualControllerLayout() {
                     longPressHandler.removeCallbacksAndMessages(null)
                     longPressPending = false
                     gamepad.rightTrigger.pressed = false
+
+                    interactingWithSth = false
 
                     if(lastInsideInnerCircle){
                         gamepad.rightCross.bottom.pressed = false
