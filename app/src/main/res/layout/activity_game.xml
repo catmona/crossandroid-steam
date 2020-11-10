@@ -10,11 +10,13 @@
     <WebView
         android:id="@+id/game_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <FrameLayout
         android:id="@+id/control_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone"/>
+    <!-- Hide virtual controller by default. It will be shown programmatically if needed. -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

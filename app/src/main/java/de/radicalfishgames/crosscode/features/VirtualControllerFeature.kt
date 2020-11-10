@@ -69,6 +69,8 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
         for(controller in availableLayouts){
 
             val parentView = hostActivity.layoutInflater.inflate(controller.layoutResId, hostActivity.control_container) as ViewGroup
+            parentView.visibility = View.VISIBLE
+
             val view = parentView.getChildAt(parentView.childCount - 1) as ViewGroup
 
             // Hide all controllers by default and only show them when they are needed
