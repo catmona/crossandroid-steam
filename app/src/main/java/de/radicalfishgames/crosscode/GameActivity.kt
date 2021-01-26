@@ -57,6 +57,7 @@ class GameActivity : AppCompatActivity() {
 
         // Order is important, since some of these depend on one another and this is also the initialization order
         gameWrapper.features.addAll(listOf(
+            ExtensionLoadingFix(gameWrapper, this),
             GameEventManager(gameWrapper, this),
             VirtualControllerFeature(gameWrapper, this),
             AutoLayoutSwitchFeature(gameWrapper, this),

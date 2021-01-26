@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
+import androidx.core.net.toFile
 import de.radicalfishgames.crosscode.features.Feature
 import java.io.File
 import java.io.FileInputStream
@@ -15,7 +16,7 @@ import java.util.*
 import kotlin.reflect.KClass
 
 
-class GameWrapper(private val webView: WebView, private val modLoaderPresent: Boolean = false, private val gameDir: String? = null) {
+class GameWrapper(private val webView: WebView, private val modLoaderPresent: Boolean = false, val gameDir: String? = null) {
 
     val features = LinkedList<Feature>()
 
@@ -59,14 +60,14 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
                         uri = Uri.parse("file:///$gameDir${uri.path}")
                     }
 
-                    var mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
-                    if(uri.toString().endsWith(".js")){
-                        mimeType = "application/javascript"
-                    }
-
                     if(!File(uri.path!!).exists()){
                         Log.w("CrossAndroid", "Path $uri not found!")
                         return null
+                    }
+
+                    var mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
+                    if(uri.toString().endsWith(".js")){
+                        mimeType = "application/javascript"
                     }
 
                     return WebResourceResponse(mimeType, "utf-8", view.context.contentResolver.openInputStream(uri)!!)
