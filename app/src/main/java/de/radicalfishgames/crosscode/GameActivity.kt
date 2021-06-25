@@ -111,7 +111,7 @@ class GameActivity : AppCompatActivity() {
         }
     }
 
-    fun isNativeControllerActive(): Boolean{
+    fun isNativeControllerActive(): Boolean {
         Log.d("CrossCode", "Searching for native controller...")
 
         InputDevice.getDeviceIds().forEach { deviceId ->
@@ -127,10 +127,16 @@ class GameActivity : AppCompatActivity() {
         return false
     }
 
-    private fun isController(device: InputDevice): Boolean{
-        return device.supportsSource(InputDevice.SOURCE_GAMEPAD)
-                && device.supportsSource(InputDevice.SOURCE_JOYSTICK)
+    private fun isController(device: InputDevice): Boolean {
         // SOURCE_DPAD is apparently not how a gamepad is labelled, despite having a DPad available
+        val hasControllerSources = device.supportsSource(InputDevice.SOURCE_GAMEPAD) && device.supportsSource(InputDevice.SOURCE_JOYSTICK)
+
+        if(hasControllerSources && device.name.equals("uinput-fpc")) {
+            Log.w("CrossCode", "Ignoring input device uinput-fpc as it's known to be a fingerprint scanner disguising as a controller: https://github.com/libgdx/gdx-controllers/issues/9")
+            return false
+        }
+
+        return hasControllerSources
     }
 
     override fun onPause() {
