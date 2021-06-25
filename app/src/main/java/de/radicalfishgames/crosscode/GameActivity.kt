@@ -118,6 +118,8 @@ class GameActivity : AppCompatActivity() {
             val device = InputDevice.getDevice(deviceId)
 
             if(isController(device)){
+                Log.d("CrossCode", "Found device with gamepad and joystick support: ${device.name}")
+                Log.v("CrossCode", device.toString())
                 return true
             }
         }
