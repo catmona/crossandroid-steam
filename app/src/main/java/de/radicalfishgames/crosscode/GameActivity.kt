@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.storage.OnObbStateChangeListener
@@ -155,6 +156,13 @@ class GameActivity : AppCompatActivity() {
         gameWrapper.onResume()
 
         goIntoFullScreen()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        gameWrapper.getFeature(ImportExportFeature::class)
+            .onActivityResult(requestCode, resultCode, data)
+
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     fun goIntoFullScreen(){
