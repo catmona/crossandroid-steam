@@ -78,5 +78,5 @@ to import into the game.
 
 ## Feedback
 Speaking of suggestions: If you have any, suggest them either
-[here](https://gitlab.com/Namnodorel/crossandroid/issues) or in the
-#crossandroid channel on the [Community Modding Discord Server](https://discord.gg/TFs6n5v)
+[here](https://gitlab.com/Namnodorel/crossandroid/issues) or in the #crossandroid channel 
+on the [Community Modding Discord Server](https://discord.gg/3Xw69VjXfW)
