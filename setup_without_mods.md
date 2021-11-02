@@ -35,8 +35,8 @@ You should now have in this folder:
 **5.** Now, everything is ready. Double-click jObbifier.jar to execute it.
 
 Enter the following:
-- Input folder: <the copied game assets folder>
-- Output location: <your created folder>
+- Input folder: &lt;the copied game assets folder&gt;
+- Output location: &lt;your created folder&gt;
 - Package name: de.radicalfishgames.crosscode
 - Package version: 1
 - Use password: No
