@@ -44,7 +44,7 @@ Open https://www.github.com/monkey0506/jobbifier/releases . Click on the links f
 and jObbifier.jar and download them to your created folder. **Verify that your files look like
 this**:
 
-- <your folder>
+- &lt;your folder&gt;
     - jobb.jar
     - jObbifier.jar
     - CrossCode
@@ -60,8 +60,8 @@ this**:
 **7.** Now, everything is ready. Double-click jObbifier.jar to execute it.
 
 Enter the following:
-- Input folder: <the copied game folder>
-- Output location: <your created folder>
+- Input folder: &lt;the copied game folder&gt;
+- Output location: &lt;your created folder&gt;
 - Package name: de.radicalfishgames.crosscode
 - Package version: 1
 - Use password: No
