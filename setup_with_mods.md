@@ -35,7 +35,8 @@ Now, move the extracted modloader-files into the folder with the CrossCode game 
 
 **5.** To get the modloader working on Android, you will have to install a mod that fixes
 an issue with starting the game. You can get the mod files
-[here](https://gitlab.com/Namnodorel/crossandroid/-/archive/master/crossandroid-master.zip?path=mod-startup-fix)
+[here](https://gitlab.com/Namnodorel/crossandroid/-/archive/master/crossandroid-master.zip?path=mod-startup-fix).
+Make sure to add a `"mod-startup-fix"` to the mod list in your `mods.json` file.
 
 **6.** CrossAndroid can't use the game files as they are now. To convert the game
 files into a format that the app can read, we are going to use a tool called "Jobbifier".
