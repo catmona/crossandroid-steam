@@ -69,7 +69,7 @@ class GameActivity : AppCompatActivity() {
             OverlayScaleFeature(gameWrapper, this)
         ))
 
-        gameWrapper.loadGame("file:///$gameFilePath")
+        gameWrapper.loadGame(gameFilePath)
 
     }
 

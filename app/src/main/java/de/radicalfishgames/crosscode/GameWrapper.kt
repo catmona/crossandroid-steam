@@ -7,11 +7,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
-import androidx.core.net.toFile
 import de.radicalfishgames.crosscode.features.Feature
 import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
 import java.util.*
 import kotlin.reflect.KClass
 
@@ -83,12 +80,14 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
         }
     }
 
-    fun loadGame(fromLocation: String) {
+    fun loadGame(gameFilePath: String) {
         for(feature in features){
             feature.onPreGamePageLoad()
         }
 
-        webView.loadUrl(fromLocation)
+        // Load the game files, and also set a flag for the modloader to recognize that
+        // it's being executed in CrossAndroid
+        webView.loadUrl("file://$gameFilePath?crossandroid=true")
     }
 
 
