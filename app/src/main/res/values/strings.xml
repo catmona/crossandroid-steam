@@ -38,4 +38,6 @@
     <string name="always_sprint_summary">Enable this to always run as fast as possible, no matter where you touch the movement pad.</string>
     <string name="disable_swipe_dash_title">Dash only on tap</string>
     <string name="disable_swipe_dash_summary">Only dash when the dash area is tapped (not swiped into) to avoid dashing by accident</string>
+    <string name="force_virtual_summary">Always use the virtual controller, even when a physical controller is connected.</string>
+    <string name="force_virtual_title">Force Virtual Controller</string>
 </resources>

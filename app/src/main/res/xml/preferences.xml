@@ -14,6 +14,12 @@
         android:summary="@string/disable_overlay_cutscenes_automatically_summary"
         android:title="@string/disable_overlay_cutscenes" />
 
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="force_virtual"
+        app:summary="@string/force_virtual_summary"
+        app:title="@string/force_virtual_title" />
+
     <SeekBarPreference
         android:defaultValue="0"
         android:key="overlay_transparency"

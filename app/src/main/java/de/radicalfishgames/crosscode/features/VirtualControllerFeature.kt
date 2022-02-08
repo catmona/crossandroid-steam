@@ -18,16 +18,17 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
                                hostActivity: GameActivity
 ) : Feature(gameWrapper, hostActivity) {
 
-    internal val enabled = !hostActivity.isNativeControllerActive()
-
     private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
 
+    private val forceVirtualController = hostActivity.preferences.getBoolean("force_virtual", false)
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
     private val dashOnlyOnTap = hostActivity.preferences.getBoolean("disable_swipe_dash", false)
 
     private val availableLayouts = setOf(CombatLayout, MenuLayout, DirectLayout)
     lateinit var currentLayout: VirtualControllerLayout
         private set
+
+    internal val enabled = !hostActivity.isNativeControllerActive() || forceVirtualController
 
     val layoutViews = HashMap<VirtualControllerLayout, ViewGroup>()
 
