@@ -1,6 +1,7 @@
 # Installing and updating the game files _with mods_
 
 **Warning: Newer versions of the modloader currently don't work with CrossAndroid!**
+**v2.16.1 is the last version that should still work.**
 
 **Warning: Modloader support is experimental! It is likely to cause issues which can only get
 fixed when you provide a logcat with details about the problem.**
