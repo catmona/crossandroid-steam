@@ -58,6 +58,7 @@ class GameActivity : AppCompatActivity() {
 
         // Order is important, since some of these depend on one another and this is also the initialization order
         gameWrapper.features.addAll(listOf(
+            ModListProvider(gameWrapper, this),
             ExtensionLoadingFix(gameWrapper, this),
             GameEventManager(gameWrapper, this),
             VirtualControllerFeature(gameWrapper, this),
@@ -88,8 +89,6 @@ class GameActivity : AppCompatActivity() {
         val launchFile: File
         if(modLoaderLaunchFile.exists()){
             launchFile = modLoaderLaunchFile
-
-            Toast.makeText(this, "Warning: Newer versions of the modloader currently don't work with CrossAndroid!", Toast.LENGTH_LONG).show()
 
             Log.d("CrossCode", "Modloader found!")
         }else{

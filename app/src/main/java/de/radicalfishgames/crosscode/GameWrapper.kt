@@ -13,13 +13,15 @@ import java.util.*
 import kotlin.reflect.KClass
 
 
-class GameWrapper(private val webView: WebView, private val modLoaderPresent: Boolean = false, val gameDir: String? = null) {
+class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = false, val gameDir: String? = null) {
 
     val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
 
     private val handler = Handler()
+
+    private var calledPostGameLoad = false
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -54,7 +56,7 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
 
                     var uri = request.url
                     if(!uri.path.toString().startsWith("/mnt")){
-                        uri = Uri.parse("file:///$gameDir${uri.path}")
+                        uri = Uri.parse("file://$gameDir${uri.path}")
                     }
 
                     if(!File(uri.path!!).exists()){
@@ -81,6 +83,8 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
     }
 
     fun loadGame(gameFilePath: String) {
+        exposeJSInterface(this, "CrossAndroid")
+
         for(feature in features){
             feature.onPreGamePageLoad()
         }
@@ -105,23 +109,16 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
         }else{
             Log.d("CrossCode", "Modloader is present, it will start the game for us.")
 
-            exposeJSInterface(this, "CrossAndroid")
         }
     }
 
     @JavascriptInterface
     fun executePostGameLoad(){
+        if(calledPostGameLoad){
+            return
+        }
+        calledPostGameLoad = true
         handler.post {
-            if(modLoaderPresent){
-                // Restore access to variables that the event listeners, controls etc. require
-                // These would otherwise be "hidden away" within the iframe
-                runJS("""
-                    let ig = frame.contentWindow.ig;
-                    let sc = frame.contentWindow.sc;
-                    let navigator = frame.contentWindow.navigator;
-                """.trimIndent())
-            }
-
             for(feature in features){
                 feature.onPostGamePageLoad()
             }
