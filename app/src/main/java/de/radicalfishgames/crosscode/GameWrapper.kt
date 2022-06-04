@@ -1,19 +1,17 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import de.radicalfishgames.crosscode.features.Feature
-import java.io.File
 import java.util.*
 import kotlin.reflect.KClass
 
 
-class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = false, val gameDir: String? = null) {
+class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, val gameDir: String) {
 
     val features = LinkedList<Feature>()
 
@@ -23,10 +21,14 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = 
 
     private var calledPostGameLoad = false
 
+    private val webViewClient = GameWebViewClient(this)
+
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
 
         Log.d("CrossCode, ", "Initializing WebView")
+
+        WebView.setWebContentsDebuggingEnabled(true)
 
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
@@ -36,44 +38,17 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = 
             javaScriptEnabled = true
             javaScriptCanOpenWindowsAutomatically = true
             layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
-
             domStorageEnabled = true
-            allowUniversalAccessFromFileURLs = true
             mediaPlaybackRequiresUserGesture = false
 
+            allowFileAccessFromFileURLs = false
+            allowUniversalAccessFromFileURLs = false
+            allowFileAccess = false
+            allowContentAccess = false
+
         }
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                onPageLoaded()
-            }
-
-            override fun shouldInterceptRequest(
-                view: WebView?,
-                request: WebResourceRequest?
-            ): WebResourceResponse? {
-                if(modLoaderPresent && request != null && view != null){
-
-                    var uri = request.url
-                    if(!uri.path.toString().startsWith("/mnt")){
-                        uri = Uri.parse("file://$gameDir${uri.path}")
-                    }
-
-                    if(!File(uri.path!!).exists()){
-                        Log.w("CrossAndroid", "Path $uri not found!")
-                        return null
-                    }
-
-                    var mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
-                    if(uri.toString().endsWith(".js")){
-                        mimeType = "application/javascript"
-                    }
-
-                    return WebResourceResponse(mimeType, "utf-8", view.context.contentResolver.openInputStream(uri)!!)
-                }
-                return null
-            }
-        }
+        webView.webViewClient = webViewClient
 
         // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
@@ -82,7 +57,7 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = 
         }
     }
 
-    fun loadGame(gameFilePath: String) {
+    fun loadGame(gameEntryPoint: String) {
         exposeJSInterface(this, "CrossAndroid")
 
         for(feature in features){
@@ -91,7 +66,11 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = 
 
         // Load the game files, and also set a flag for the modloader to recognize that
         // it's being executed in CrossAndroid
-        webView.loadUrl("file://$gameFilePath?crossandroid=true")
+        webView.loadUrl(webViewClient.buildVirtualUrl()
+            .path(gameEntryPoint)
+            .encodedQuery("crossandroid=true")
+            .build()
+            .toString())
     }
 
 
@@ -118,6 +97,7 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean = 
             return
         }
         calledPostGameLoad = true
+
         handler.post {
             for(feature in features){
                 feature.onPostGamePageLoad()
