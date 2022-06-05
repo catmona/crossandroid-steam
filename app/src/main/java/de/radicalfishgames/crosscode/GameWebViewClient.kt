@@ -48,19 +48,18 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
             return WebResourceResponse(null, null, null)
         }
 
-        val stream = try {
-            FileInputStream(requestedFile)
-        } catch (_: FileNotFoundException) {
-
-            if(requestedFile.isDirectory){
-                // Return an empty successful response for directories, CCLoader depends on that for
-                // checking whether they exist.
-                return WebResourceResponse(null, null, NullInputStream())
-            }
-
+        if(!requestedFile.canRead()){
             Log.w("CrossCode", "Path $urlPath not found!")
             return WebResourceResponse(null, null, null)
         }
+
+        if(requestedFile.isDirectory){
+            // Return an empty successful response for directories, CCLoader depends on that for
+            // checking whether they exist.
+            return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
+        }
+
+        val stream = FileInputStream(requestedFile)
 
         val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(requestedFile.extension)
             ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
@@ -143,9 +142,4 @@ object FallbackMimeTypeMap {
     fun getMimeTypeFromExtension(extension: String): String? {
         return if(extension.isNotEmpty()) extensionsToMimeTypesMap[extension.toLowerCase(Locale.ROOT)] else null
     }
-}
-
-
-class NullInputStream : InputStream() {
-    override fun read(): Int = -1
 }
