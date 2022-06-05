@@ -28,8 +28,6 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
 
         Log.d("CrossCode, ", "Initializing WebView")
 
-        WebView.setWebContentsDebuggingEnabled(true)
-
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
 
