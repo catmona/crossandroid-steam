@@ -1,8 +1,5 @@
 # Installing and updating the game files _with mods_
 
-**Warning: Newer versions of the modloader currently don't work with CrossAndroid!**
-**v2.16.1 is the last version that should still work.**
-
 **Warning: Modloader support is experimental! It is likely to cause issues which can only get
 fixed when you provide a logcat with details about the problem.**
 
@@ -34,12 +31,7 @@ When you've found the game files, copy **the whole folder** to the folder you ju
 Now, move the extracted modloader-files into the folder with the CrossCode game files.
 
 
-**5.** To get the modloader working on Android, you will have to install a mod that fixes
-an issue with starting the game. You can get the mod files
-[here](https://gitlab.com/Namnodorel/crossandroid/-/archive/master/crossandroid-master.zip?path=mod-startup-fix).
-Make sure to add a `"mod-startup-fix"` to the mod list in your `mods.json` file.
-
-**6.** CrossAndroid can't use the game files as they are now. To convert the game
+**5.** CrossAndroid can't use the game files as they are now. To convert the game
 files into a format that the app can read, we are going to use a tool called "Jobbifier".
 
 Open https://www.github.com/monkey0506/jobbifier/releases . Click on the links for jobb.jar
@@ -52,14 +44,12 @@ this**:
     - CrossCode
         - assets
             - mods
-                - mod-startup-fix
                 - ...
             - ...
         - ccloader
-        - node_modules
         - ...
 
-**7.** Now, everything is ready. Double-click jObbifier.jar to execute it.
+**6.** Now, everything is ready. Double-click jObbifier.jar to execute it.
 
 Enter the following:
 - Input folder: &lt;the copied game folder&gt;
@@ -73,7 +63,7 @@ the game files, this may take a minute.
 
 When it is done, close the program and proceed with the next step.
 
-**8.** Almost done! The tool should have created a file called
+**7.** Almost done! The tool should have created a file called
 "**main.1.de.radicalfishgames.crosscode.obb**" - this is the file this app can read.
 Now we just need to move it to the right place on your phone.
 

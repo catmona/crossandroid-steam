@@ -9,7 +9,6 @@ import android.os.storage.StorageManager
 import android.util.Log
 import android.view.InputDevice
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.*
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
@@ -47,17 +46,31 @@ class GameActivity : AppCompatActivity() {
         val nativeControllerActive = isNativeControllerActive()
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
 
-        val gameFilePath = getGamePath()
-        val modLoaderPresent = gameFilePath.contains("ccloader")
 
-        Log.d("CrossCode", "Game path: $gameFilePath Attempting to load.")
+        obbName = "main.$version.$packageName.obb"
+        obbPath = "$obbDir/$obbName"
+        storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
+        val gameDir = storageManager.getMountedObbPath(obbPath)
+        Log.d("CrossCode", "Game directory: $gameDir")
+
+        var gameEntryPoint = "node-webkit.html"
+        val modLoaderEntryPoint = "ccloader/index.html"
+        var modLoaderPresent = false
+        if(File("$gameDir/$modLoaderEntryPoint").exists()){
+            Log.d("CrossCode", "Modloader found!")
+            gameEntryPoint = modLoaderEntryPoint
+            modLoaderPresent = true
+        }
+
+        Log.d("CrossCode", "Game entry point: $gameEntryPoint Attempting to load.")
 
 
-        gameWrapper = GameWrapper(game_view, modLoaderPresent, storageManager.getMountedObbPath(obbPath))
+        gameWrapper = GameWrapper(game_view, modLoaderPresent, gameDir)
         gameWrapper.initWebView()
 
         // Order is important, since some of these depend on one another and this is also the initialization order
         gameWrapper.features.addAll(listOf(
+            ModListProvider(gameWrapper, this),
             ExtensionLoadingFix(gameWrapper, this),
             GameEventManager(gameWrapper, this),
             VirtualControllerFeature(gameWrapper, this),
@@ -69,36 +82,8 @@ class GameActivity : AppCompatActivity() {
             OverlayScaleFeature(gameWrapper, this)
         ))
 
-        gameWrapper.loadGame(gameFilePath)
+        gameWrapper.loadGame(gameEntryPoint)
 
-    }
-
-    private fun getGamePath(): String {
-
-        obbName = "main.$version.$packageName.obb"
-        obbPath = "$obbDir/$obbName"
-
-        storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
-
-        val gameDir = storageManager.getMountedObbPath(obbPath)
-
-        val normalLaunchFile = File("$gameDir/node-webkit.html")
-        val modLoaderLaunchFile = File("$gameDir/ccloader/index.html")
-
-        val launchFile: File
-        if(modLoaderLaunchFile.exists()){
-            launchFile = modLoaderLaunchFile
-
-            Toast.makeText(this, "Warning: Newer versions of the modloader currently don't work with CrossAndroid!", Toast.LENGTH_LONG).show()
-
-            Log.d("CrossCode", "Modloader found!")
-        }else{
-            launchFile = normalLaunchFile
-
-            Log.d("CrossCode", "")
-        }
-
-        return launchFile.absolutePath
     }
 
     override fun onBackPressed() {

@@ -1,25 +1,27 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import de.radicalfishgames.crosscode.features.Feature
-import java.io.File
 import java.util.*
 import kotlin.reflect.KClass
 
 
-class GameWrapper(private val webView: WebView, private val modLoaderPresent: Boolean = false, val gameDir: String? = null) {
+class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, val gameDir: String) {
 
     val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
 
     private val handler = Handler()
+
+    private var calledPostGameLoad = false
+
+    private val webViewClient = GameWebViewClient(this)
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
@@ -34,44 +36,17 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
             javaScriptEnabled = true
             javaScriptCanOpenWindowsAutomatically = true
             layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
-
             domStorageEnabled = true
-            allowUniversalAccessFromFileURLs = true
             mediaPlaybackRequiresUserGesture = false
 
+            allowFileAccessFromFileURLs = false
+            allowUniversalAccessFromFileURLs = false
+            allowFileAccess = false
+            allowContentAccess = false
+
         }
 
-        webView.webViewClient = object : WebViewClient() {
-            override fun onPageFinished(view: WebView?, url: String?) {
-                onPageLoaded()
-            }
-
-            override fun shouldInterceptRequest(
-                view: WebView?,
-                request: WebResourceRequest?
-            ): WebResourceResponse? {
-                if(modLoaderPresent && request != null && view != null){
-
-                    var uri = request.url
-                    if(!uri.path.toString().startsWith("/mnt")){
-                        uri = Uri.parse("file:///$gameDir${uri.path}")
-                    }
-
-                    if(!File(uri.path!!).exists()){
-                        Log.w("CrossAndroid", "Path $uri not found!")
-                        return null
-                    }
-
-                    var mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()))
-                    if(uri.toString().endsWith(".js")){
-                        mimeType = "application/javascript"
-                    }
-
-                    return WebResourceResponse(mimeType, "utf-8", view.context.contentResolver.openInputStream(uri)!!)
-                }
-                return null
-            }
-        }
+        webView.webViewClient = webViewClient
 
         // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->
@@ -80,14 +55,20 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
         }
     }
 
-    fun loadGame(gameFilePath: String) {
+    fun loadGame(gameEntryPoint: String) {
+        exposeJSInterface(this, "CrossAndroid")
+
         for(feature in features){
             feature.onPreGamePageLoad()
         }
 
         // Load the game files, and also set a flag for the modloader to recognize that
         // it's being executed in CrossAndroid
-        webView.loadUrl("file://$gameFilePath?crossandroid=true")
+        webView.loadUrl(webViewClient.buildVirtualUrl()
+            .path(gameEntryPoint)
+            .encodedQuery("crossandroid=true")
+            .build()
+            .toString())
     }
 
 
@@ -105,23 +86,17 @@ class GameWrapper(private val webView: WebView, private val modLoaderPresent: Bo
         }else{
             Log.d("CrossCode", "Modloader is present, it will start the game for us.")
 
-            exposeJSInterface(this, "CrossAndroid")
         }
     }
 
     @JavascriptInterface
     fun executePostGameLoad(){
-        handler.post {
-            if(modLoaderPresent){
-                // Restore access to variables that the event listeners, controls etc. require
-                // These would otherwise be "hidden away" within the iframe
-                runJS("""
-                    let ig = frame.contentWindow.ig;
-                    let sc = frame.contentWindow.sc;
-                    let navigator = frame.contentWindow.navigator;
-                """.trimIndent())
-            }
+        if(calledPostGameLoad){
+            return
+        }
+        calledPostGameLoad = true
 
+        handler.post {
             for(feature in features){
                 feature.onPostGamePageLoad()
             }
