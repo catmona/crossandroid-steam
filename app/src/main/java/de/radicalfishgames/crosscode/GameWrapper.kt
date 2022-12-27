@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import android.view.MotionEvent
@@ -31,6 +32,12 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Prevents screen turning bright from the focus effect when using a controller
+            // on some devices.
+            webView.defaultFocusHighlightEnabled = false
+        }
+
         webView.settings.apply {
 
             javaScriptEnabled = true
@@ -43,7 +50,6 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
             allowUniversalAccessFromFileURLs = false
             allowFileAccess = false
             allowContentAccess = false
-
         }
 
         webView.webViewClient = webViewClient
