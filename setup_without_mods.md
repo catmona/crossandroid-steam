@@ -24,8 +24,9 @@ When you've found the game files, copy the "assets" folder to the folder you jus
 **4.** CrossAndroid can't use the game files as they are now. To convert the game
 files into a format that the app can read, we are going to use a tool called "Jobbifier".
 
-Open https://www.github.com/monkey0506/jobbifier/releases . Click on the links for jobb.jar
-and jObbifier.jar and download them to your created folder.
+Open https://www.github.com/monkey0506/jobbifier/releases . Click on the link for
+jObbifier.jar and download it to your created folder. Next, open https://gitlab.com/Namnodorel/crossandroid/-/raw/master/jobb-bin/base-master-jobb.jar
+and move the downloaded file to your created folder. Rename it to `jobb.jar`.
 
 You should now have in this folder:
 - the "assets" folder from the game

@@ -34,8 +34,7 @@ class ExtensionLoadingFix(gameWrapper: GameWrapper,
     }
 
     private fun loadExtensionList() {
-        val extensionDirRelPath = if (gameWrapper.modLoaderPresent) "assets/extension/" else "extension/"
-        val extensionDir = File("${gameWrapper.gameDir}/${extensionDirRelPath}")
+        val extensionDir = File("${gameWrapper.gameDir}/extension/")
 
         if(!extensionDir.exists() || !extensionDir.isDirectory) {
             Log.w("CrossCode", "No extension directory found! Searched at ${extensionDir.path}")

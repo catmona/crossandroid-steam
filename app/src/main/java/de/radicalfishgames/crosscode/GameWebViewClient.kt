@@ -67,7 +67,7 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         return WebResourceResponse(mimeType, null, stream)
     }
 
-    fun buildVirtualUrl(): Uri.Builder = Uri.Builder().scheme(VIRTUAL_ORIGIN_SCHEME).authority(VIRTUAL_ORIGIN_DOMAIN)
+    fun buildVirtualUrl(): Uri.Builder = Uri.Builder().scheme(VIRTUAL_ORIGIN_SCHEME).authority(VIRTUAL_ORIGIN_DOMAIN).appendQueryParameter("crossandroid", "true")
 
     companion object {
         const val VIRTUAL_ORIGIN_SCHEME = "https"

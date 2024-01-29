@@ -54,11 +54,11 @@ class GameActivity : AppCompatActivity() {
         Log.d("CrossCode", "Game directory: $gameDir")
 
         var gameEntryPoint = "node-webkit.html"
-        val modLoaderEntryPoint = "ccloader/index.html"
+        val modLoaderEntryFile = (File("$gameDir/ccloader/index.html") or File("$gameDir/ccloader/main.html")) or File("$gameDir/ccloader3/main.html")
         var modLoaderPresent = false
-        if(File("$gameDir/$modLoaderEntryPoint").exists()){
+        if(modLoaderEntryFile.exists()){
             Log.d("CrossCode", "Modloader found!")
-            gameEntryPoint = modLoaderEntryPoint
+            gameEntryPoint = modLoaderEntryFile.canonicalPath.replace(Regex("(.*:\\d+/)"), "")
             modLoaderPresent = true
         }
 
