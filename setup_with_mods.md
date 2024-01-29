@@ -34,19 +34,19 @@ Now, move the extracted modloader-files into the folder with the CrossCode game 
 **5.** CrossAndroid can't use the game files as they are now. To convert the game
 files into a format that the app can read, we are going to use a tool called "Jobbifier".
 
-Open https://www.github.com/monkey0506/jobbifier/releases . Click on the links for jobb.jar
-and jObbifier.jar and download them to your created folder. **Verify that your files look like
-this**:
+Open https://www.github.com/monkey0506/jobbifier/releases . Click on the link for
+jObbifier.jar and download it to your created folder. Next, open https://gitlab.com/Namnodorel/crossandroid/-/raw/master/jobb-bin/base-master-jobb.jar
+and move the downloaded file to your created folder. Rename it to `jobb.jar`.
+
+**Verify that your files look like this**:
 
 - &lt;your folder&gt;
     - jobb.jar
     - jObbifier.jar
-    - CrossCode
-        - assets
-            - mods
-                - ...
-            - ...
+    - assets
         - ccloader
+        - mods
+            - ...
         - ...
 
 **6.** Now, everything is ready. Double-click jObbifier.jar to execute it.

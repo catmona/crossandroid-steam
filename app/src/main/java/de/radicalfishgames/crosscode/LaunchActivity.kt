@@ -27,7 +27,6 @@ import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 import kotlinx.android.synthetic.main.guide_layout.*
 import java.util.*
 
-
 class LaunchActivity : AppCompatActivity() {
 
     private var userConfirmedJava = false
@@ -122,7 +121,7 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun obbFilesFound(path: String){
         val normalLaunchFile = File("$path/node-webkit.html")
-        val modLoaderLaunchFile = File("$path/ccloader/index.html")
+        val modLoaderLaunchFile = (File("$path/ccloader/index.html") or File("$path/ccloader/main.html")) or File("$path/ccloader3/main.html")
 
         if(!(normalLaunchFile.exists() || modLoaderLaunchFile.exists())){
             Toast.makeText(this@LaunchActivity, "Can't find node-webkit.html or ccloader/index.html in OBB", Toast.LENGTH_LONG).show()
@@ -321,6 +320,8 @@ class LaunchActivity : AppCompatActivity() {
 
         val contributors = LinkedList<ContributorInfo>()
         contributors.add(ContributorInfo("Ichiki Hayaite aka TheSparkstarScope", "Contributed the awesome pixelart"))
+        contributors.add(ContributorInfo("Dmytro Meleshko", "Enhanced modloader support"))
+        contributors.add(ContributorInfo("Alyxia & Xinto", "CCLoader3 support"))
         config.contributors = contributors
 
         intent.putExtra(AboutActivity.CREDITZ_CONFIG, config)
