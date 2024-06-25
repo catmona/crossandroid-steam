@@ -4,11 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.os.storage.OnObbStateChangeListener
-import android.os.storage.StorageManager
 import android.util.Log
 import android.view.InputDevice
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.features.*
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
@@ -19,12 +18,6 @@ import java.io.File
 class GameActivity : AppCompatActivity() {
 
     val errorHandler = ErrorHandler(this)
-
-    private lateinit var storageManager: StorageManager
-
-    private val version = 1
-    private lateinit var obbName: String
-    private lateinit var obbPath: String
 
     private lateinit var gameWrapper: GameWrapper
 
@@ -47,13 +40,15 @@ class GameActivity : AppCompatActivity() {
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
 
 
-        obbName = "main.$version.$packageName.obb"
-        obbPath = "$obbDir/$obbName"
-        storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
-        val gameDir = storageManager.getMountedObbPath(obbPath)
+        val dataFilesPath = this.getExternalFilesDir(null)
+        if (dataFilesPath == null) {
+            Toast.makeText(this@GameActivity, "Storage permission denied", Toast.LENGTH_LONG).show()
+            return
+        }
+        val gameDir = "${dataFilesPath.absolutePath}/CrossCode"
         Log.d("CrossCode", "Game directory: $gameDir")
 
-        var gameEntryPoint = "node-webkit.html"
+        var gameEntryPoint = "assets/node-webkit.html"
         val modLoaderEntryFile = (File("$gameDir/ccloader/index.html") or File("$gameDir/ccloader/main.html")) or File("$gameDir/ccloader3/main.html")
         var modLoaderPresent = false
         if(modLoaderEntryFile.exists()){
@@ -162,20 +157,5 @@ class GameActivity : AppCompatActivity() {
                     or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                     or View.SYSTEM_UI_FLAG_FULLSCREEN)
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        Log.d("CrossCode", "Attempting to unmount game files...")
-
-        storageManager.unmountObb(obbPath, true, object : OnObbStateChangeListener() {
-            // Do nothing, we can't really do much about it if unmounting fails
-            override fun onObbStateChange(path: String?, state: Int) {
-                if(state != UNMOUNTED){
-                    Log.e("CrossCode", "Unmounting the game assets failed! State: $state")
-                }
-            }
-        })
     }
 }

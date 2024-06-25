@@ -1,13 +1,10 @@
 package de.radicalfishgames.crosscode
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.storage.OnObbStateChangeListener
-import android.os.storage.StorageManager
 import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -29,8 +26,8 @@ import java.util.*
 
 class LaunchActivity : AppCompatActivity() {
 
-    private var userConfirmedJava = false
-    private var userConfirmedGotGameFiles = false
+    private var userConfirmedCCLoader = false
+    private var userConfirmedCopiedInst = false
     private var userConfirmedDownloadedTools = false
     private var userConfirmedPackagedGameFiles = false
 
@@ -58,75 +55,35 @@ class LaunchActivity : AppCompatActivity() {
         super.onResume()
 
         handler.post {
-            tryToMountObb()
+            tryToAccessInstance()
         }
     }
 
-    private fun tryToMountObb() {
+    private fun tryToAccessInstance() {
+        Log.i("CrossCode", "Attempting to access the CrossCode instance...")
 
-        Log.i("CrossCode", "Attempting to mount OBB...")
-
-        val version = 1
-        val obbName = "main.$version.$packageName.obb"
-
-        val obbPath = "$obbDir/$obbName"
-
-        if(!isMountingPossible(obbPath)){
-            mountFailed()
+        val sdcardPath = this.getExternalFilesDir(null)
+        if (sdcardPath == null) {
+            Toast.makeText(this@LaunchActivity, "Storage permission denied", Toast.LENGTH_LONG).show()
             return
         }
+        val instanceDir = "${sdcardPath.absolutePath}/CrossCode"
 
-        val storageManager = getSystemService(Context.STORAGE_SERVICE) as StorageManager
-        if(storageManager.isObbMounted(obbPath)){
-            obbFilesFound(storageManager.getMountedObbPath(obbPath))
-
-        }else{
-            mountObb(obbPath, storageManager)
+        if (!File("${instanceDir}/assets").exists()) {
+            instanceNotFound()
+            return
         }
+        instanceFound("${instanceDir}/assets")
     }
 
-    private fun isMountingPossible(obbPath: String): Boolean{
-        if(!hasStoragePermission()){
-            Log.i("CrossCode", "No storage permission!")
-
-            return false
-        }else if(!File(obbPath).exists()){
-            Log.i("CrossCode", "OBB file not found!")
-
-            return false
-        }
-
-        return true
-    }
-
-    private fun mountObb(path: String, storageManager: StorageManager){
-        storageManager.mountObb(path, null, object : OnObbStateChangeListener() {
-            override fun onObbStateChange(path: String, state: Int) {
-
-                if(state == MOUNTED || state == ERROR_ALREADY_MOUNTED){
-                    val mountedPath = storageManager.getMountedObbPath(path)
-
-                    obbFilesFound(mountedPath)
-
-                } else {
-                    Toast.makeText(this@LaunchActivity, "Mount failed: $state", Toast.LENGTH_LONG).show()
-                    Log.e("CrossCode", "Mount failed: $state")
-                    mounting_progress_bar.visibility = GONE
-
-                    mountFailed()
-                }
-            }
-        })
-    }
-
-    private fun obbFilesFound(path: String){
+    private fun instanceFound(path: String){
         val normalLaunchFile = File("$path/node-webkit.html")
         val modLoaderLaunchFile = (File("$path/ccloader/index.html") or File("$path/ccloader/main.html")) or File("$path/ccloader3/main.html")
 
         if(!(normalLaunchFile.exists() || modLoaderLaunchFile.exists())){
             Toast.makeText(this@LaunchActivity, "Can't find node-webkit.html or ccloader/index.html in OBB", Toast.LENGTH_LONG).show()
 
-            mountFailed()
+            instanceNotFound()
         }else{
             gameFilesIntact()
             return
@@ -135,15 +92,15 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun gameFilesIntact(){
 
-        Log.i("CrossCode", "OBB file found!")
+        Log.i("CrossCode", "Instance directory found!")
 
         mounting_progress_bar.visibility = GONE
         launch_button.isEnabled = true
     }
 
-    private fun mountFailed(){
-        userConfirmedJava = false
-        userConfirmedGotGameFiles = false
+    private fun instanceNotFound(){
+        userConfirmedCCLoader = false
+        userConfirmedCopiedInst = false
         userConfirmedDownloadedTools = false
         userConfirmedPackagedGameFiles = false
 
@@ -152,7 +109,7 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun showCurrentGuide(showTransition: Boolean){
 
-        Log.i("CrossCode", "Showing user guide on installing the OBB.")
+        Log.i("CrossCode", "Showing user guide on installing the instance directory.")
 
         val setupContainer: View
         if(findViewById<ScrollView>(R.id.setup_container) == null){
@@ -167,15 +124,10 @@ class LaunchActivity : AppCompatActivity() {
 
         val hasStoragePermission = hasStoragePermission()
 
+
         if(hasStoragePermission){
             permission_text_tv.visibility = GONE
             ask_permission_btn.visibility = GONE
-
-            val folder = obbDir
-            if(!folder.exists()){
-                folder.mkdirs()
-            }
-
         }else{
             permission_text_tv.visibility = VISIBLE
             ask_permission_btn.visibility = VISIBLE
@@ -192,89 +144,38 @@ class LaunchActivity : AppCompatActivity() {
         pastStepsSuccessfull = pastStepsSuccessfull && hasStoragePermission
 
 
-        if(pastStepsSuccessfull && userConfirmedJava){
-            check_java_text_tv.visibility = GONE
-            have_java_btn.visibility = GONE
+        if(pastStepsSuccessfull && userConfirmedCCLoader){
+            install_ccloader_text_tv.visibility = GONE
+            install_ccloader_btn.visibility = GONE
 
         }else if(pastStepsSuccessfull){
 
-            check_java_text_tv.visibility = VISIBLE
-            have_java_btn.visibility = VISIBLE
+            install_ccloader_text_tv.visibility = VISIBLE
+            install_ccloader_btn.visibility = VISIBLE
 
-            have_java_btn.setOnClickListener {
-                userConfirmedJava = true
+            install_ccloader_btn.setOnClickListener {
+                userConfirmedCCLoader = true
                 showCurrentGuide(true)
             }
         }
-        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedJava
+        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedCCLoader
 
-
-        if(pastStepsSuccessfull && userConfirmedGotGameFiles){
-            get_assets_text_tv.visibility = GONE
-            got_assets_btn.visibility = GONE
+        if(pastStepsSuccessfull && userConfirmedCopiedInst){
+            copy_instance_text_tv.visibility = GONE
+            copy_instance_btn.visibility = GONE
 
         }else if(pastStepsSuccessfull){
 
-            get_assets_text_tv.visibility = VISIBLE
-            got_assets_btn.visibility = VISIBLE
+            copy_instance_text_tv.visibility = VISIBLE
+            copy_instance_btn.visibility = VISIBLE
 
-            got_assets_btn.setOnClickListener {
-                userConfirmedGotGameFiles = true
-                showCurrentGuide(true)
-            }
-        }
-        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedGotGameFiles
+            copy_instance_btn.setOnClickListener {
+                userConfirmedCopiedInst = true
 
-
-        if(pastStepsSuccessfull && userConfirmedDownloadedTools){
-            download_tools_text_tv.visibility = GONE
-            download_tools_btn.visibility = GONE
-
-        }else if(pastStepsSuccessfull){
-
-            download_tools_text_tv.visibility = VISIBLE
-            download_tools_btn.visibility = VISIBLE
-
-            download_tools_btn.setOnClickListener {
-                userConfirmedDownloadedTools = true
-                showCurrentGuide(true)
-            }
-        }
-        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedDownloadedTools
-
-
-        if(pastStepsSuccessfull && userConfirmedPackagedGameFiles){
-            package_assets_text_tv.visibility = GONE
-            package_assets_btn.visibility = GONE
-
-        }else if(pastStepsSuccessfull){
-
-            package_assets_text_tv.visibility = VISIBLE
-            package_assets_btn.visibility = VISIBLE
-
-            package_assets_btn.setOnClickListener {
-                userConfirmedPackagedGameFiles = true
-                showCurrentGuide(true)
-            }
-        }
-        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedPackagedGameFiles
-
-
-        if(!pastStepsSuccessfull){
-            move_files_text_tv.visibility = GONE
-            move_files_btn.visibility = GONE
-
-        }else{
-
-            move_files_text_tv.visibility = VISIBLE
-            move_files_btn.visibility = VISIBLE
-
-            move_files_btn.setOnClickListener {
                 setupContainer.visibility = GONE
                 launch_container.visibility = VISIBLE
-
                 handler.post {
-                    tryToMountObb()
+                    tryToAccessInstance()
                 }
             }
         }
@@ -322,6 +223,7 @@ class LaunchActivity : AppCompatActivity() {
         contributors.add(ContributorInfo("Ichiki Hayaite aka TheSparkstarScope", "Contributed the awesome pixelart"))
         contributors.add(ContributorInfo("Dmytro Meleshko", "Enhanced modloader support"))
         contributors.add(ContributorInfo("Alyxia & Xinto", "CCLoader3 support"))
+        contributors.add(ContributorInfo("krypek", "Changed CrossCode instance format loading from .obb files to a regular directory"))
         config.contributors = contributors
 
         intent.putExtra(AboutActivity.CREDITZ_CONFIG, config)
