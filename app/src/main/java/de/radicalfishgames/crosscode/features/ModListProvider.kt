@@ -24,7 +24,7 @@ class ModListProvider(gameWrapper: GameWrapper,
             modList = emptyList()
         }
 
-        val modsDir = File("${gameWrapper.gameDir}/mods")
+        val modsDir = File("${gameWrapper.gameDir}/assets/mods")
 
         if(!modsDir.exists() || !modsDir.isDirectory) {
             Log.w("CrossCode", "No mods directory found! Searched at ${modsDir.path}")

@@ -2,6 +2,7 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -28,7 +29,8 @@
             android:text="@string/game_files_explanation"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/welcome_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/welcome_tv"
+            tools:visibility="gone" />
 
         <TextView
             android:id="@+id/permission_title_tv"
@@ -41,16 +43,17 @@
             android:textColor="@android:color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/game_files_explanation_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/game_files_explanation_tv"
+            tools:visibility="gone" />
 
         <TextView
             android:id="@+id/permission_text_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/permission_explanation"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/permission_title_tv"
-            android:visibility="gone" />
+            app:layout_constraintTop_toBottomOf="@+id/permission_title_tv" />
 
         <Button
             android:id="@+id/ask_permission_btn"
@@ -62,11 +65,11 @@
             android:visibility="gone" />
 
         <TextView
-            android:id="@+id/check_java_title_tv"
+            android:id="@+id/install_ccloader_title_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:padding="4dp"
-            android:text="@string/check_java_title"
+            android:text="@string/install_ccloader_title"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:textColor="@android:color/white"
             app:layout_constraintEnd_toEndOf="parent"
@@ -74,147 +77,56 @@
             app:layout_constraintTop_toBottomOf="@+id/ask_permission_btn" />
 
         <TextView
-            android:id="@+id/check_java_text_tv"
+            android:id="@+id/install_ccloader_text_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/check_java_explanation"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/check_java_title_tv"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/have_java_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/continue_guide"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/check_java_text_tv"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/get_assets_title_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:padding="4dp"
-            android:text="@string/get_game_files_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/have_java_btn" />
-
-        <TextView
-            android:id="@+id/get_assets_text_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/get_game_files_explanation"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/get_assets_title_tv"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/got_assets_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/continue_guide"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/get_assets_text_tv"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/download_tools_title_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:padding="4dp"
-            android:text="@string/download_tools_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/got_assets_btn" />
-
-        <TextView
-            android:id="@+id/download_tools_text_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/download_toolset_explanation"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/download_tools_title_tv"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/download_tools_btn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/continue_guide"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/download_tools_text_tv"
-            android:visibility="gone" />
-
-        <TextView
-            android:id="@+id/package_assets_title_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:padding="4dp"
-            android:text="@string/package_assets_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/download_tools_btn" />
-
-        <TextView
-            android:id="@+id/package_assets_text_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/package_game_files_explanation"
+            android:text="@string/install_ccloader_explanation"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/package_assets_title_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/install_ccloader_title_tv" />
 
         <Button
-            android:id="@+id/package_assets_btn"
+            android:id="@+id/install_ccloader_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/continue_guide"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/package_assets_text_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/install_ccloader_text_tv"
+            android:visibility="gone" />
 
         <TextView
-            android:id="@+id/move_files_title_tv"
+            android:id="@+id/copy_instance_title_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:padding="4dp"
-            android:text="@string/move_files_title"
+            android:text="@string/copy_instance_title"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:textColor="@android:color/white"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/package_assets_btn" />
+            app:layout_constraintTop_toBottomOf="@+id/install_ccloader_btn"
+            tools:visibility="visible" />
 
         <TextView
-            android:id="@+id/move_files_text_tv"
+            android:id="@+id/copy_instance_text_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/move_files_explanation"
+            android:text="@string/copy_instance_explanation"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/move_files_title_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/copy_instance_title_tv"
+            tools:visibility="visible" />
 
         <Button
-            android:id="@+id/move_files_btn"
+            android:id="@+id/copy_instance_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/finish_guide"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/move_files_text_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/copy_instance_text_tv" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

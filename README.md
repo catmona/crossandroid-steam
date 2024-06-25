@@ -29,9 +29,7 @@ to your phone.
 
 You can update the app later independently of the game files. However,
 if you want to update the game or install mods, you will have to [follow
-the same steps again](setup_without_mods.md). If you want to install mods,
-the method is similar with some additional steps - for detailed instructions,
-see [here](setup_with_mods.md)
+the same steps again](SETUP.md).
 
 ## Using the virtual controller
 Here's an overview of the combat controls overlay:

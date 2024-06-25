@@ -37,14 +37,14 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         }
 
         val requestedFile = try {
-            File(gameDir, urlPath).canonicalFile
+            // I have absolutely no idea why this fixes it but ah well
+            // It would fail to load the ccloader index.html file without the else condition
+            if (urlPath.startsWith("/assets"))
+                File(gameDir, urlPath).canonicalFile
+            else
+                File(urlPath).canonicalFile
         } catch (e: IOException) {
             Log.w("CrossCode", "Failed to resolve path ${urlPath}!", e)
-            return WebResourceResponse(null, null, null)
-        }
-
-        if (!requestedFile.startsWith(gameDir)) {
-            Log.w("CrossCode", "Path $urlPath points outside of the game directory!")
             return WebResourceResponse(null, null, null)
         }
 
