@@ -9,6 +9,7 @@ import java.util.*
 class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() {
 
     private val gameDir = gameWrapper.gameFolderManager.getGameDir()
+    private val ccmodManager = CcmodManager()
 
     override fun onPageFinished(view: WebView?, url: String?) {
         gameWrapper.onPageLoaded()
@@ -41,9 +42,28 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
             return null
         }
 
+        val normalizedPath = urlPath.trimStart('/')
+        var fullPath = File(gameDir, normalizedPath).canonicalPath
+
+        // Check if this is a request for a file inside a .ccmod archive
+        var ccmodPath = CcmodManager.parseCcmodPath(fullPath)
+        if (ccmodPath != null) {
+            // CCLoader runs from ccloader/ directory, but ccmod files are in assets/mods/
+            // If the ccmod file doesn't exist at the resolved path, try without the ccloader/ prefix
+            if (!File(ccmodPath.first).exists() && normalizedPath.startsWith("ccloader/")) {
+                val pathWithoutCcloader = normalizedPath.removePrefix("ccloader/")
+                val altFullPath = File(gameDir, pathWithoutCcloader).canonicalPath
+                val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
+                if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
+                    fullPath = altFullPath
+                    ccmodPath = altCcmodPath
+                }
+            }
+            return handleCcmodRequest(request, ccmodPath.first, ccmodPath.second, normalizedPath)
+        }
+
+        // Regular file handling
         val requestedFile = try {
-            // Normalize path and resolve against game directory
-            val normalizedPath = urlPath.trimStart('/')
             File(gameDir, normalizedPath).canonicalFile
         } catch (e: IOException) {
             Log.w("CrossCode", "Failed to resolve path $urlPath!", e)
@@ -51,6 +71,18 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         }
 
         if (!requestedFile.exists()) {
+            // Check if this is an asset that exists in a ccmod
+            if (normalizedPath.startsWith("assets/")) {
+                val assetPath = normalizedPath.removePrefix("assets/")
+                val stream = ccmodManager.getAssetStream(assetPath)
+                if (stream != null) {
+                    Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
+                    val extension = assetPath.substringAfterLast('.', "")
+                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+                    return WebResourceResponse(mimeType, null, stream)
+                }
+            }
             Log.w("CrossCode", "Path $urlPath not found! (resolved to ${requestedFile.absolutePath})")
             return WebResourceResponse(null, null, null)
         }
@@ -66,12 +98,164 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
             return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
         }
 
+        // Auto-patch CCLoader JS to enable ccmod support on Android
+        if (normalizedPath == "ccloader/js/ccloader.js") {
+            return servePatchedCCLoader(requestedFile)
+        }
+
         val stream = FileInputStream(requestedFile)
 
         val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(requestedFile.extension)
             ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
 
         return WebResourceResponse(mimeType, null, stream)
+    }
+
+    /**
+     * Handle requests for files inside .ccmod archives.
+     * CCLoader uses X-Cmd headers to query ccmod contents:
+     * - X-Cmd: getFiles - list files in a directory
+     * - X-Cmd: isDirectory - check if path is a directory
+     * - X-Cmd: isFile - check if path is a file
+     * - (no header) - get file content
+     */
+    private fun handleCcmodRequest(
+        request: WebResourceRequest,
+        ccmodFilePath: String,
+        internalPath: String,
+        urlPath: String
+    ): WebResourceResponse {
+        // Check if the .ccmod file itself exists
+        val ccmodFile = File(ccmodFilePath)
+        if (!ccmodFile.exists()) {
+            Log.w("CrossCode", "Ccmod file not found: $ccmodFilePath")
+            return WebResourceResponse(null, null, null)
+        }
+
+        val xCmd = request.requestHeaders["X-Cmd"]
+        Log.d("CrossCode", "Ccmod request: $urlPath, X-Cmd: $xCmd, internal: $internalPath")
+
+        return when (xCmd) {
+            "getFiles" -> {
+                val json = ccmodManager.listFilesAsJson(ccmodFilePath, internalPath)
+                Log.d("CrossCode", "getFiles result: $json")
+                WebResourceResponse(
+                    "application/json",
+                    "UTF-8",
+                    ByteArrayInputStream(json.toByteArray(Charsets.UTF_8))
+                )
+            }
+            "isDirectory" -> {
+                val isDir = ccmodManager.isDirectory(ccmodFilePath, internalPath)
+                Log.d("CrossCode", "isDirectory result: $isDir")
+                WebResourceResponse(
+                    "application/json",
+                    "UTF-8",
+                    ByteArrayInputStream(isDir.toString().toByteArray(Charsets.UTF_8))
+                )
+            }
+            "isFile" -> {
+                val isFile = ccmodManager.isFile(ccmodFilePath, internalPath)
+                Log.d("CrossCode", "isFile result: $isFile")
+                WebResourceResponse(
+                    "application/json",
+                    "UTF-8",
+                    ByteArrayInputStream(isFile.toString().toByteArray(Charsets.UTF_8))
+                )
+            }
+            else -> {
+                // No X-Cmd header - serve the actual file content
+                if (internalPath.isEmpty()) {
+                    // Request for the ccmod root - treat as directory
+                    return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
+                }
+
+                val stream = ccmodManager.getFileStream(ccmodFilePath, internalPath)
+                if (stream == null) {
+                    // Could be a directory inside the ccmod
+                    if (ccmodManager.isDirectory(ccmodFilePath, internalPath)) {
+                        return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
+                    }
+                    Log.w("CrossCode", "File not found in ccmod: $internalPath")
+                    return WebResourceResponse(null, null, null)
+                }
+
+                // Determine MIME type from the internal file extension
+                val extension = internalPath.substringAfterLast('.', "")
+                val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                    ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+
+                WebResourceResponse(mimeType, null, stream)
+            }
+        }
+    }
+
+    /**
+     * Serve CCLoader's main JS file with patches applied to enable ccmod support.
+     *
+     * CCLoader normally requires a Service Worker and Cache API to read .ccmod files,
+     * but these don't work reliably on Android WebView. Instead, CrossAndroid handles
+     * ccmod file access natively. These patches disable the Service Worker/Cache path
+     * when CrossAndroid's ccmodSupported() returns true.
+     */
+    private fun servePatchedCCLoader(file: File): WebResourceResponse {
+        var content = file.readText(Charsets.UTF_8)
+        var patchCount = 0
+
+        // Patch 1: Skip the "ccmod not supported" warning when ccmodSupported() is true
+        // Original: if (window.CrossAndroid) {
+        // Patched:  if (window.CrossAndroid && !window.CrossAndroid.ccmodSupported()) {
+        val patch1Old = "if (window.CrossAndroid) {"
+        val patch1New = "if (window.CrossAndroid && !window.CrossAndroid.ccmodSupported()) {"
+        if (content.contains(patch1Old)) {
+            content = content.replace(patch1Old, patch1New)
+            patchCount++
+        }
+
+        // Patch 2: Skip Service Worker initialization when ccmodSupported() is true
+        // Original: await this._initializeServiceWorker();
+        // Patched:  if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._initializeServiceWorker(); }
+        val patch2Old = "await this._initializeServiceWorker();"
+        val patch2New = "if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._initializeServiceWorker(); }"
+        if (content.contains(patch2Old)) {
+            content = content.replace(patch2Old, patch2New)
+            patchCount++
+        }
+
+        // Patch 3: Skip Cache API calls when ccmodSupported() is true
+        // Original: await this._sendPackedModNames(packedMods);
+        // Patched:  if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._sendPackedModNames(packedMods); }
+        val patch3Old = "await this._sendPackedModNames(packedMods);"
+        val patch3New = "if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._sendPackedModNames(packedMods); }"
+        if (content.contains(patch3Old)) {
+            content = content.replace(patch3Old, patch3New)
+            patchCount++
+        }
+
+        Log.i("CrossCode", "Applied $patchCount patches to CCLoader for ccmod support")
+
+        return WebResourceResponse(
+            "text/javascript",
+            "UTF-8",
+            ByteArrayInputStream(content.toByteArray(Charsets.UTF_8))
+        )
+    }
+
+    /**
+     * Build the ccmod asset index. Should be called before loading the game.
+     */
+    fun buildCcmodAssetIndex() {
+        val modsDir = gameDir?.let { File(it, "assets/mods") }
+        if (modsDir != null && modsDir.exists()) {
+            ccmodManager.buildAssetIndex(modsDir)
+        }
+    }
+
+    /**
+     * Close ccmod manager resources. Should be called when activity is destroyed.
+     */
+    fun closeCcmodManager() {
+        ccmodManager.closeAll()
     }
 
     fun buildVirtualUrl(): Uri.Builder = Uri.Builder().scheme(VIRTUAL_ORIGIN_SCHEME).authority(VIRTUAL_ORIGIN_DOMAIN).appendQueryParameter("crossandroid", "true")

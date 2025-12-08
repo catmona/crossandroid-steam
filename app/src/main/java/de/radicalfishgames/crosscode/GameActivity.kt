@@ -155,6 +155,13 @@ class GameActivity : AppCompatActivity() {
         goIntoFullScreen()
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::gameWrapper.isInitialized) {
+            gameWrapper.onDestroy()
+        }
+    }
+
     fun goIntoFullScreen(){
         runOnUiThread {
             WindowCompat.setDecorFitsSystemWindows(window, false)

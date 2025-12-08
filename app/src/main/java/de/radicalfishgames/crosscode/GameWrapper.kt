@@ -68,6 +68,9 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
     fun loadGame(gameEntryPoint: String) {
         exposeJSInterface(this, "CrossAndroid")
 
+        // Build ccmod asset index before loading the game
+        webViewClient.buildCcmodAssetIndex()
+
         for(feature in features){
             feature.onPreGamePageLoad()
         }
@@ -80,6 +83,13 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
             .build()
             .toString())
     }
+
+    /**
+     * Indicates that CrossAndroid supports .ccmod files.
+     * CCLoader can check this property to enable packed mod support.
+     */
+    @JavascriptInterface
+    fun ccmodSupported(): Boolean = true
 
 
     fun onPageLoaded(){
@@ -125,6 +135,10 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
 
     fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
     fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
+
+    fun onDestroy() {
+        webViewClient.closeCcmodManager()
+    }
 
     fun runJS(js: String, callback: ValueCallback<String>? = null){
         webView.evaluateJavascript(js, callback)
