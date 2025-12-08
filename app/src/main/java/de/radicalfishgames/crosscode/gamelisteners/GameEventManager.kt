@@ -6,25 +6,24 @@ import android.util.Log
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.features.Feature
-import java.util.*
+import java.util.LinkedList
 import kotlin.collections.HashSet
-
 
 class GameEventManager(
     gameWrapper: GameWrapper,
-    hostActivity: GameActivity
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-    
-    private val listeners = listOf(
-        MenuFullEnter(this),
-        MenuExit(this),
-        TradeMenu(this),
-        GameStateChangeCutscene(this),
-        MessageRing(this),
-        MessageEnd(this),
-        ElementModeChange(this),
-        ElementLoad(this)
-    )
+    private val listeners =
+        listOf(
+            MenuFullEnter(this),
+            MenuExit(this),
+            TradeMenu(this),
+            GameStateChangeCutscene(this),
+            MessageRing(this),
+            MessageEnd(this),
+            ElementModeChange(this),
+            ElementLoad(this),
+        )
 
     private val onMenuEnter: MutableSet<() -> Unit> = HashSet()
     private val onMenuExit: MutableSet<() -> Unit> = HashSet()
@@ -42,13 +41,12 @@ class GameEventManager(
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onPreGamePageLoad() {
-        for(listener in listeners){
+        for (listener in listeners) {
             gameWrapper.exposeJSInterface(listener, listener.interfaceName)
         }
     }
 
     override fun onPostGamePageLoad() {
-
         Log.d("CrossCode", "Injecting JS listeners...")
 
         var requiredModulesJS = ""
@@ -59,15 +57,14 @@ class GameEventManager(
 
         var eventIfsJS = ""
 
-        for(listener in listeners){
-
-            if(!modulesAddedAlready.contains(listener.requiredModuleName)){
+        for (listener in listeners) {
+            if (!modulesAddedAlready.contains(listener.requiredModuleName)) {
                 modulesAddedAlready.add(listener.requiredModuleName)
 
                 requiredModulesJS += ".requires(\"${listener.requiredModuleName}\")"
             }
 
-            if(!observerObjectsAddedAlready.contains(listener.eventObjectName)){
+            if (!observerObjectsAddedAlready.contains(listener.eventObjectName)) {
                 observerObjectsAddedAlready.add(listener.eventObjectName)
 
                 observerRegistrationJS += "sc.Model.addObserver(sc.${listener.eventObjectName}, this);"
@@ -99,16 +96,17 @@ class GameEventManager(
             })
         """
 
-        jsForAllListeners = jsForAllListeners
-            .trimIndent()
-            .replace("\n", "")
+        jsForAllListeners =
+            jsForAllListeners
+                .trimIndent()
+                .replace("\n", "")
 
         runJS(jsForAllListeners)
     }
 
     fun onMenuEnter(run: () -> Unit) = onMenuEnter.add(run)
 
-    internal fun onMenuEnter(){
+    internal fun onMenuEnter() {
         handler.post {
             onMenuEnter.forEach {
                 it.invoke()
@@ -118,7 +116,7 @@ class GameEventManager(
 
     fun onMenuExit(run: () -> Unit) = onMenuExit.add(run)
 
-    internal fun onMenuExit(){
+    internal fun onMenuExit() {
         handler.post {
             onMenuExit.forEach {
                 it.invoke()
@@ -128,7 +126,7 @@ class GameEventManager(
 
     fun onCutsceneEnter(run: () -> Unit) = onCutsceneEnter.add(run)
 
-    internal fun onCutsceneEnter(){
+    internal fun onCutsceneEnter() {
         handler.post {
             onCutsceneEnter.forEach {
                 it.invoke()
@@ -138,7 +136,7 @@ class GameEventManager(
 
     fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
 
-    internal fun onCutsceneExit(){
+    internal fun onCutsceneExit() {
         handler.post {
             onCutsceneExit.forEach {
                 it.invoke()
@@ -148,7 +146,7 @@ class GameEventManager(
 
     fun onDirectLinkRing(run: () -> Unit) = onDirectLinkRing.add(run)
 
-    internal fun onDirectLinkRing(){
+    internal fun onDirectLinkRing() {
         handler.post {
             onDirectLinkRing.forEach {
                 it.invoke()
@@ -158,7 +156,7 @@ class GameEventManager(
 
     fun onDirectLinkEnd(run: () -> Unit) = onDirectLinkEnd.add(run)
 
-    internal fun onDirectLinkEnd(){
+    internal fun onDirectLinkEnd() {
         handler.post {
             onDirectLinkEnd.forEach {
                 it.invoke()
@@ -168,7 +166,7 @@ class GameEventManager(
 
     fun onElementChange(run: (element: ElementMode) -> Unit) = onElementChange.add(run)
 
-    internal fun onElementModeChange(elementMode: ElementMode){
+    internal fun onElementModeChange(elementMode: ElementMode) {
         handler.post {
             onElementChange.forEach {
                 it.invoke(elementMode)

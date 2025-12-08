@@ -2,16 +2,27 @@ package de.radicalfishgames.crosscode
 
 import android.net.Uri
 import android.util.Log
-import android.webkit.*
-import java.io.*
-import java.util.*
+import android.webkit.MimeTypeMap
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.util.Locale
 
-class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() {
-
+class GameWebViewClient(
+    private val gameWrapper: GameWrapper,
+) : WebViewClient() {
     private val gameDir = gameWrapper.gameFolderManager.getGameDir()
     private val ccmodManager = CcmodManager()
 
-    override fun onPageFinished(view: WebView?, url: String?) {
+    override fun onPageFinished(
+        view: WebView?,
+        url: String?,
+    ) {
         gameWrapper.onPageLoaded()
     }
 
@@ -26,7 +37,10 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
     // described in more detail here:
     // https://developer.android.com/guide/webapps/load-local-content
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
-    override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+    override fun shouldInterceptRequest(
+        view: WebView?,
+        request: WebResourceRequest?,
+    ): WebResourceResponse? {
         if (view == null || request == null) {
             return null
         }
@@ -63,12 +77,13 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         }
 
         // Regular file handling
-        val requestedFile = try {
-            File(gameDir, normalizedPath).canonicalFile
-        } catch (e: IOException) {
-            Log.w("CrossCode", "Failed to resolve path $urlPath!", e)
-            return WebResourceResponse(null, null, null)
-        }
+        val requestedFile =
+            try {
+                File(gameDir, normalizedPath).canonicalFile
+            } catch (e: IOException) {
+                Log.w("CrossCode", "Failed to resolve path $urlPath!", e)
+                return WebResourceResponse(null, null, null)
+            }
 
         if (!requestedFile.exists()) {
             // Check if this is an asset that exists in a ccmod
@@ -78,8 +93,9 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
                 if (stream != null) {
                     Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
                     val extension = assetPath.substringAfterLast('.', "")
-                    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+                    val mimeType =
+                        MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                            ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
                     return WebResourceResponse(mimeType, null, stream)
                 }
             }
@@ -105,8 +121,9 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
 
         val stream = FileInputStream(requestedFile)
 
-        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(requestedFile.extension)
-            ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
+        val mimeType =
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(requestedFile.extension)
+                ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
 
         return WebResourceResponse(mimeType, null, stream)
     }
@@ -123,7 +140,7 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         request: WebResourceRequest,
         ccmodFilePath: String,
         internalPath: String,
-        urlPath: String
+        urlPath: String,
     ): WebResourceResponse {
         // Check if the .ccmod file itself exists
         val ccmodFile = File(ccmodFilePath)
@@ -142,27 +159,30 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
                 WebResourceResponse(
                     "application/json",
                     "UTF-8",
-                    ByteArrayInputStream(json.toByteArray(Charsets.UTF_8))
+                    ByteArrayInputStream(json.toByteArray(Charsets.UTF_8)),
                 )
             }
+
             "isDirectory" -> {
                 val isDir = ccmodManager.isDirectory(ccmodFilePath, internalPath)
                 Log.d("CrossCode", "isDirectory result: $isDir")
                 WebResourceResponse(
                     "application/json",
                     "UTF-8",
-                    ByteArrayInputStream(isDir.toString().toByteArray(Charsets.UTF_8))
+                    ByteArrayInputStream(isDir.toString().toByteArray(Charsets.UTF_8)),
                 )
             }
+
             "isFile" -> {
                 val isFile = ccmodManager.isFile(ccmodFilePath, internalPath)
                 Log.d("CrossCode", "isFile result: $isFile")
                 WebResourceResponse(
                     "application/json",
                     "UTF-8",
-                    ByteArrayInputStream(isFile.toString().toByteArray(Charsets.UTF_8))
+                    ByteArrayInputStream(isFile.toString().toByteArray(Charsets.UTF_8)),
                 )
             }
+
             else -> {
                 // No X-Cmd header - serve the actual file content
                 if (internalPath.isEmpty()) {
@@ -182,8 +202,9 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
 
                 // Determine MIME type from the internal file extension
                 val extension = internalPath.substringAfterLast('.', "")
-                val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                    ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+                val mimeType =
+                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
 
                 WebResourceResponse(mimeType, null, stream)
             }
@@ -237,7 +258,7 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         return WebResourceResponse(
             "text/javascript",
             "UTF-8",
-            ByteArrayInputStream(content.toByteArray(Charsets.UTF_8))
+            ByteArrayInputStream(content.toByteArray(Charsets.UTF_8)),
         )
     }
 
@@ -258,7 +279,12 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
         ccmodManager.closeAll()
     }
 
-    fun buildVirtualUrl(): Uri.Builder = Uri.Builder().scheme(VIRTUAL_ORIGIN_SCHEME).authority(VIRTUAL_ORIGIN_DOMAIN).appendQueryParameter("crossandroid", "true")
+    fun buildVirtualUrl(): Uri.Builder =
+        Uri
+            .Builder()
+            .scheme(VIRTUAL_ORIGIN_SCHEME)
+            .authority(VIRTUAL_ORIGIN_DOMAIN)
+            .appendQueryParameter("crossandroid", "true")
 
     companion object {
         const val VIRTUAL_ORIGIN_SCHEME = "https"
@@ -266,9 +292,7 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
     }
 }
 
-
 object FallbackMimeTypeMap {
-
     private val extensionsToMimeTypesMap = mutableMapOf<String, String>()
 
     init {
@@ -322,7 +346,10 @@ object FallbackMimeTypeMap {
         add("application/zip", "ccmod")
     }
 
-    fun add(type: String, vararg exts: String) {
+    fun add(
+        type: String,
+        vararg exts: String,
+    ) {
         for (ext in exts) {
             if (ext !in extensionsToMimeTypesMap) {
                 extensionsToMimeTypesMap[ext] = type
@@ -330,7 +357,6 @@ object FallbackMimeTypeMap {
         }
     }
 
-    fun getMimeTypeFromExtension(extension: String): String? {
-        return if (extension.isNotEmpty()) extensionsToMimeTypesMap[extension.lowercase(Locale.ROOT)] else null
-    }
+    fun getMimeTypeFromExtension(extension: String): String? =
+        if (extension.isNotEmpty()) extensionsToMimeTypesMap[extension.lowercase(Locale.ROOT)] else null
 }

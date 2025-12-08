@@ -10,11 +10,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import de.radicalfishgames.crosscode.R
-import java.io.*
-
+import java.io.BufferedReader
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 
 class PreferencesActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -24,24 +26,27 @@ class PreferencesActivity : AppCompatActivity() {
             .beginTransaction()
             .replace(R.id.preferences_placeholder, PreferenceFragment())
             .commit()
-
     }
 }
 
 // For whatever reason AndroidX _requires_ us to use a fragment, even though it could just have the whole activity
 class PreferenceFragment : PreferenceFragmentCompat() {
+    private val getContentLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            handleFilePickerResult(uri)
+        }
 
-    private val getContentLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        handleFilePickerResult(uri)
-    }
-
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+    override fun onCreatePreferences(
+        savedInstanceState: Bundle?,
+        rootKey: String?,
+    ) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
         val filePicker = findPreference("fileToImport") as Preference?
-        filePicker!!.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-            getContentLauncher.launch("text/plain")
-            true
-        }
+        filePicker!!.onPreferenceClickListener =
+            Preference.OnPreferenceClickListener {
+                getContentLauncher.launch("text/plain")
+                true
+            }
     }
 
     private fun handleFilePickerResult(uri: Uri?) {
@@ -62,7 +67,8 @@ class PreferenceFragment : PreferenceFragmentCompat() {
                 builder.append(line)
             }
             // Do something with the content in
-            preferences.edit()
+            preferences
+                .edit()
                 .putString("save_to_import", builder.toString())
                 .apply()
         } catch (e: FileNotFoundException) {

@@ -1,7 +1,12 @@
 package de.radicalfishgames.crosscode.overlay
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PointF
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.SparseArray
 import android.view.MotionEvent
@@ -12,19 +17,20 @@ import androidx.core.util.keyIterator
 import androidx.core.util.set
 import de.radicalfishgames.crosscode.R
 
-
-open class ControlView(context: Context, attrs: AttributeSet) : View(context, attrs) {
-
+open class ControlView(
+    context: Context,
+    attrs: AttributeSet,
+) : View(context, attrs) {
     private val onTouch: MutableSet<() -> Unit> = HashSet()
     private val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
     private val onRelease: MutableSet<() -> Unit> = HashSet()
 
-    private val imagePaint = Paint().apply {
-        isDither = false
-        isAntiAlias = false
-        isFilterBitmap = false
-    }
-
+    private val imagePaint =
+        Paint().apply {
+            isDither = false
+            isAntiAlias = false
+            isFilterBitmap = false
+        }
 
     private lateinit var fullSizeRect: RectF
     var imageBitmap: Bitmap
@@ -41,46 +47,49 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
                 recycle()
             }
         }
-
     }
 
     private val activePointers = SparseArray<PointF>()
     private var mainPointerId: Int? = null
 
     override fun onDraw(canvas: Canvas) {
-
         canvas.apply {
-
             drawBitmap(
                 imageBitmap,
                 null,
                 fullSizeRect,
-                imagePaint
+                imagePaint,
             )
         }
     }
 
-    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+    override fun onSizeChanged(
+        width: Int,
+        height: Int,
+        oldWidth: Int,
+        oldHeight: Int,
+    ) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
 
-        fullSizeRect = RectF(
-            paddingLeft.toFloat(),
-            paddingTop.toFloat(),
-            width.toFloat() - paddingRight,
-            height.toFloat() - paddingBottom
-        )
+        fullSizeRect =
+            RectF(
+                paddingLeft.toFloat(),
+                paddingTop.toFloat(),
+                width.toFloat() - paddingRight,
+                height.toFloat() - paddingBottom,
+            )
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
 
         // Update pointer list
-        when(event.action){
+        when (event.action) {
             // New finger placed on screen
             MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_POINTER_DOWN -> {
+            MotionEvent.ACTION_POINTER_DOWN,
+            -> {
                 val pointer = PointF()
 
                 pointer.x = event.getX(pointerIndex)
@@ -91,11 +100,11 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
 
             // Finger(s) moved
             MotionEvent.ACTION_MOVE -> {
-                for(index in 0 until event.pointerCount){
+                for (index in 0 until event.pointerCount) {
                     val movedId = event.getPointerId(index)
 
                     // A pointer moved into our View from another View
-                    if(!activePointers.contains(movedId)){
+                    if (!activePointers.contains(movedId)) {
                         activePointers[movedId] = PointF()
                     }
 
@@ -103,14 +112,14 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
 
                     pointer.x = event.getX(index)
                     pointer.y = event.getY(index)
-
                 }
             }
 
             // Finger lifted (or another View has taken over control of the event)
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP,
-            MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_CANCEL,
+            -> {
                 activePointers.remove(pointerId)
             }
         }
@@ -118,73 +127,76 @@ open class ControlView(context: Context, attrs: AttributeSet) : View(context, at
         // Check if main pointer still exists, is inside the view, etc.
         val hadOldMainPointer = mainPointerId != null
 
-        val mainPointerStillValid = hadOldMainPointer
-                && activePointers.containsKey(mainPointerId!!)
-                && isWithinView(
+        val mainPointerStillValid =
+            hadOldMainPointer &&
+                activePointers.containsKey(mainPointerId!!) &&
+                isWithinView(
                     activePointers[mainPointerId!!].x,
-                    activePointers[mainPointerId!!].y
+                    activePointers[mainPointerId!!].y,
                 )
 
-        if(!mainPointerStillValid){
+        if (!mainPointerStillValid) {
             mainPointerId = null
 
-            //Search for a new pointer within the view
-            for(id in activePointers.keyIterator()){
+            // Search for a new pointer within the view
+            for (id in activePointers.keyIterator()) {
                 val pointer = activePointers[id]
 
-                if(isWithinView(pointer.x, pointer.y)){
+                if (isWithinView(pointer.x, pointer.y)) {
                     mainPointerId = id
                     break
                 }
             }
 
             // A fresh pointer has been selected
-            if(mainPointerId != null && !hadOldMainPointer) {
+            if (mainPointerId != null && !hadOldMainPointer) {
                 onTouch()
 
                 onMove()
 
                 // A new pointer has been selected, but this is not an unpressed button - move
-            }else if(mainPointerId != null && hadOldMainPointer){
+            } else if (mainPointerId != null && hadOldMainPointer) {
                 onMove()
 
                 // Last pointer moved out of the view, release
-            }else if(hadOldMainPointer){
+            } else if (hadOldMainPointer) {
                 onRelease()
             }
 
             // All is fine with our main pointer, update its position
-        }else{
+        } else {
             onMove()
-
         }
 
         // Return true in any case so we get notified when the pointer enters our view
         return true
     }
 
-    protected open fun isWithinView(x: Float, y: Float): Boolean {
-        return true
-    }
+    protected open fun isWithinView(
+        x: Float,
+        y: Float,
+    ): Boolean = true
 
     fun onTouch(run: () -> Unit) = onTouch.add(run)
 
-    private fun onTouch(){
+    private fun onTouch() {
         onTouch.forEach { it.invoke() }
     }
 
     fun onMove(run: (x: Float, y: Float) -> Unit) = onMove.add(run)
 
-    private fun onMove(){
-        onMove.forEach { it.invoke(
-            activePointers[mainPointerId!!].x,
-            activePointers[mainPointerId!!].y
-        ) }
+    private fun onMove() {
+        onMove.forEach {
+            it.invoke(
+                activePointers[mainPointerId!!].x,
+                activePointers[mainPointerId!!].y,
+            )
+        }
     }
 
     fun onRelease(run: () -> Unit) = onRelease.add(run)
 
-    private fun onRelease(){
+    private fun onRelease() {
         onRelease.forEach { it.invoke() }
     }
 }

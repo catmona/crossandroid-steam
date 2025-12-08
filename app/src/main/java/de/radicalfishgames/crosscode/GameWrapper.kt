@@ -7,14 +7,19 @@ import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
-import android.webkit.*
+import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.webkit.WebSettings
+import android.webkit.WebView
 import de.radicalfishgames.crosscode.features.Feature
-import java.util.*
+import java.util.LinkedList
 import kotlin.reflect.KClass
 
-
-class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, val gameFolderManager: GameFolderManager) {
-
+class GameWrapper(
+    private val webView: WebView,
+    val modLoaderPresent: Boolean,
+    val gameFolderManager: GameFolderManager,
+) {
     val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
@@ -27,7 +32,6 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
-
         Log.d("CrossCode, ", "Initializing WebView")
 
         webView.setInitialScale(0)
@@ -40,7 +44,6 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
         }
 
         webView.settings.apply {
-
             javaScriptEnabled = true
             javaScriptCanOpenWindowsAutomatically = true
             layoutAlgorithm = WebSettings.LayoutAlgorithm.NORMAL
@@ -71,17 +74,20 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
         // Build ccmod asset index before loading the game
         webViewClient.buildCcmodAssetIndex()
 
-        for(feature in features){
+        for (feature in features) {
             feature.onPreGamePageLoad()
         }
 
         // Load the game files, and also set a flag for the modloader to recognize that
         // it's being executed in CrossAndroid
-        webView.loadUrl(webViewClient.buildVirtualUrl()
-            .path(gameEntryPoint)
-            .encodedQuery("crossandroid=true")
-            .build()
-            .toString())
+        webView.loadUrl(
+            webViewClient
+                .buildVirtualUrl()
+                .path(gameEntryPoint)
+                .encodedQuery("crossandroid=true")
+                .build()
+                .toString(),
+        )
     }
 
     /**
@@ -91,56 +97,57 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
     @JavascriptInterface
     fun ccmodSupported(): Boolean = true
 
-
-    fun onPageLoaded(){
-
+    fun onPageLoaded() {
         Log.d("CrossCode", "Game page loaded.")
 
-        if(!modLoaderPresent){
+        if (!modLoaderPresent) {
             Log.d("CrossCode", "Starting game manually.")
 
             startCrossCodeManually()
 
             executePostGameLoad()
-
-        }else{
+        } else {
             Log.d("CrossCode", "Modloader is present, it will start the game for us.")
-
         }
     }
 
     @JavascriptInterface
-    fun executePostGameLoad(){
-        if(calledPostGameLoad){
+    fun executePostGameLoad() {
+        if (calledPostGameLoad) {
             return
         }
         calledPostGameLoad = true
 
         handler.post {
-            for(feature in features){
+            for (feature in features) {
                 feature.onPostGamePageLoad()
             }
         }
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun <T : Feature> getFeature(ofType: KClass<T>): T {
-        return features.first { ofType.isInstance(it) } as T
-    }
+    fun <T : Feature> getFeature(ofType: KClass<T>): T = features.first { ofType.isInstance(it) } as T
 
     @SuppressLint("JavascriptInterface")
-    fun exposeJSInterface(obj: Any, name:String) = webView.addJavascriptInterface(obj, name)
+    fun exposeJSInterface(
+        obj: Any,
+        name: String,
+    ) = webView.addJavascriptInterface(obj, name)
 
     private fun startCrossCodeManually() = runJS("doStartCrossCodePlz()")
 
     fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
+
     fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
 
     fun onDestroy() {
         webViewClient.closeCcmodManager()
     }
 
-    fun runJS(js: String, callback: ValueCallback<String>? = null){
+    fun runJS(
+        js: String,
+        callback: ValueCallback<String>? = null,
+    ) {
         webView.evaluateJavascript(js, callback)
     }
 }
