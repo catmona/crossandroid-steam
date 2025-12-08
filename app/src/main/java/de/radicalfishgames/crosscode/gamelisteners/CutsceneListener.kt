@@ -2,9 +2,9 @@ package de.radicalfishgames.crosscode.gamelisteners
 
 import android.webkit.JavascriptInterface
 
-
-class GameStateChangeCutscene(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class GameStateChangeCutscene(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CACutsceneListener"
 
     override val requiredModuleName: String = "game.feature.model.game-model"
@@ -21,15 +21,15 @@ class GameStateChangeCutscene(eventManager: GameEventManager) : GameEventListene
         """
 
     @JavascriptInterface
-    fun reportCutsceneEnter(){
+    fun reportCutsceneEnter() {
         eventManager.onCutsceneEnter()
 
         isInCutscene = true
     }
 
     @JavascriptInterface
-    fun reportCutsceneExit(){
-        if(isInCutscene){
+    fun reportCutsceneExit() {
+        if (isInCutscene) {
             eventManager.onCutsceneExit()
         }
 
@@ -39,11 +39,11 @@ class GameStateChangeCutscene(eventManager: GameEventManager) : GameEventListene
     companion object {
         var isInCutscene = false
     }
-
 }
 
-class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class MessageRing(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAMessageRingListener"
 
     override val requiredModuleName: String = "game.feature.msg.message-model"
@@ -56,15 +56,15 @@ class MessageRing(eventManager: GameEventManager) : GameEventListener(eventManag
         """
 
     @JavascriptInterface
-    fun reportRing(){
+    fun reportRing() {
         // Report a message ring
         eventManager.onDirectLinkRing()
     }
-
 }
 
-class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class MessageEnd(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAMessageEndListener"
 
     override val requiredModuleName: String = "game.feature.msg.message-model"
@@ -77,9 +77,8 @@ class MessageEnd(eventManager: GameEventManager) : GameEventListener(eventManage
         """
 
     @JavascriptInterface
-    fun reportMessageEnd(){
+    fun reportMessageEnd() {
         // Report a message end
         eventManager.onDirectLinkEnd()
     }
-
 }

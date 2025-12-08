@@ -6,10 +6,10 @@ import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import org.json.JSONArray
 
-class ModListProvider(gameWrapper: GameWrapper,
-                      hostActivity: GameActivity
+class ModListProvider(
+    gameWrapper: GameWrapper,
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-
     lateinit var modList: List<String>
 
     override fun onPreGamePageLoad() {
@@ -18,7 +18,7 @@ class ModListProvider(gameWrapper: GameWrapper,
     }
 
     private fun loadModList() {
-        if(!gameWrapper.modLoaderPresent){
+        if (!gameWrapper.modLoaderPresent) {
             modList = emptyList()
             return
         }
@@ -51,10 +51,9 @@ class ModListProvider(gameWrapper: GameWrapper,
     @JavascriptInterface
     fun getModListAsJson(): String {
         val json = JSONArray()
-        for(name in modList){
+        for (name in modList) {
             json.put(name)
         }
         return json.toString()
     }
-
 }

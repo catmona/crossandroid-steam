@@ -7,10 +7,10 @@ import de.radicalfishgames.crosscode.GameWrapper
 import org.json.JSONArray
 import java.io.File
 
-class ExtensionLoadingFix(gameWrapper: GameWrapper,
-                          hostActivity: GameActivity
+class ExtensionLoadingFix(
+    gameWrapper: GameWrapper,
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-
     lateinit var extensionList: List<String>
 
     override fun onPreGamePageLoad() {
@@ -29,7 +29,7 @@ class ExtensionLoadingFix(gameWrapper: GameWrapper,
                         this.onExtensionListLoaded(${getExtensionListAsJson()});
                     }
                 });
-            """
+            """,
         )
     }
 
@@ -70,10 +70,9 @@ class ExtensionLoadingFix(gameWrapper: GameWrapper,
     @JavascriptInterface
     fun getExtensionListAsJson(): String {
         val json = JSONArray()
-        for(name in extensionList){
+        for (name in extensionList) {
             json.put(name)
         }
         return json.toString()
     }
-
 }

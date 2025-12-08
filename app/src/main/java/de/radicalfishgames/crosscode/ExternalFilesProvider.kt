@@ -11,30 +11,31 @@ import java.io.File
 import java.io.FileNotFoundException
 
 class ExternalFilesProvider : DocumentsProvider() {
-
     companion object {
         private const val ROOT_ID = "crosscode"
         private const val ROOT_DOC_ID = "root"
 
-        private val DEFAULT_ROOT_PROJECTION = arrayOf(
-            DocumentsContract.Root.COLUMN_ROOT_ID,
-            DocumentsContract.Root.COLUMN_MIME_TYPES,
-            DocumentsContract.Root.COLUMN_FLAGS,
-            DocumentsContract.Root.COLUMN_ICON,
-            DocumentsContract.Root.COLUMN_TITLE,
-            DocumentsContract.Root.COLUMN_SUMMARY,
-            DocumentsContract.Root.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Root.COLUMN_AVAILABLE_BYTES
-        )
+        private val DEFAULT_ROOT_PROJECTION =
+            arrayOf(
+                DocumentsContract.Root.COLUMN_ROOT_ID,
+                DocumentsContract.Root.COLUMN_MIME_TYPES,
+                DocumentsContract.Root.COLUMN_FLAGS,
+                DocumentsContract.Root.COLUMN_ICON,
+                DocumentsContract.Root.COLUMN_TITLE,
+                DocumentsContract.Root.COLUMN_SUMMARY,
+                DocumentsContract.Root.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Root.COLUMN_AVAILABLE_BYTES,
+            )
 
-        private val DEFAULT_DOCUMENT_PROJECTION = arrayOf(
-            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_MIME_TYPE,
-            DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-            DocumentsContract.Document.COLUMN_LAST_MODIFIED,
-            DocumentsContract.Document.COLUMN_FLAGS,
-            DocumentsContract.Document.COLUMN_SIZE
-        )
+        private val DEFAULT_DOCUMENT_PROJECTION =
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_MIME_TYPE,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_LAST_MODIFIED,
+                DocumentsContract.Document.COLUMN_FLAGS,
+                DocumentsContract.Document.COLUMN_SIZE,
+            )
     }
 
     private val baseDir: File
@@ -54,7 +55,7 @@ class ExternalFilesProvider : DocumentsProvider() {
             add(
                 DocumentsContract.Root.COLUMN_FLAGS,
                 DocumentsContract.Root.FLAG_SUPPORTS_CREATE or
-                    DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD
+                    DocumentsContract.Root.FLAG_SUPPORTS_IS_CHILD,
             )
             add(DocumentsContract.Root.COLUMN_MIME_TYPES, "*/*")
             add(DocumentsContract.Root.COLUMN_AVAILABLE_BYTES, baseDir.freeSpace)
@@ -63,7 +64,10 @@ class ExternalFilesProvider : DocumentsProvider() {
         return result
     }
 
-    override fun queryDocument(documentId: String?, projection: Array<out String>?): Cursor {
+    override fun queryDocument(
+        documentId: String?,
+        projection: Array<out String>?,
+    ): Cursor {
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
         val file = getFileForDocId(documentId ?: ROOT_DOC_ID)
         includeFile(result, documentId ?: ROOT_DOC_ID, file)
@@ -73,7 +77,7 @@ class ExternalFilesProvider : DocumentsProvider() {
     override fun queryChildDocuments(
         parentDocumentId: String?,
         projection: Array<out String>?,
-        sortOrder: String?
+        sortOrder: String?,
     ): Cursor {
         val result = MatrixCursor(projection ?: DEFAULT_DOCUMENT_PROJECTION)
         val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID)
@@ -88,7 +92,7 @@ class ExternalFilesProvider : DocumentsProvider() {
     override fun openDocument(
         documentId: String?,
         mode: String?,
-        signal: CancellationSignal?
+        signal: CancellationSignal?,
     ): ParcelFileDescriptor {
         val file = getFileForDocId(documentId ?: throw FileNotFoundException())
         val accessMode = ParcelFileDescriptor.parseMode(mode ?: "r")
@@ -98,7 +102,7 @@ class ExternalFilesProvider : DocumentsProvider() {
     override fun createDocument(
         parentDocumentId: String?,
         mimeType: String?,
-        displayName: String?
+        displayName: String?,
     ): String {
         val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID)
         val file = File(parent, displayName ?: "new_file")
@@ -121,14 +125,20 @@ class ExternalFilesProvider : DocumentsProvider() {
         }
     }
 
-    override fun renameDocument(documentId: String?, displayName: String?): String {
+    override fun renameDocument(
+        documentId: String?,
+        displayName: String?,
+    ): String {
         val file = getFileForDocId(documentId ?: throw FileNotFoundException())
         val newFile = File(file.parentFile, displayName ?: file.name)
         file.renameTo(newFile)
         return getDocIdForFile(newFile)
     }
 
-    override fun isChildDocument(parentDocumentId: String?, documentId: String?): Boolean {
+    override fun isChildDocument(
+        parentDocumentId: String?,
+        documentId: String?,
+    ): Boolean {
         val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID)
         val child = getFileForDocId(documentId ?: return false)
         return child.absolutePath.startsWith(parent.absolutePath)
@@ -152,7 +162,11 @@ class ExternalFilesProvider : DocumentsProvider() {
         }
     }
 
-    private fun includeFile(result: MatrixCursor, docId: String, file: File) {
+    private fun includeFile(
+        result: MatrixCursor,
+        docId: String,
+        file: File,
+    ) {
         var flags = 0
 
         if (file.isDirectory) {
@@ -163,11 +177,12 @@ class ExternalFilesProvider : DocumentsProvider() {
         flags = flags or DocumentsContract.Document.FLAG_SUPPORTS_DELETE
         flags = flags or DocumentsContract.Document.FLAG_SUPPORTS_RENAME
 
-        val mimeType = if (file.isDirectory) {
-            DocumentsContract.Document.MIME_TYPE_DIR
-        } else {
-            getMimeType(file)
-        }
+        val mimeType =
+            if (file.isDirectory) {
+                DocumentsContract.Document.MIME_TYPE_DIR
+            } else {
+                getMimeType(file)
+            }
 
         result.newRow().apply {
             add(DocumentsContract.Document.COLUMN_DOCUMENT_ID, docId)

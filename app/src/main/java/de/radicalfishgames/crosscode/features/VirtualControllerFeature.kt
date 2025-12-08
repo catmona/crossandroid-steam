@@ -12,12 +12,11 @@ import de.radicalfishgames.crosscode.layouts.DirectLayout
 import de.radicalfishgames.crosscode.layouts.MenuLayout
 import de.radicalfishgames.crosscode.layouts.VirtualControllerLayout
 
-
-class VirtualControllerFeature(gameWrapper: GameWrapper,
-                               hostActivity: GameActivity
+class VirtualControllerFeature(
+    gameWrapper: GameWrapper,
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-
-    private val gamepadState: GamepadJsonBridge = GamepadJsonBridge {updateGamepadJS()}
+    private val gamepadState: GamepadJsonBridge = GamepadJsonBridge { updateGamepadJS() }
 
     private val forceVirtualController = hostActivity.preferences.getBoolean("force_virtual", false)
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
@@ -33,22 +32,20 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
 
     private var isControllerReady = false
 
-
     override fun onPostGamePageLoad() {
-        if(!enabled){
+        if (!enabled) {
             return
         }
 
         // Hook the getGamepads-function to only return our gamepad
         runJS(
             """
-                var $JS_GAMEPADS_VAR = [];
-                navigator.getGamepads = function(){
-                    return $JS_GAMEPADS_VAR;
-                };
-            """
-                .trimIndent()
-                .replace("\n", "")
+            var $JS_GAMEPADS_VAR = [];
+            navigator.getGamepads = function(){
+                return $JS_GAMEPADS_VAR;
+            };
+            """.trimIndent()
+                .replace("\n", ""),
         )
 
         CombatLayout.alwaysSprint = combatAlwaysSprint
@@ -64,10 +61,8 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
         isControllerReady = true
     }
 
-    private fun initializeLayouts(){
-
-        for(controller in availableLayouts){
-
+    private fun initializeLayouts() {
+        for (controller in availableLayouts) {
             val parentView = hostActivity.layoutInflater.inflate(controller.layoutResId, hostActivity.binding.controlContainer) as ViewGroup
             parentView.visibility = View.VISIBLE
 
@@ -81,8 +76,8 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
         }
     }
 
-    fun switchToLayout(newLayout: VirtualControllerLayout){
-        if(!enabled){
+    fun switchToLayout(newLayout: VirtualControllerLayout) {
+        if (!enabled) {
             return
         }
         Log.d("CrossCode", "Switching to virtual controller ${newLayout.javaClass.simpleName}")
@@ -94,12 +89,12 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
         gameWrapper.blockWebViewClicks = !currentLayout.allowWebViewInteraction
     }
 
-    private fun updateGamepadJS(){
-        if(!enabled){
+    private fun updateGamepadJS() {
+        if (!enabled) {
             return
         }
 
-        if(isControllerReady){
+        if (isControllerReady) {
             val jsonGamepad = gamepadState.asJsonString
 
             runJS("$JS_GAMEPADS_VAR = [JSON.parse('$jsonGamepad')];")

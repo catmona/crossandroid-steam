@@ -7,9 +7,7 @@ import de.radicalfishgames.crosscode.databinding.DirectLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 
-
 object DirectLayout : VirtualControllerLayout() {
-
     override val layoutResId = R.layout.direct_layout
     override val allowWebViewInteraction = true
 
@@ -19,7 +17,7 @@ object DirectLayout : VirtualControllerLayout() {
         gamepad: GamepadJsonBridge,
         layoutView: View,
         feature: VirtualControllerFeature,
-        eventManager: GameEventManager
+        eventManager: GameEventManager,
     ) {
         val binding = DirectLayoutBinding.bind(layoutView)
 

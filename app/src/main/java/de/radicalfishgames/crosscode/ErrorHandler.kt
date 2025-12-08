@@ -9,10 +9,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.PrintWriter
 import java.io.StringWriter
 
-
-class ErrorHandler(val hostActivity: Activity) : Thread.UncaughtExceptionHandler {
-
-    override fun uncaughtException(t: Thread, e: Throwable) {
+class ErrorHandler(
+    val hostActivity: Activity,
+) : Thread.UncaughtExceptionHandler {
+    override fun uncaughtException(
+        t: Thread,
+        e: Throwable,
+    ) {
         MaterialAlertDialogBuilder(hostActivity)
             .setTitle("Crash")
             .setMessage("Looks like there was an error in the app! Please report the log message you can copy below.")
@@ -20,11 +23,10 @@ class ErrorHandler(val hostActivity: Activity) : Thread.UncaughtExceptionHandler
                 val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("CrossAndroid Error", errorToString(e))
                 clipboard.setPrimaryClip(clip)
-            }
-            .show()
+            }.show()
     }
 
-    private fun errorToString(e: Throwable): String{
+    private fun errorToString(e: Throwable): String {
         val sw = StringWriter()
         val pw = PrintWriter(sw)
         e.printStackTrace(pw)

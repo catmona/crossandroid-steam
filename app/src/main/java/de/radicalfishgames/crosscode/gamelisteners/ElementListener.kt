@@ -2,9 +2,9 @@ package de.radicalfishgames.crosscode.gamelisteners
 
 import android.webkit.JavascriptInterface
 
-
-class ElementModeChange(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class ElementModeChange(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAElementModeChangeListener"
 
     override val requiredModuleName: String = "game.feature.player.player-model"
@@ -17,14 +17,14 @@ class ElementModeChange(eventManager: GameEventManager) : GameEventListener(even
         """
 
     @JavascriptInterface
-    fun reportElementalModeChanged(element: Int){
+    fun reportElementalModeChanged(element: Int) {
         eventManager.onElementModeChange(ElementMode.valueOf(element))
     }
-
 }
 
-class ElementLoad(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class ElementLoad(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAElementLoadListener"
 
     override val requiredModuleName: String = "game.feature.player.player-model"
@@ -37,10 +37,9 @@ class ElementLoad(eventManager: GameEventManager) : GameEventListener(eventManag
         """
 
     @JavascriptInterface
-    fun reportElementLoad(element: Int){
+    fun reportElementLoad(element: Int) {
         eventManager.onElementModeChange(ElementMode.valueOf(element))
     }
-
 }
 
 enum class ElementMode {
@@ -48,11 +47,12 @@ enum class ElementMode {
     HEAT,
     COLD,
     SHOCK,
-    WAVE;
+    WAVE,
+    ;
 
     companion object {
-        fun valueOf(index: Int): ElementMode{
-            return when(index){
+        fun valueOf(index: Int): ElementMode =
+            when (index) {
                 0 -> NEUTRAL
                 1 -> HEAT
                 2 -> COLD
@@ -60,6 +60,5 @@ enum class ElementMode {
                 4 -> WAVE
                 else -> NEUTRAL
             }
-        }
     }
 }

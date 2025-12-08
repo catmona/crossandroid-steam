@@ -1,7 +1,8 @@
 package de.radicalfishgames.crosscode.gamelisteners
 
-
-abstract class GameEventListener(protected val eventManager: GameEventManager) {
+abstract class GameEventListener(
+    protected val eventManager: GameEventManager,
+) {
     abstract val interfaceName: String
 
     abstract val requiredModuleName: String

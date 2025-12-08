@@ -11,45 +11,41 @@ import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
 
-
 class ImportExportFeature(
     gameWrapper: GameWrapper,
-    hostActivity: GameActivity
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-
     private val saveStringToImport = hostActivity.preferences.getString("save_to_import", "")
     private val exportSaveEnabled = hostActivity.preferences.getBoolean("export_save", false)
 
     private var saveStringToExport: String? = null
 
     override fun onPreGamePageLoad() {
-
         gameWrapper.exposeJSInterface(this, "CAImportExport")
-
     }
 
     override fun onPostGamePageLoad() {
-
         val importJS: String
-        if(saveStringToImport != null && saveStringToImport.isNotEmpty()){
+        if (saveStringToImport != null && saveStringToImport.isNotEmpty()) {
             importJS = "ig.storage.pushSlotData(\"${saveStringToImport.trim()}\");"
 
-            hostActivity.preferences.edit()
+            hostActivity.preferences
+                .edit()
                 .putString("save_to_import", "")
                 .apply()
-
-        }else{
+        } else {
             importJS = ""
         }
 
         val exportJS: String
-        if(exportSaveEnabled){
+        if (exportSaveEnabled) {
             exportJS = "CAImportExport.showExportedSave(ig.storage.getLastSlotData());"
-        }else{
+        } else {
             exportJS = ""
         }
 
-        runJS("""
+        runJS(
+            """
             ig.module("crossandroid.importexport").requires("impact.feature.storage.storage").defines(function(){
                 sc.CrossAndroidImportExport = ig.GameAddon.extend({
                     init: function() {
@@ -61,30 +57,25 @@ class ImportExportFeature(
                     return sc.crossAndroidImportExport = new sc.CrossAndroidImportExport
                 })
             })
-        """)
-
+        """,
+        )
     }
 
     @JavascriptInterface
-    fun showExportedSave(saveString: String){
+    fun showExportedSave(saveString: String) {
         try {
-
             MaterialAlertDialogBuilder(hostActivity)
                 .setTitle("Exported Save String")
                 .setMessage("Your save string is ready! You can save it as a text file now.")
                 .setPositiveButton("Save") { _: DialogInterface, _: Int ->
                     saveStringToExport = saveString
                     hostActivity.createDocumentLauncher.launch("crosscode_savestring.txt")
-                }
-                .setNegativeButton("Cancel") { _: DialogInterface, _: Int ->
+                }.setNegativeButton("Cancel") { _: DialogInterface, _: Int ->
                     hostActivity.goIntoFullScreen()
-                }
-                .setOnDismissListener {
+                }.setOnDismissListener {
                     hostActivity.goIntoFullScreen()
-                }
-                .show()
-
-        }catch (ex: Exception){
+                }.show()
+        } catch (ex: Exception) {
             hostActivity.errorHandler.uncaughtException(Thread.currentThread(), ex)
             throw ex
         }

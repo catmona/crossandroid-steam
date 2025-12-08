@@ -14,7 +14,6 @@ import java.util.zip.ZipFile
  * Also maintains an asset index for fast lookup of mod assets.
  */
 class CcmodManager {
-
     private val zipCache = ConcurrentHashMap<String, ZipFile>()
 
     // Maps asset paths (e.g., "media/gui/CCModManager.png") to ccmod file paths
@@ -40,7 +39,10 @@ class CcmodManager {
      * @param internalPath Path inside the archive (e.g., "package.json" or "assets/data/foo.json")
      * @return InputStream for the file, or null if not found
      */
-    fun getFileStream(ccmodPath: String, internalPath: String): InputStream? {
+    fun getFileStream(
+        ccmodPath: String,
+        internalPath: String,
+    ): InputStream? {
         val zipFile = getZipFile(ccmodPath) ?: return null
         val normalizedPath = internalPath.trimStart('/')
 
@@ -66,7 +68,10 @@ class CcmodManager {
     /**
      * Check if a path exists inside a ccmod archive (file or directory).
      */
-    fun exists(ccmodPath: String, internalPath: String): Boolean {
+    fun exists(
+        ccmodPath: String,
+        internalPath: String,
+    ): Boolean {
         val zipFile = getZipFile(ccmodPath) ?: return false
         val normalizedPath = internalPath.trimStart('/')
 
@@ -90,7 +95,10 @@ class CcmodManager {
     /**
      * Check if a path is a directory inside a ccmod archive.
      */
-    fun isDirectory(ccmodPath: String, internalPath: String): Boolean {
+    fun isDirectory(
+        ccmodPath: String,
+        internalPath: String,
+    ): Boolean {
         val zipFile = getZipFile(ccmodPath) ?: return false
         val normalizedPath = internalPath.trimStart('/')
 
@@ -121,7 +129,10 @@ class CcmodManager {
     /**
      * Check if a path is a file inside a ccmod archive.
      */
-    fun isFile(ccmodPath: String, internalPath: String): Boolean {
+    fun isFile(
+        ccmodPath: String,
+        internalPath: String,
+    ): Boolean {
         val zipFile = getZipFile(ccmodPath) ?: return false
         val normalizedPath = internalPath.trimStart('/')
 
@@ -137,11 +148,15 @@ class CcmodManager {
      * List files in a directory inside a ccmod archive.
      * @return List of filenames (directories end with "/")
      */
-    fun listFiles(ccmodPath: String, internalPath: String): List<String> {
+    fun listFiles(
+        ccmodPath: String,
+        internalPath: String,
+    ): List<String> {
         val zipFile = getZipFile(ccmodPath) ?: return emptyList()
-        val normalizedPath = internalPath.trimStart('/').let {
-            if (it.isEmpty() || it.endsWith("/")) it else "$it/"
-        }
+        val normalizedPath =
+            internalPath.trimStart('/').let {
+                if (it.isEmpty() || it.endsWith("/")) it else "$it/"
+            }
 
         val results = mutableSetOf<String>()
 
@@ -159,11 +174,12 @@ class CcmodManager {
             }
 
             // Get the relative path from the directory
-            val relativePath = if (normalizedPath.isEmpty()) {
-                entryName
-            } else {
-                entryName.removePrefix(normalizedPath)
-            }
+            val relativePath =
+                if (normalizedPath.isEmpty()) {
+                    entryName
+                } else {
+                    entryName.removePrefix(normalizedPath)
+                }
 
             if (relativePath.isEmpty()) {
                 continue
@@ -171,11 +187,12 @@ class CcmodManager {
 
             // Get only direct children (first component of relative path)
             val firstSlash = relativePath.indexOf('/')
-            val childName = if (firstSlash == -1) {
-                relativePath
-            } else {
-                relativePath.substring(0, firstSlash + 1) // Include trailing slash for dirs
-            }
+            val childName =
+                if (firstSlash == -1) {
+                    relativePath
+                } else {
+                    relativePath.substring(0, firstSlash + 1) // Include trailing slash for dirs
+                }
 
             if (childName.isNotEmpty()) {
                 results.add(childName)
@@ -188,7 +205,10 @@ class CcmodManager {
     /**
      * List files as JSON array (for X-Cmd: getFiles response).
      */
-    fun listFilesAsJson(ccmodPath: String, internalPath: String): String {
+    fun listFilesAsJson(
+        ccmodPath: String,
+        internalPath: String,
+    ): String {
         val files = listFiles(ccmodPath, internalPath)
         return JSONArray(files).toString()
     }
@@ -265,9 +285,7 @@ class CcmodManager {
      * @param assetPath The relative asset path (e.g., "media/gui/CCModManager.png")
      * @return The ccmod file path containing this asset, or null if not found
      */
-    fun lookupAsset(assetPath: String): String? {
-        return assetIndex[assetPath]
-    }
+    fun lookupAsset(assetPath: String): String? = assetIndex[assetPath]
 
     /**
      * Get a file stream for an indexed asset.

@@ -1,26 +1,25 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Intent
-import android.os.Bundle
-import android.util.Log
-import android.view.View.GONE
-import android.view.View.VISIBLE
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.View
+import android.view.View.GONE
+import android.view.View.VISIBLE
 import android.widget.ScrollView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.mikepenz.aboutlibraries.LibsBuilder
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 
 class LaunchActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityLaunchBinding
     private var guideBinding: GuideLayoutBinding? = null
     private lateinit var gameFolderManager: GameFolderManager
@@ -104,9 +103,13 @@ class LaunchActivity : AppCompatActivity() {
         binding.launchContainer.visibility = VISIBLE
     }
 
-    private fun instanceNotFound(showDialog: Boolean = false, message: String? = null) {
+    private fun instanceNotFound(
+        showDialog: Boolean = false,
+        message: String? = null,
+    ) {
         if (showDialog && message != null) {
-            AlertDialog.Builder(this)
+            AlertDialog
+                .Builder(this)
                 .setTitle("Game files not found")
                 .setMessage(message)
                 .setPositiveButton("OK", null)

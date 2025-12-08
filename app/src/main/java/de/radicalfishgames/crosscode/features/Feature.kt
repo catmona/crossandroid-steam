@@ -4,11 +4,16 @@ import android.webkit.ValueCallback
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 
-
-abstract class Feature(protected val gameWrapper: GameWrapper, protected val hostActivity: GameActivity) {
-    
+abstract class Feature(
+    protected val gameWrapper: GameWrapper,
+    protected val hostActivity: GameActivity,
+) {
     open fun onPreGamePageLoad() {}
+
     open fun onPostGamePageLoad() {}
 
-    internal fun runJS(js: String, callback: ValueCallback<String>? = null) = gameWrapper.runJS(js, callback)
+    internal fun runJS(
+        js: String,
+        callback: ValueCallback<String>? = null,
+    ) = gameWrapper.runJS(js, callback)
 }

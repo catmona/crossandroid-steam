@@ -2,9 +2,9 @@ package de.radicalfishgames.crosscode.gamelisteners
 
 import android.webkit.JavascriptInterface
 
-
-class MenuFullEnter(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class MenuFullEnter(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAMenuListenerFullEnter"
 
     override val requiredModuleName: String = "game.feature.menu.menu-model"
@@ -17,13 +17,14 @@ class MenuFullEnter(eventManager: GameEventManager) : GameEventListener(eventMan
         """
 
     @JavascriptInterface
-    fun reportFullMenuOpen(){
+    fun reportFullMenuOpen() {
         eventManager.onMenuEnter()
     }
 }
 
-class MenuExit(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class MenuExit(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CAMenuListenerExit"
 
     override val requiredModuleName: String = "game.feature.menu.menu-model"
@@ -36,17 +37,18 @@ class MenuExit(eventManager: GameEventManager) : GameEventListener(eventManager)
         """
 
     @JavascriptInterface
-    fun reportMenuExit(){
+    fun reportMenuExit() {
         // The menu exit event fires when the trade menu is opened, which is why we ignore
         // menu events that happen during the trade menu.
-        if(!TradeMenu.isMenuOpen){
+        if (!TradeMenu.isMenuOpen) {
             eventManager.onMenuExit()
         }
     }
 }
 
-class TradeMenu(eventManager: GameEventManager) : GameEventListener(eventManager) {
-
+class TradeMenu(
+    eventManager: GameEventManager,
+) : GameEventListener(eventManager) {
     override val interfaceName: String = "CATradeMenuListenerEnter"
 
     override val requiredModuleName: String = "game.feature.model.game-model"
@@ -63,15 +65,15 @@ class TradeMenu(eventManager: GameEventManager) : GameEventListener(eventManager
         """
 
     @JavascriptInterface
-    fun reportTradeMenuOpen(){
+    fun reportTradeMenuOpen() {
         eventManager.onMenuEnter()
 
         isMenuOpen = true
     }
 
     @JavascriptInterface
-    fun reportTradeMenuExit(){
-        if(isMenuOpen){
+    fun reportTradeMenuExit() {
+        if (isMenuOpen) {
             eventManager.onMenuExit()
         }
 

@@ -8,8 +8,9 @@ import java.io.File
  * Manages access to the game folder in the app's external files directory.
  * Games files should be placed in: Android/data/de.radicalfishgames.crosscode/files/CrossCode/
  */
-class GameFolderManager(private val context: Context) {
-
+class GameFolderManager(
+    private val context: Context,
+) {
     /**
      * Returns the game directory, or null if external storage is not available.
      */
@@ -21,9 +22,7 @@ class GameFolderManager(private val context: Context) {
     /**
      * Returns a human-readable path for display purposes.
      */
-    fun getDisplayPath(): String? {
-        return getGameDir()?.absolutePath
-    }
+    fun getDisplayPath(): String? = getGameDir()?.absolutePath
 
     /**
      * Checks if the game folder exists and is readable.

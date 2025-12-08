@@ -15,7 +15,6 @@ import kotlin.math.min
 import kotlin.math.pow
 
 object CombatLayout : VirtualControllerLayout() {
-
     override val layoutResId = R.layout.combat_layout
 
     var alwaysSprint = true
@@ -32,20 +31,21 @@ object CombatLayout : VirtualControllerLayout() {
     private var dashState = NONE
     private var interactingWithSth = false
 
-    override fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager){
-
+    override fun bindControls(
+        gamepad: GamepadJsonBridge,
+        layoutView: View,
+        feature: VirtualControllerFeature,
+        eventManager: GameEventManager,
+    ) {
         val binding = CombatLayoutBinding.bind(layoutView)
 
         binding.apply {
-
             overlayToggle.onSwipe { right, left, up, down ->
                 // Do in handler to avoid a crash due to the potential layout changes
                 handler.post {
-
-                    if(right || left){
+                    if (right || left) {
                         feature.switchToLayout(MenuLayout)
-
-                    }else if(up || down){
+                    } else if (up || down) {
                         DirectLayout.layoutToEnable = CombatLayout
                         feature.switchToLayout(DirectLayout)
                     }
@@ -61,23 +61,31 @@ object CombatLayout : VirtualControllerLayout() {
                 // Switch buttons, because with our method you go back to neutral by swiping in the
                 // opposite direction as before. Eg Neutral -> Heat: Swipe Down and then Heat -> Neutral: Swipe Up
                 when (currentElement) {
-                    ElementMode.NEUTRAL -> when {
-                        right -> fakeClick(gamepad.leftCross.right)
-                        left -> fakeClick(gamepad.leftCross.left)
-                        up -> fakeClick(gamepad.leftCross.top)
-                        down -> fakeClick(gamepad.leftCross.bottom)
+                    ElementMode.NEUTRAL -> {
+                        when {
+                            right -> fakeClick(gamepad.leftCross.right)
+                            left -> fakeClick(gamepad.leftCross.left)
+                            up -> fakeClick(gamepad.leftCross.top)
+                            down -> fakeClick(gamepad.leftCross.bottom)
+                        }
                     }
-                    ElementMode.HEAT, ElementMode.COLD -> when {
-                        right -> fakeClick(gamepad.leftCross.right)
-                        left -> fakeClick(gamepad.leftCross.left)
-                        up -> fakeClick(gamepad.leftCross.bottom)
-                        down -> fakeClick(gamepad.leftCross.top)
+
+                    ElementMode.HEAT, ElementMode.COLD -> {
+                        when {
+                            right -> fakeClick(gamepad.leftCross.right)
+                            left -> fakeClick(gamepad.leftCross.left)
+                            up -> fakeClick(gamepad.leftCross.bottom)
+                            down -> fakeClick(gamepad.leftCross.top)
+                        }
                     }
-                    ElementMode.SHOCK, ElementMode.WAVE -> when {
-                        right -> fakeClick(gamepad.leftCross.left)
-                        left -> fakeClick(gamepad.leftCross.right)
-                        up -> fakeClick(gamepad.leftCross.top)
-                        down -> fakeClick(gamepad.leftCross.bottom)
+
+                    ElementMode.SHOCK, ElementMode.WAVE -> {
+                        when {
+                            right -> fakeClick(gamepad.leftCross.left)
+                            left -> fakeClick(gamepad.leftCross.right)
+                            up -> fakeClick(gamepad.leftCross.top)
+                            down -> fakeClick(gamepad.leftCross.bottom)
+                        }
                     }
                 }
             }
@@ -86,24 +94,25 @@ object CombatLayout : VirtualControllerLayout() {
 
                 currentElement = elementMode
 
-                val elementUIImageResID = when(elementMode){
-                    ElementMode.NEUTRAL -> R.drawable.element_neutral
-                    ElementMode.HEAT -> R.drawable.element_heat
-                    ElementMode.COLD -> R.drawable.element_cold
-                    ElementMode.SHOCK -> R.drawable.element_shock
-                    ElementMode.WAVE -> R.drawable.element_wave
-                }
+                val elementUIImageResID =
+                    when (elementMode) {
+                        ElementMode.NEUTRAL -> R.drawable.element_neutral
+                        ElementMode.HEAT -> R.drawable.element_heat
+                        ElementMode.COLD -> R.drawable.element_cold
+                        ElementMode.SHOCK -> R.drawable.element_shock
+                        ElementMode.WAVE -> R.drawable.element_wave
+                    }
 
-                elementalButton.imageBitmap = BitmapFactory.decodeResource(
-                    elementalButton.context.resources,
-                    elementUIImageResID
-                )
+                elementalButton.imageBitmap =
+                    BitmapFactory.decodeResource(
+                        elementalButton.context.resources,
+                        elementUIImageResID,
+                    )
 
                 elementalButton.invalidate()
             }
 
             movementPad.apply {
-
                 var lastInsideInnerCircle = false
                 var hasBeenInsideInnerCircle = false
 
@@ -112,86 +121,80 @@ object CombatLayout : VirtualControllerLayout() {
                     val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.7.pow(2)
                     hasBeenInsideInnerCircle = hasBeenInsideInnerCircle || currentInsideInnerCircle
 
-                    val xActual = when {
-                        alwaysSprint && xDir > 0.15 -> 1.0
-                        alwaysSprint && xDir < -0.15 -> -1.0
-                        else -> min(xDir * 1.3, 1.0)
-                    }
+                    val xActual =
+                        when {
+                            alwaysSprint && xDir > 0.15 -> 1.0
+                            alwaysSprint && xDir < -0.15 -> -1.0
+                            else -> min(xDir * 1.3, 1.0)
+                        }
 
-                    val yActual = when {
-                        alwaysSprint && yDir > 0.15 -> 1.0
-                        alwaysSprint && yDir < -0.15 -> -1.0
-                        else -> min(yDir * 1.3, 1.0)
-                    }
+                    val yActual =
+                        when {
+                            alwaysSprint && yDir > 0.15 -> 1.0
+                            alwaysSprint && yDir < -0.15 -> -1.0
+                            else -> min(yDir * 1.3, 1.0)
+                        }
 
                     gamepad.leftStick.horizontal.state = xActual
                     gamepad.leftStick.vertical.state = yActual
 
-                    if(dashState == NONE && !currentInsideInnerCircle && (!dashOnlyOnTap || !hasBeenInsideInnerCircle)){
+                    if (dashState == NONE && !currentInsideInnerCircle && (!dashOnlyOnTap || !hasBeenInsideInnerCircle)) {
                         dashState = DASHING
 
                         CombatLayout.handler.postDelayed({
                             gamepad.leftBumper.pressed = true
 
                             CombatLayout.handler.postDelayed({
-
-                                if(dashState == DASHING_MOVE_END){
+                                if (dashState == DASHING_MOVE_END) {
                                     gamepad.leftStick.vertical.state = 0.0
                                     gamepad.leftStick.horizontal.state = 0.0
 
                                     gamepad.leftBumper.pressed = false
 
                                     dashState = NONE
-
-                                }else if(lastInsideInnerCircle){
+                                } else if (lastInsideInnerCircle) {
                                     gamepad.leftBumper.pressed = false
 
                                     dashState = NONE
-
-                                }else{
+                                } else {
                                     dashState = DASHED
                                 }
                             }, FAKE_CLICK_TIME)
                         }, 60L)
-
                     }
 
-                    if(currentInsideInnerCircle && dashState == DASHED){
+                    if (currentInsideInnerCircle && dashState == DASHED) {
                         gamepad.leftBumper.pressed = false
 
                         dashState = NONE
-
                     }
 
                     lastInsideInnerCircle = currentInsideInnerCircle
                 }
 
                 onRelease {
-
-                    if(dashState != DASHING){
+                    if (dashState != DASHING) {
                         gamepad.leftStick.vertical.state = 0.0
                         gamepad.leftStick.horizontal.state = 0.0
 
                         gamepad.leftBumper.pressed = false
 
                         dashState = NONE
-                    }  else {
+                    } else {
                         dashState = DASHING_MOVE_END
                     }
 
                     // Confirm quickmenu selection
-                    if(lastInsideInnerCircle && gamepad.leftTrigger.pressed){
+                    if (lastInsideInnerCircle && gamepad.leftTrigger.pressed) {
                         fakeClick(gamepad.rightCross.bottom)
                     }
 
                     lastInsideInnerCircle = false
                     hasBeenInsideInnerCircle = false
                 }
-
             }
 
             aimPad.apply {
-
                 var lastInsideInnerCircle = false
 
                 var longPressPending = false
@@ -202,32 +205,31 @@ object CombatLayout : VirtualControllerLayout() {
 
                     val currentInsideInnerCircle = xDir.pow(2) + yDir.pow(2) <= 0.3.pow(2)
 
-                    if(currentInsideInnerCircle){
+                    if (currentInsideInnerCircle) {
+                        val actionButtonPressed =
+                            gamepad.leftBumper.pressed ||
+                                dashState != NONE ||
+                                gamepad.rightStick.vertical.state != 0.0 ||
+                                gamepad.rightStick.horizontal.state != 0.0
 
-                        val actionButtonPressed = gamepad.leftBumper.pressed
-                                || dashState != NONE
-                                || gamepad.rightStick.vertical.state != 0.0
-                                || gamepad.rightStick.horizontal.state != 0.0
-
-                        if(actionButtonPressed){
-
+                        if (actionButtonPressed) {
                             // Trigger combat arts - the delay is there to avoid triggering the art accidentally
-                            if(!longPressPending){
+                            if (!longPressPending) {
                                 longPressHandler.postDelayed({
-                                    val actionButtonStillPressed = gamepad.leftBumper.pressed
-                                            || dashState != NONE
-                                            || gamepad.rightStick.vertical.state != 0.0
-                                            || gamepad.rightStick.horizontal.state != 0.0
+                                    val actionButtonStillPressed =
+                                        gamepad.leftBumper.pressed ||
+                                            dashState != NONE ||
+                                            gamepad.rightStick.vertical.state != 0.0 ||
+                                            gamepad.rightStick.horizontal.state != 0.0
 
-                                    if(actionButtonStillPressed){
+                                    if (actionButtonStillPressed) {
                                         gamepad.rightTrigger.pressed = true
                                         combatArtPending = true
                                     }
                                 }, 100L)
                                 longPressPending = true
                             }
-
-                        }else{
+                        } else {
                             gamepad.rightCross.bottom.pressed = true
                             gamepad.rightBumper.pressed = true
 
@@ -239,18 +241,17 @@ object CombatLayout : VirtualControllerLayout() {
                                 """window.variable = ig.game.playerEntity.interactObject === null;""",
                                 ValueCallback { result ->
                                     interactingWithSth = !result.toBoolean()
-                                    if(interactingWithSth){
+                                    if (interactingWithSth) {
                                         gamepad.rightTrigger.pressed = false
                                     }
-                                }
+                                },
                             )
 
                             // Trigger combat arts for melee
-                            if(!longPressPending){
-
+                            if (!longPressPending) {
                                 longPressHandler.postDelayed({
-                                    if(interactingWithSth){
-                                        return@postDelayed;
+                                    if (interactingWithSth) {
+                                        return@postDelayed
                                     }
 
                                     gamepad.rightTrigger.pressed = true
@@ -258,8 +259,7 @@ object CombatLayout : VirtualControllerLayout() {
                                 longPressPending = true
                             }
                         }
-                    }else{
-
+                    } else {
                         gamepad.rightCross.bottom.pressed = false
                         gamepad.rightBumper.pressed = false
 
@@ -278,31 +278,29 @@ object CombatLayout : VirtualControllerLayout() {
                 }
 
                 onRelease {
-
                     longPressHandler.removeCallbacksAndMessages(null)
                     longPressPending = false
                     gamepad.rightTrigger.pressed = false
 
                     interactingWithSth = false
 
-                    if(lastInsideInnerCircle){
+                    if (lastInsideInnerCircle) {
                         gamepad.rightCross.bottom.pressed = false
                         gamepad.rightBumper.pressed = false
 
                         // If we are executing a throw art, delay resetting the direction
                         // to avoid accidentally switching to a melee art
-                        if(combatArtPending){
+                        if (combatArtPending) {
                             combatArtPending = false
                             CombatLayout.handler.postDelayed({
                                 gamepad.rightStick.vertical.state = 0.0
                                 gamepad.rightStick.horizontal.state = 0.0
                             }, 300L)
-                        }else{
+                        } else {
                             gamepad.rightStick.vertical.state = 0.0
                             gamepad.rightStick.horizontal.state = 0.0
                         }
-
-                    }else{
+                    } else {
                         gamepad.rightCross.bottom.pressed = false
 
                         // CrossCode expects a button press to fire, so we give it one
@@ -315,26 +313,23 @@ object CombatLayout : VirtualControllerLayout() {
             }
 
             menuButton.apply {
-
                 var startedToPressAt: Long = 0
                 onTouch {
                     startedToPressAt = System.currentTimeMillis()
-
                 }
 
                 onRelease {
-
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
                     // Decide based on long- or short click whether to open the inventory or menu
                     val openMenu = timeDiff > (0.2 * 1000)
 
                     // Open menu
-                    if(openMenu){
+                    if (openMenu) {
                         fakeClick(gamepad.startOrForward)
 
                         // Open inventory
-                    }else{
+                    } else {
                         fakeClick(gamepad.selectOrBack)
                     }
                 }

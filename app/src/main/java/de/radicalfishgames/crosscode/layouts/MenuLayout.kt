@@ -7,25 +7,24 @@ import de.radicalfishgames.crosscode.databinding.MenuLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 
-
 object MenuLayout : VirtualControllerLayout() {
-
     override val layoutResId = R.layout.menu_layout
 
-    override fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager) {
-
+    override fun bindControls(
+        gamepad: GamepadJsonBridge,
+        layoutView: View,
+        feature: VirtualControllerFeature,
+        eventManager: GameEventManager,
+    ) {
         val binding = MenuLayoutBinding.bind(layoutView)
 
         binding.apply {
-
             overlayToggle.onSwipe { right, left, up, down ->
                 // Do in handler to avoid a crash due to the potential layout changes
                 handler.post {
-
-                    if(right || left){
+                    if (right || left) {
                         feature.switchToLayout(CombatLayout)
-
-                    }else if(up || down){
+                    } else if (up || down) {
                         DirectLayout.layoutToEnable = MenuLayout
                         feature.switchToLayout(DirectLayout)
                     }
@@ -35,17 +34,19 @@ object MenuLayout : VirtualControllerLayout() {
             menuDirections.apply {
                 onDirectionUpdate { xDir, yDir ->
 
-                    val xActual = when {
-                        xDir > 0.15 -> 1.0
-                        xDir < -0.15 -> -1.0
-                        else -> 0.0
-                    }
+                    val xActual =
+                        when {
+                            xDir > 0.15 -> 1.0
+                            xDir < -0.15 -> -1.0
+                            else -> 0.0
+                        }
 
-                    val yActual = when {
-                        yDir > 0.15 -> 1.0
-                        yDir < -0.15 -> -1.0
-                        else -> 0.0
-                    }
+                    val yActual =
+                        when {
+                            yDir > 0.15 -> 1.0
+                            yDir < -0.15 -> -1.0
+                            else -> 0.0
+                        }
 
                     gamepad.leftStick.horizontal.state = xActual
                     gamepad.leftStick.vertical.state = yActual
@@ -57,7 +58,6 @@ object MenuLayout : VirtualControllerLayout() {
                 }
             }
 
-
             tabLeft.apply {
                 var startedToPressAt: Long = 0
                 onTouch {
@@ -65,16 +65,14 @@ object MenuLayout : VirtualControllerLayout() {
                 }
 
                 onRelease {
-
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
                     // Decide based on long- or short click whether to press bumper or trigger
                     val useTrigger = timeDiff > (0.2 * 1000)
 
-                    if(useTrigger){
+                    if (useTrigger) {
                         fakeClick(gamepad.leftTrigger)
-
-                    }else{
+                    } else {
                         fakeClick(gamepad.leftBumper)
                     }
                 }
@@ -86,16 +84,14 @@ object MenuLayout : VirtualControllerLayout() {
                 }
 
                 onRelease {
-
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
                     // Decide based on long- or short click whether to press bumper or trigger
                     val useTrigger = timeDiff > (0.2 * 1000)
 
-                    if(useTrigger){
+                    if (useTrigger) {
                         fakeClick(gamepad.rightTrigger)
-
-                    }else{
+                    } else {
                         fakeClick(gamepad.rightBumper)
                     }
                 }
@@ -107,7 +103,6 @@ object MenuLayout : VirtualControllerLayout() {
             bindSimpleButton(rightcrossBottom, gamepad.rightCross.bottom)
 
             bindSimpleButton(helpButton, gamepad.startOrForward)
-
         }
     }
 }

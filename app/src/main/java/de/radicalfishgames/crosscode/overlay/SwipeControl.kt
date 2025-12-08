@@ -4,9 +4,10 @@ import android.content.Context
 import android.util.AttributeSet
 import kotlin.math.abs
 
-
-class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context, attrs) {
-
+class SwipeControl(
+    context: Context,
+    attrs: AttributeSet,
+) : ControlView(context, attrs) {
     private var onSwipe: MutableSet<(right: Boolean, left: Boolean, up: Boolean, down: Boolean) -> Unit> = HashSet()
 
     private var downX: Float? = null
@@ -17,11 +18,10 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
 
     init {
         onMove { x: Float, y: Float ->
-            if(downX == null || downY == null){
+            if (downX == null || downY == null) {
                 downX = x
                 downY = y
-
-            }else{
+            } else {
 
                 latestX = x
                 latestY = y
@@ -30,7 +30,7 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
 
         onRelease {
 
-            if(latestX != null && latestY != null && downX != null && downY != null){
+            if (latestX != null && latestY != null && downX != null && downY != null) {
                 val xDiff = latestX!! - downX!!
                 val yDiff = latestY!! - downY!!
 
@@ -39,7 +39,7 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
                 val up = isSwipeUp(xDiff, yDiff)
                 val down = isSwipeDown(xDiff, yDiff)
 
-                if(right || left || up || down){
+                if (right || left || up || down) {
                     onSwipe(right, left, up, down)
                 }
             }
@@ -51,26 +51,34 @@ class SwipeControl(context: Context, attrs: AttributeSet) : ControlView(context,
         }
     }
 
+    private fun isSwipeRight(
+        xDiff: Float,
+        yDiff: Float,
+    ): Boolean = (abs(yDiff) / abs(xDiff)) < RATIO_MAX && xDiff > 0
 
-    private fun isSwipeRight(xDiff: Float, yDiff: Float): Boolean {
-        return (abs(yDiff) / abs(xDiff)) < RATIO_MAX && xDiff > 0
-    }
+    private fun isSwipeLeft(
+        xDiff: Float,
+        yDiff: Float,
+    ): Boolean = (abs(yDiff) / abs(xDiff)) < RATIO_MAX && xDiff < 0
 
-    private fun isSwipeLeft(xDiff: Float, yDiff: Float): Boolean {
-        return (abs(yDiff) / abs(xDiff)) < RATIO_MAX && xDiff < 0
-    }
+    private fun isSwipeUp(
+        xDiff: Float,
+        yDiff: Float,
+    ): Boolean = (abs(xDiff) / abs(yDiff)) < RATIO_MAX && yDiff < 0
 
-    private fun isSwipeUp(xDiff: Float, yDiff: Float): Boolean {
-        return (abs(xDiff) / abs(yDiff)) < RATIO_MAX && yDiff < 0
-    }
-
-    private fun isSwipeDown(xDiff: Float, yDiff: Float): Boolean {
-        return (abs(xDiff) / abs(yDiff)) < RATIO_MAX && yDiff > 0
-    }
+    private fun isSwipeDown(
+        xDiff: Float,
+        yDiff: Float,
+    ): Boolean = (abs(xDiff) / abs(yDiff)) < RATIO_MAX && yDiff > 0
 
     fun onSwipe(run: (right: Boolean, left: Boolean, up: Boolean, down: Boolean) -> Unit) = onSwipe.add(run)
 
-    private fun onSwipe(right: Boolean, left: Boolean, up: Boolean, down: Boolean){
+    private fun onSwipe(
+        right: Boolean,
+        left: Boolean,
+        up: Boolean,
+        down: Boolean,
+    ) {
         onSwipe.forEach {
             it.invoke(right, left, up, down)
         }

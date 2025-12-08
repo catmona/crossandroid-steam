@@ -12,24 +12,22 @@ import de.radicalfishgames.crosscode.GameWrapper
 import kotlin.math.ceil
 import kotlin.math.min
 
-
 class HapticFeedbackFeature(
     gameWrapper: GameWrapper,
-    hostActivity: GameActivity
+    hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-
     private val enabled = hostActivity.preferences.getBoolean("vibration_on_rumble", true)
-    private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = hostActivity.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        @Suppress("DEPRECATION")
-        hostActivity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    }
+    private val vibrator: Vibrator =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager = hostActivity.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            hostActivity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
 
     override fun onPreGamePageLoad() {
-
-        if(!enabled){
+        if (!enabled) {
             return
         }
 
@@ -37,51 +35,56 @@ class HapticFeedbackFeature(
     }
 
     override fun onPostGamePageLoad() {
-
-        if(!enabled){
+        if (!enabled) {
             return
         }
 
-        runJS("""
+        runJS(
+            """
             ig.Rumble.RumbleHandle.inject({
                 _updatePosition: function(arg) {
                     this.parent(arg);
                     $JS_INTERFACE_NAME.reportRumble(arg, this.shakeDuration);
                 }
             });
-        """)
+        """,
+        )
     }
 
     @JavascriptInterface
-    fun reportRumble(strength: Double, effectDuration: Double){
+    fun reportRumble(
+        strength: Double,
+        effectDuration: Double,
+    ) {
         try {
-
-            if(strength > 15){
+            if (strength > 15) {
                 Log.e("CrossCode", "Received a rumble strength that is larger than rumbles should get!")
                 return
             }
 
-            if(effectDuration > 0.2){
+            if (effectDuration > 0.2) {
                 // Effect is too slow - less of a screen shake and more of a screen-wobbling
                 return
             }
 
-            val vibrationAmplitude = min(ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH) * NORMAL_EFFECT_DURATION/effectDuration), 255.0).toInt()
+            val vibrationAmplitude =
+                min(
+                    ceil(MAX_VIB_AMPLITUDE * (strength / MAX_RUMBLE_STRENGTH) * NORMAL_EFFECT_DURATION / effectDuration),
+                    255.0,
+                ).toInt()
             val vibrationDuration = ceil(MAX_VIB_DURATION_MILLIS * (strength / MAX_RUMBLE_STRENGTH)).toLong()
 
-            if(vibrationAmplitude == 0 || vibrationDuration == 0L){
+            if (vibrationAmplitude == 0 || vibrationDuration == 0L) {
                 Log.w("CrossCode", "Rumble strength is too small!")
                 return
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(VibrationEffect.createOneShot(vibrationDuration, vibrationAmplitude))
-
             } else {
                 @Suppress("DEPRECATION")
                 vibrator.vibrate(vibrationDuration)
             }
-
         } catch (ex: Exception) {
             hostActivity.errorHandler.uncaughtException(Thread.currentThread(), ex)
             throw ex
