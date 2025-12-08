@@ -34,26 +34,28 @@ class ExtensionLoadingFix(gameWrapper: GameWrapper,
     }
 
     private fun loadExtensionList() {
-        val extensionDir = File("${gameWrapper.gameDir}/assets/extension/")
+        val gameFolderManager = gameWrapper.gameFolderManager
+        val extensionDirFiles = gameFolderManager.listFiles("assets/extension")
 
-        if(!extensionDir.exists() || !extensionDir.isDirectory) {
-            Log.w("CrossCode", "No extension directory found! Searched at ${extensionDir.path}")
+        if (extensionDirFiles == null) {
+            Log.w("CrossCode", "No extension directory found!")
+            extensionList = emptyList()
             return
         }
 
         val discoveredExtensions = mutableListOf<String>()
 
-        for(singleExtDir in extensionDir.listFiles()!!) {
-            if(!singleExtDir.isDirectory) {
+        for (singleExtDir in extensionDirFiles) {
+            if (!singleExtDir.isDirectory) {
                 continue
             }
 
             val extensionName = singleExtDir.name
 
-            val manifestFileRelPath = "$singleExtDir/$extensionName.json"
-            val manifestFile = File(manifestFileRelPath)
-            if(!manifestFile.exists()) {
-                Log.w("CrossCode", "Found extension directory $extensionName, but not $manifestFileRelPath!")
+            // Check if manifest file exists
+            val manifestFile = File(singleExtDir, "$extensionName.json")
+            if (!manifestFile.exists()) {
+                Log.w("CrossCode", "Found extension directory $extensionName, but not $extensionName.json!")
                 continue
             }
 

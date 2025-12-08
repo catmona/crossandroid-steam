@@ -2,14 +2,15 @@ package de.radicalfishgames.crosscode.layouts
 
 import android.graphics.BitmapFactory
 import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.webkit.ValueCallback
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.databinding.CombatLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import kotlinx.android.synthetic.main.combat_layout.view.*
 import kotlin.math.min
 import kotlin.math.pow
 
@@ -33,9 +34,11 @@ object CombatLayout : VirtualControllerLayout() {
 
     override fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager){
 
-        layoutView.apply {
+        val binding = CombatLayoutBinding.bind(layoutView)
 
-            overlay_toggle.onSwipe { right, left, up, down ->
+        binding.apply {
+
+            overlayToggle.onSwipe { right, left, up, down ->
                 // Do in handler to avoid a crash due to the potential layout changes
                 handler.post {
 
@@ -49,11 +52,11 @@ object CombatLayout : VirtualControllerLayout() {
                 }
             }
 
-            bindSimpleButton(shield_button, gamepad.leftBumper)
-            bindSimpleButton(dash_button, gamepad.leftBumper)
-            bindSimpleButton(quickmenu_button, gamepad.leftTrigger)
+            bindSimpleButton(shieldButton, gamepad.leftBumper)
+            bindSimpleButton(dashButton, gamepad.leftBumper)
+            bindSimpleButton(quickmenuButton, gamepad.leftTrigger)
 
-            elemental_button.onSwipe { right, left, up, down ->
+            elementalButton.onSwipe { right, left, up, down ->
 
                 // Switch buttons, because with our method you go back to neutral by swiping in the
                 // opposite direction as before. Eg Neutral -> Heat: Swipe Down and then Heat -> Neutral: Swipe Up
@@ -91,15 +94,15 @@ object CombatLayout : VirtualControllerLayout() {
                     ElementMode.WAVE -> R.drawable.element_wave
                 }
 
-                elemental_button.imageBitmap = BitmapFactory.decodeResource(
-                    elemental_button.context.resources,
+                elementalButton.imageBitmap = BitmapFactory.decodeResource(
+                    elementalButton.context.resources,
                     elementUIImageResID
                 )
 
-                elemental_button.invalidate()
+                elementalButton.invalidate()
             }
 
-            movement_pad.apply {
+            movementPad.apply {
 
                 var lastInsideInnerCircle = false
                 var hasBeenInsideInnerCircle = false
@@ -187,13 +190,13 @@ object CombatLayout : VirtualControllerLayout() {
 
             }
 
-            aim_pad.apply {
+            aimPad.apply {
 
                 var lastInsideInnerCircle = false
 
                 var longPressPending = false
                 var combatArtPending = false
-                val longPressHandler = Handler()
+                val longPressHandler = Handler(Looper.getMainLooper())
 
                 onDirectionUpdate { xDir, yDir ->
 
@@ -311,7 +314,7 @@ object CombatLayout : VirtualControllerLayout() {
                 }
             }
 
-            menu_button.apply {
+            menuButton.apply {
 
                 var startedToPressAt: Long = 0
                 onTouch {

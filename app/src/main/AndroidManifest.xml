@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    android:hardwareAccelerated="true"
-    package="de.radicalfishgames.crosscode">
+    android:hardwareAccelerated="true">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.BLUETOOTH"/>
 
@@ -23,22 +21,38 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:allowBackup="true"
-        android:hasFragileUserData="true">
+        android:hasFragileUserData="true"
+        android:enableOnBackInvokedCallback="true">
 
-        <activity android:name=".LaunchActivity">
+        <activity
+            android:name=".LaunchActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".preferences.PreferencesActivity" />
+        <activity
+            android:name=".preferences.PreferencesActivity"
+            android:exported="false" />
 
-        <activity android:name=".GameActivity"
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
             android:screenOrientation="sensorLandscape"
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode">
-        </activity>
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode" />
+
+        <provider
+            android:name=".ExternalFilesProvider"
+            android:authorities="de.radicalfishgames.crosscode.documents"
+            android:grantUriPermissions="true"
+            android:exported="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
     </application>
 
 </manifest>

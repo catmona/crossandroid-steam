@@ -1,52 +1,49 @@
 package de.radicalfishgames.crosscode
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import kotlinx.android.synthetic.main.activity_launch.*
-import java.io.File
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.os.Handler
+import android.os.Looper
 import android.view.View
-import android.view.ViewStub
 import android.widget.ScrollView
-import de.namnodorel.creditz.views.*
+import androidx.appcompat.app.AlertDialog
+import com.mikepenz.aboutlibraries.LibsBuilder
+import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
+import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
-import kotlinx.android.synthetic.main.guide_layout.*
-import java.util.*
 
 class LaunchActivity : AppCompatActivity() {
 
-    private var userConfirmedCCLoader = false
-    private var userConfirmedCopiedInst = false
-    private var userConfirmedDownloadedTools = false
-    private var userConfirmedPackagedGameFiles = false
+    private lateinit var binding: ActivityLaunchBinding
+    private var guideBinding: GuideLayoutBinding? = null
+    private lateinit var gameFolderManager: GameFolderManager
 
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_launch)
+        binding = ActivityLaunchBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        launch_button.setOnClickListener {
+        gameFolderManager = GameFolderManager(this)
+
+        binding.launchButton.setOnClickListener {
             launchGameActivity()
         }
 
-        preferences_button.setOnClickListener {
+        binding.preferencesButton.setOnClickListener {
             launchPreferencesActivity()
         }
 
-        about_button.setOnClickListener {
+        binding.aboutButton.setOnClickListener {
             launchAboutActivity()
         }
     }
@@ -59,174 +56,123 @@ class LaunchActivity : AppCompatActivity() {
         }
     }
 
-    private fun tryToAccessInstance() {
+    private fun tryToAccessInstance(showDialogOnFailure: Boolean = false) {
         Log.i("CrossCode", "Attempting to access the CrossCode instance...")
 
-        val sdcardPath = this.getExternalFilesDir(null)
-        if (sdcardPath == null) {
-            Toast.makeText(this@LaunchActivity, "Storage permission denied", Toast.LENGTH_LONG).show()
+        val gameDir = gameFolderManager.getGameDir()
+        if (gameDir == null) {
+            Log.e("CrossCode", "External storage not available")
+            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
             return
         }
-        val instanceDir = "${sdcardPath.absolutePath}/CrossCode"
 
-        if (!File("${instanceDir}/assets").exists()) {
-            instanceNotFound()
+        Log.i("CrossCode", "Game directory: ${gameDir.absolutePath}")
+
+        if (!gameFolderManager.hasValidGameFolder()) {
+            Log.i("CrossCode", "Game folder not found")
+            instanceNotFound(showDialogOnFailure, "Game folder not found at:\n${gameDir.absolutePath}")
             return
         }
-        instanceFound("${instanceDir}/assets")
+
+        if (!gameFolderManager.hasAssetsFolder()) {
+            Log.i("CrossCode", "Assets folder not found in game folder")
+            instanceNotFound(showDialogOnFailure, "The 'assets' folder was not found in the game folder.")
+            return
+        }
+
+        instanceFound(showDialogOnFailure)
     }
 
-    private fun instanceFound(path: String){
-        val normalLaunchFile = File("$path/node-webkit.html")
-        val modLoaderLaunchFile = (File("$path/ccloader/index.html") or File("$path/ccloader/main.html")) or File("$path/ccloader3/main.html")
+    private fun instanceFound(showDialogOnFailure: Boolean) {
+        val hasModLoader = gameFolderManager.findModLoaderEntry() != null
 
-        if(!(normalLaunchFile.exists() || modLoaderLaunchFile.exists())){
-            Toast.makeText(this@LaunchActivity, "Can't find node-webkit.html or ccloader/index.html in OBB", Toast.LENGTH_LONG).show()
-
-            instanceNotFound()
-        }else{
+        if (!gameFolderManager.exists("assets/node-webkit.html") && !hasModLoader) {
+            instanceNotFound(showDialogOnFailure, "CCLoader not found. Make sure you installed CCLoader before copying the game files.")
+        } else {
             gameFilesIntact()
-            return
         }
     }
 
-    private fun gameFilesIntact(){
-
+    private fun gameFilesIntact() {
         Log.i("CrossCode", "Instance directory found!")
 
-        mounting_progress_bar.visibility = GONE
-        launch_button.isEnabled = true
+        binding.mountingProgressBar.visibility = GONE
+        binding.launchButton.isEnabled = true
+
+        // Hide guide if visible
+        findViewById<ScrollView>(R.id.setup_container)?.visibility = GONE
+        binding.launchContainer.visibility = VISIBLE
     }
 
-    private fun instanceNotFound(){
-        userConfirmedCCLoader = false
-        userConfirmedCopiedInst = false
-        userConfirmedDownloadedTools = false
-        userConfirmedPackagedGameFiles = false
-
-        showCurrentGuide(false)
+    private fun instanceNotFound(showDialog: Boolean = false, message: String? = null) {
+        if (showDialog && message != null) {
+            AlertDialog.Builder(this)
+                .setTitle("Game files not found")
+                .setMessage(message)
+                .setPositiveButton("OK", null)
+                .show()
+        }
+        showCurrentGuide()
     }
 
-    private fun showCurrentGuide(showTransition: Boolean){
-
+    private fun showCurrentGuide() {
         Log.i("CrossCode", "Showing user guide on installing the instance directory.")
 
         val setupContainer: View
-        if(findViewById<ScrollView>(R.id.setup_container) == null){
-            setupContainer = findViewById<ViewStub>(R.id.setup_container_stub).inflate()
-        }else{
+        if (findViewById<ScrollView>(R.id.setup_container) == null) {
+            val inflatedView = binding.setupContainerStub.inflate()
+            guideBinding = GuideLayoutBinding.bind(inflatedView)
+            setupContainer = inflatedView
+        } else {
             setupContainer = findViewById<ScrollView>(R.id.setup_container)
-        }
-
-        launch_container.visibility = GONE
-
-        var pastStepsSuccessfull = true
-
-        val hasStoragePermission = hasStoragePermission()
-
-
-        if(hasStoragePermission){
-            permission_text_tv.visibility = GONE
-            ask_permission_btn.visibility = GONE
-        }else{
-            permission_text_tv.visibility = VISIBLE
-            ask_permission_btn.visibility = VISIBLE
-
-            ask_permission_btn.setOnClickListener {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 0)
-
-                }else{
-                    Toast.makeText(this, "Can't request permission. Please contact the dev.", Toast.LENGTH_LONG).show()
-                }
+            if (guideBinding == null) {
+                guideBinding = GuideLayoutBinding.bind(setupContainer)
             }
         }
-        pastStepsSuccessfull = pastStepsSuccessfull && hasStoragePermission
 
+        val guide = guideBinding!!
 
-        if(pastStepsSuccessfull && userConfirmedCCLoader){
-            install_ccloader_text_tv.visibility = GONE
-            install_ccloader_btn.visibility = GONE
+        binding.launchContainer.visibility = GONE
+        setupContainer.visibility = VISIBLE
 
-        }else if(pastStepsSuccessfull){
+        // Show all steps
+        guide.selectFolderTitleTv.visibility = VISIBLE
+        guide.selectFolderTextTv.visibility = VISIBLE
+        guide.installCcloaderTextTv.visibility = VISIBLE
+        guide.copyInstanceTextTv.visibility = VISIBLE
 
-            install_ccloader_text_tv.visibility = VISIBLE
-            install_ccloader_btn.visibility = VISIBLE
+        // Show the path in step 3
+        val gamePath = gameFolderManager.getDisplayPath() ?: "Unknown"
+        guide.selectedFolderLabelTv.visibility = VISIBLE
+        guide.selectedFolderLabelTv.text = getString(R.string.selected_folder_label, gamePath)
 
-            install_ccloader_btn.setOnClickListener {
-                userConfirmedCCLoader = true
-                showCurrentGuide(true)
-            }
-        }
-        pastStepsSuccessfull = pastStepsSuccessfull && userConfirmedCCLoader
-
-        if(pastStepsSuccessfull && userConfirmedCopiedInst){
-            copy_instance_text_tv.visibility = GONE
-            copy_instance_btn.visibility = GONE
-
-        }else if(pastStepsSuccessfull){
-
-            copy_instance_text_tv.visibility = VISIBLE
-            copy_instance_btn.visibility = VISIBLE
-
-            copy_instance_btn.setOnClickListener {
-                userConfirmedCopiedInst = true
-
-                setupContainer.visibility = GONE
-                launch_container.visibility = VISIBLE
-                handler.post {
-                    tryToAccessInstance()
-                }
+        // Single button at the end
+        guide.copyInstanceBtn.visibility = VISIBLE
+        guide.copyInstanceBtn.setOnClickListener {
+            handler.post {
+                tryToAccessInstance(showDialogOnFailure = true)
             }
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        if((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED)){
-            Toast.makeText(this, "CrossAndroid unfortunately can not function without this permission.", Toast.LENGTH_LONG).show()
-        }
-
-        showCurrentGuide(false)
-    }
-
-    private fun hasStoragePermission(): Boolean {
-        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun launchGameActivity(){
+    private fun launchGameActivity() {
         val intent = Intent(this, GameActivity::class.java)
         intent.addFlags(FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TASK)
         startActivity(intent)
     }
 
-    private fun launchPreferencesActivity(){
+    private fun launchPreferencesActivity() {
         val intent = Intent(this, PreferencesActivity::class.java)
         startActivity(intent)
     }
 
-    private fun launchAboutActivity(){
-        val intent = Intent(this, AboutActivity::class.java)
-
-        val config = CreditzConfig()
-
-        config.aboutTitle = "CrossAndroid"
-        config.aboutDescription = "A port/wrapper app to run CrossCode on Android devices developed by Namnodorel."
-        config.theme = R.style.AppTheme
-
-        val infoButtons = LinkedList<InfoButton>()
-        infoButtons.add(InfoButton("Project Page", "https://gitlab.com/Namnodorel/crossandroid/"))
-        config.infoButtons = infoButtons
-
-        val contributors = LinkedList<ContributorInfo>()
-        contributors.add(ContributorInfo("Ichiki Hayaite aka TheSparkstarScope", "Contributed the awesome pixelart"))
-        contributors.add(ContributorInfo("Dmytro Meleshko", "Enhanced modloader support"))
-        contributors.add(ContributorInfo("Alyxia & Xinto", "CCLoader3 support"))
-        contributors.add(ContributorInfo("krypek", "Changed CrossCode instance format loading from .obb files to a regular directory"))
-        config.contributors = contributors
-
-        intent.putExtra(AboutActivity.CREDITZ_CONFIG, config)
-        startActivity(intent)
+    private fun launchAboutActivity() {
+        LibsBuilder()
+            .withAboutAppName("CrossAndroid")
+            .withAboutIconShown(true)
+            .withAboutVersionShown(true)
+            .withActivityTitle("About")
+            .withSearchEnabled(true)
+            .start(this)
     }
 }

@@ -1,8 +1,8 @@
 package de.radicalfishgames.crosscode.features
 
-import android.app.Activity
 import android.content.DialogInterface
 import android.content.Intent
+import android.net.Uri
 import android.webkit.JavascriptInterface
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.radicalfishgames.crosscode.GameActivity
@@ -72,19 +72,11 @@ class ImportExportFeature(
             MaterialAlertDialogBuilder(hostActivity)
                 .setTitle("Exported Save String")
                 .setMessage("Your save string is ready! You can save it as a text file now.")
-                .setPositiveButton("Save") { dialog: DialogInterface, which: Int ->
-
-                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-                        addCategory(Intent.CATEGORY_OPENABLE)
-                        type = "text/plain"
-                        putExtra(Intent.EXTRA_TITLE, "crosscode_savestring.txt")
-                    }
-
+                .setPositiveButton("Save") { _: DialogInterface, _: Int ->
                     saveStringToExport = saveString
-
-                    hostActivity.startActivityForResult(intent, SAVE_SAVESTRING)
+                    hostActivity.createDocumentLauncher.launch("crosscode_savestring.txt")
                 }
-                .setNegativeButton("Cancel") { dialog: DialogInterface, which: Int ->
+                .setNegativeButton("Cancel") { _: DialogInterface, _: Int ->
                     hostActivity.goIntoFullScreen()
                 }
                 .setOnDismissListener {
@@ -98,31 +90,22 @@ class ImportExportFeature(
         }
     }
 
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if(requestCode == SAVE_SAVESTRING && resultCode == Activity.RESULT_OK) {
-            data?.data?.also { uri ->
-                try {
-                    hostActivity.contentResolver.openFileDescriptor(uri, "w")?.use {
-                        FileOutputStream(it.fileDescriptor).use { stream ->
-                            stream.write(saveStringToExport?.toByteArray())
-                        }
+    fun onCreateDocumentResult(uri: Uri?) {
+        if (uri != null) {
+            try {
+                hostActivity.contentResolver.openFileDescriptor(uri, "w")?.use {
+                    FileOutputStream(it.fileDescriptor).use { stream ->
+                        stream.write(saveStringToExport?.toByteArray())
                     }
-                } catch (e: FileNotFoundException) {
-                    e.printStackTrace()
-                } catch (e: IOException) {
-                    e.printStackTrace()
                 }
-
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
         }
 
-        if(requestCode == SAVE_SAVESTRING) {
-            saveStringToExport = null
-            hostActivity.goIntoFullScreen()
-        }
-    }
-
-    companion object {
-        const val SAVE_SAVESTRING = 1
+        saveStringToExport = null
+        hostActivity.goIntoFullScreen()
     }
 }

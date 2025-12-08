@@ -11,7 +11,6 @@ import de.radicalfishgames.crosscode.layouts.CombatLayout
 import de.radicalfishgames.crosscode.layouts.DirectLayout
 import de.radicalfishgames.crosscode.layouts.MenuLayout
 import de.radicalfishgames.crosscode.layouts.VirtualControllerLayout
-import kotlinx.android.synthetic.main.activity_game.*
 
 
 class VirtualControllerFeature(gameWrapper: GameWrapper,
@@ -69,7 +68,7 @@ class VirtualControllerFeature(gameWrapper: GameWrapper,
 
         for(controller in availableLayouts){
 
-            val parentView = hostActivity.layoutInflater.inflate(controller.layoutResId, hostActivity.control_container) as ViewGroup
+            val parentView = hostActivity.layoutInflater.inflate(controller.layoutResId, hostActivity.binding.controlContainer) as ViewGroup
             parentView.visibility = View.VISIBLE
 
             val view = parentView.getChildAt(parentView.childCount - 1) as ViewGroup

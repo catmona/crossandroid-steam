@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.gamelisteners
 
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
@@ -38,7 +39,7 @@ class GameEventManager(
 
     // Post events to the original thread instead of staying in the JS one, so
     // the event handlers can modify the View
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onPreGamePageLoad() {
         for(listener in listeners){

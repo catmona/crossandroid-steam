@@ -3,6 +3,7 @@ package de.radicalfishgames.crosscode
 import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -12,13 +13,13 @@ import java.util.*
 import kotlin.reflect.KClass
 
 
-class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, val gameDir: String) {
+class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, val gameFolderManager: GameFolderManager) {
 
     val features = LinkedList<Feature>()
 
     var blockWebViewClicks = true
 
-    private val handler = Handler()
+    private val handler = Handler(Looper.getMainLooper())
 
     private var calledPostGameLoad = false
 
@@ -46,7 +47,10 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
 
+            // Explicitly disable file access for security (suppress deprecation warnings)
+            @Suppress("DEPRECATION")
             allowFileAccessFromFileURLs = false
+            @Suppress("DEPRECATION")
             allowUniversalAccessFromFileURLs = false
             allowFileAccess = false
             allowContentAccess = false
@@ -109,6 +113,7 @@ class GameWrapper(private val webView: WebView, val modLoaderPresent: Boolean, v
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     fun <T : Feature> getFeature(ofType: KClass<T>): T {
         return features.first { ofType.isInstance(it) } as T
     }

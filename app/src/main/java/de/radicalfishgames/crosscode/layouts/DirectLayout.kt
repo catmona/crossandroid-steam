@@ -3,9 +3,9 @@ package de.radicalfishgames.crosscode.layouts
 import android.view.View
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.databinding.DirectLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import kotlinx.android.synthetic.main.direct_layout.view.*
 
 
 object DirectLayout : VirtualControllerLayout() {
@@ -21,7 +21,9 @@ object DirectLayout : VirtualControllerLayout() {
         feature: VirtualControllerFeature,
         eventManager: GameEventManager
     ) {
-        layoutView.overlay_toggle.onRelease {
+        val binding = DirectLayoutBinding.bind(layoutView)
+
+        binding.overlayToggle.onRelease {
             // Do in handler to avoid a crash due to the potential layout changes
             handler.post {
                 feature.switchToLayout(layoutToEnable)

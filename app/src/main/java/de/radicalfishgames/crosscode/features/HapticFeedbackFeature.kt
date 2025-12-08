@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.webkit.JavascriptInterface
 import de.radicalfishgames.crosscode.GameActivity
@@ -18,7 +19,13 @@ class HapticFeedbackFeature(
 ) : Feature(gameWrapper, hostActivity) {
 
     private val enabled = hostActivity.preferences.getBoolean("vibration_on_rumble", true)
-    private val vibrator = hostActivity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = hostActivity.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        hostActivity.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
 
     override fun onPreGamePageLoad() {
 

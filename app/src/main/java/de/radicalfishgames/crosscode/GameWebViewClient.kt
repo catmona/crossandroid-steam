@@ -8,7 +8,7 @@ import java.util.*
 
 class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() {
 
-    private val gameDir = File(gameWrapper.gameDir).canonicalFile
+    private val gameDir = gameWrapper.gameFolderManager.getGameDir()
 
     override fun onPageFinished(view: WebView?, url: String?) {
         gameWrapper.onPageLoaded()
@@ -26,34 +26,41 @@ class GameWebViewClient(private val gameWrapper: GameWrapper) : WebViewClient() 
     // https://developer.android.com/guide/webapps/load-local-content
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
     override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
-        if(!(view != null && request != null)){
+        if (view == null || request == null) {
+            return null
+        }
+
+        if (gameDir == null) {
+            Log.e("CrossCode", "gameDir is null, cannot serve files!")
             return null
         }
 
         val url = request.url
         val urlPath = url.path
-        if(!(url.scheme == VIRTUAL_ORIGIN_SCHEME && url.authority == VIRTUAL_ORIGIN_DOMAIN && urlPath != null)){
+        if (!(url.scheme == VIRTUAL_ORIGIN_SCHEME && url.authority == VIRTUAL_ORIGIN_DOMAIN && urlPath != null)) {
             return null
         }
 
         val requestedFile = try {
-            // I have absolutely no idea why this fixes it but ah well
-            // It would fail to load the ccloader index.html file without the else condition
-            if (urlPath.startsWith("/assets"))
-                File(gameDir, urlPath).canonicalFile
-            else
-                File(urlPath).canonicalFile
+            // Normalize path and resolve against game directory
+            val normalizedPath = urlPath.trimStart('/')
+            File(gameDir, normalizedPath).canonicalFile
         } catch (e: IOException) {
-            Log.w("CrossCode", "Failed to resolve path ${urlPath}!", e)
+            Log.w("CrossCode", "Failed to resolve path $urlPath!", e)
             return WebResourceResponse(null, null, null)
         }
 
-        if(!requestedFile.canRead()){
-            Log.w("CrossCode", "Path $urlPath not found!")
+        if (!requestedFile.exists()) {
+            Log.w("CrossCode", "Path $urlPath not found! (resolved to ${requestedFile.absolutePath})")
             return WebResourceResponse(null, null, null)
         }
 
-        if(requestedFile.isDirectory){
+        if (!requestedFile.canRead()) {
+            Log.w("CrossCode", "Path $urlPath not readable! (resolved to ${requestedFile.absolutePath})")
+            return WebResourceResponse(null, null, null)
+        }
+
+        if (requestedFile.isDirectory) {
             // Return an empty successful response for directories, CCLoader depends on that for
             // checking whether they exist.
             return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
@@ -132,14 +139,14 @@ object FallbackMimeTypeMap {
     }
 
     fun add(type: String, vararg exts: String) {
-        for(ext in exts){
-            if(ext !in extensionsToMimeTypesMap){
+        for (ext in exts) {
+            if (ext !in extensionsToMimeTypesMap) {
                 extensionsToMimeTypesMap[ext] = type
             }
         }
     }
 
     fun getMimeTypeFromExtension(extension: String): String? {
-        return if(extension.isNotEmpty()) extensionsToMimeTypesMap[extension.toLowerCase(Locale.ROOT)] else null
+        return if (extension.isNotEmpty()) extensionsToMimeTypesMap[extension.lowercase(Locale.ROOT)] else null
     }
 }

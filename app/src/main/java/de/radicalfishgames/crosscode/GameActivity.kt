@@ -1,36 +1,67 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
-import android.content.Intent
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.InputDevice
-import android.view.View
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import de.radicalfishgames.crosscode.databinding.ActivityGameBinding
 import de.radicalfishgames.crosscode.features.*
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import kotlinx.android.synthetic.main.activity_game.*
-import java.io.File
 
 
 class GameActivity : AppCompatActivity() {
 
+    lateinit var binding: ActivityGameBinding
+        private set
+
     val errorHandler = ErrorHandler(this)
 
     private lateinit var gameWrapper: GameWrapper
+    lateinit var gameFolderManager: GameFolderManager
+        private set
 
     // This SharedPreferences files is the one the preference activity automatically generates
     val preferences: SharedPreferences
          get() = getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
 
+    // Activity Result API launcher for save export
+    val createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
+        gameWrapper.getFeature(ImportExportFeature::class).onCreateDocumentResult(uri)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_game)
+        binding = ActivityGameBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
+        gameFolderManager = GameFolderManager(this)
+
+        setupBackPressHandler()
         startGame()
+    }
+
+    private fun setupBackPressHandler() {
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Disable going back with controller B button
+                if (!isNativeControllerActive()) {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                } else {
+                    Log.d("CrossCode", "Blocked back-press-event because a native controller is being used.")
+                }
+            }
+        })
     }
 
     private fun startGame(){
@@ -39,28 +70,24 @@ class GameActivity : AppCompatActivity() {
         val nativeControllerActive = isNativeControllerActive()
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
 
-
-        val dataFilesPath = this.getExternalFilesDir(null)
-        if (dataFilesPath == null) {
-            Toast.makeText(this@GameActivity, "Storage permission denied", Toast.LENGTH_LONG).show()
+        if (!gameFolderManager.hasValidGameFolder()) {
+            Toast.makeText(this@GameActivity, "No game folder selected", Toast.LENGTH_LONG).show()
+            finish()
             return
         }
-        val gameDir = "${dataFilesPath.absolutePath}/CrossCode"
-        Log.d("CrossCode", "Game directory: $gameDir")
 
         var gameEntryPoint = "assets/node-webkit.html"
-        val modLoaderEntryFile = (File("$gameDir/ccloader/index.html") or File("$gameDir/ccloader/main.html")) or File("$gameDir/ccloader3/main.html")
+        val modLoaderEntry = gameFolderManager.findModLoaderEntry()
         var modLoaderPresent = false
-        if(modLoaderEntryFile.exists()){
+        if (modLoaderEntry != null) {
             Log.d("CrossCode", "Modloader found!")
-            gameEntryPoint = modLoaderEntryFile.canonicalPath.replace(Regex("(.*:\\d+/)"), "")
+            gameEntryPoint = modLoaderEntry
             modLoaderPresent = true
         }
 
         Log.d("CrossCode", "Game entry point: $gameEntryPoint Attempting to load.")
 
-
-        gameWrapper = GameWrapper(game_view, modLoaderPresent, gameDir)
+        gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager)
         gameWrapper.initWebView()
 
         // Order is important, since some of these depend on one another and this is also the initialization order
@@ -81,22 +108,11 @@ class GameActivity : AppCompatActivity() {
 
     }
 
-    override fun onBackPressed() {
-        // Disable going back with controller B button
-        if(!isNativeControllerActive()){
-            super.onBackPressed()
-
-        }else{
-
-            Log.d("CrossCode", "Blocked back-press-event because a native controller is being used.")
-        }
-    }
-
     fun isNativeControllerActive(): Boolean {
         Log.d("CrossCode", "Searching for native controller...")
 
         InputDevice.getDeviceIds().forEach { deviceId ->
-            val device = InputDevice.getDevice(deviceId)
+            val device = InputDevice.getDevice(deviceId) ?: return@forEach
 
             if(isController(device)){
                 Log.d("CrossCode", "Found device with gamepad and joystick support: ${device.name}")
@@ -108,7 +124,8 @@ class GameActivity : AppCompatActivity() {
         return false
     }
 
-    private fun isController(device: InputDevice): Boolean {
+    private fun isController(device: InputDevice?): Boolean {
+        if (device == null) return false
         // SOURCE_DPAD is apparently not how a gamepad is labelled, despite having a DPad available
         val hasControllerSources = device.supportsSource(InputDevice.SOURCE_GAMEPAD) && device.supportsSource(InputDevice.SOURCE_JOYSTICK)
 
@@ -138,24 +155,13 @@ class GameActivity : AppCompatActivity() {
         goIntoFullScreen()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        gameWrapper.getFeature(ImportExportFeature::class)
-            .onActivityResult(requestCode, resultCode, data)
-
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
     fun goIntoFullScreen(){
         runOnUiThread {
-            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    // Set the content to appear under the system bars so that the
-                    // content doesn't resize when the system bars hide and show.
-                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    // Hide the nav bar and status bar
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN)
+            WindowCompat.setDecorFitsSystemWindows(window, false)
+            WindowInsetsControllerCompat(window, window.decorView).let { controller ->
+                controller.hide(WindowInsetsCompat.Type.systemBars())
+                controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
         }
     }
 }

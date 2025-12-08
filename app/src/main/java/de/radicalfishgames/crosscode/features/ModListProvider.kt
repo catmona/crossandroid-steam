@@ -2,11 +2,9 @@ package de.radicalfishgames.crosscode.features
 
 import android.util.Log
 import android.webkit.JavascriptInterface
-import androidx.core.net.toFile
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import org.json.JSONArray
-import java.io.File
 
 class ModListProvider(gameWrapper: GameWrapper,
                       hostActivity: GameActivity
@@ -22,20 +20,23 @@ class ModListProvider(gameWrapper: GameWrapper,
     private fun loadModList() {
         if(!gameWrapper.modLoaderPresent){
             modList = emptyList()
+            return
         }
 
-        val modsDir = File("${gameWrapper.gameDir}/assets/mods")
+        val gameFolderManager = gameWrapper.gameFolderManager
+        val modsDirFiles = gameFolderManager.listFiles("assets/mods")
 
-        if(!modsDir.exists() || !modsDir.isDirectory) {
-            Log.w("CrossCode", "No mods directory found! Searched at ${modsDir.path}")
+        if (modsDirFiles == null) {
+            Log.w("CrossCode", "No mods directory found!")
+            modList = emptyList()
             return
         }
 
         val installedMods = mutableListOf<String>()
 
-        for(modFile in modsDir.listFiles()!!) {
+        for (modFile in modsDirFiles) {
             var modFileName = modFile.name
-            if(modFile.isDirectory){
+            if (modFile.isDirectory) {
                 modFileName += "/"
             }
 

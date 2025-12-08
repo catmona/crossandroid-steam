@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.layouts
 
 import android.os.Handler
+import android.os.Looper
 import android.view.View
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
@@ -13,7 +14,7 @@ abstract class VirtualControllerLayout {
     abstract val layoutResId: Int
     open val allowWebViewInteraction = false
 
-    protected val handler = Handler()
+    protected val handler = Handler(Looper.getMainLooper())
 
 
     abstract fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager)

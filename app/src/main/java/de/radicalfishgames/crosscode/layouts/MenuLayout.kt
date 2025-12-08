@@ -3,9 +3,9 @@ package de.radicalfishgames.crosscode.layouts
 import android.view.View
 import de.radicalfishgames.crosscode.GamepadJsonBridge
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.databinding.MenuLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import kotlinx.android.synthetic.main.menu_layout.view.*
 
 
 object MenuLayout : VirtualControllerLayout() {
@@ -14,9 +14,11 @@ object MenuLayout : VirtualControllerLayout() {
 
     override fun bindControls(gamepad: GamepadJsonBridge, layoutView: View, feature: VirtualControllerFeature, eventManager: GameEventManager) {
 
-        layoutView.apply {
+        val binding = MenuLayoutBinding.bind(layoutView)
 
-            overlay_toggle.onSwipe { right, left, up, down ->
+        binding.apply {
+
+            overlayToggle.onSwipe { right, left, up, down ->
                 // Do in handler to avoid a crash due to the potential layout changes
                 handler.post {
 
@@ -30,7 +32,7 @@ object MenuLayout : VirtualControllerLayout() {
                 }
             }
 
-            menu_directions.apply {
+            menuDirections.apply {
                 onDirectionUpdate { xDir, yDir ->
 
                     val xActual = when {
@@ -56,7 +58,7 @@ object MenuLayout : VirtualControllerLayout() {
             }
 
 
-            tab_left.apply {
+            tabLeft.apply {
                 var startedToPressAt: Long = 0
                 onTouch {
                     startedToPressAt = System.currentTimeMillis()
@@ -77,7 +79,7 @@ object MenuLayout : VirtualControllerLayout() {
                     }
                 }
             }
-            tab_right.apply {
+            tabRight.apply {
                 var startedToPressAt: Long = 0
                 onTouch {
                     startedToPressAt = System.currentTimeMillis()
@@ -99,12 +101,12 @@ object MenuLayout : VirtualControllerLayout() {
                 }
             }
 
-            bindSimpleButton(rightcross_right, gamepad.rightCross.right)
-            bindSimpleButton(rightcross_left, gamepad.rightCross.left)
-            bindSimpleButton(rightcross_top, gamepad.rightCross.top)
-            bindSimpleButton(rightcross_bottom, gamepad.rightCross.bottom)
+            bindSimpleButton(rightcrossRight, gamepad.rightCross.right)
+            bindSimpleButton(rightcrossLeft, gamepad.rightCross.left)
+            bindSimpleButton(rightcrossTop, gamepad.rightCross.top)
+            bindSimpleButton(rightcrossBottom, gamepad.rightCross.bottom)
 
-            bindSimpleButton(help_button, gamepad.startOrForward)
+            bindSimpleButton(helpButton, gamepad.startOrForward)
 
         }
     }
