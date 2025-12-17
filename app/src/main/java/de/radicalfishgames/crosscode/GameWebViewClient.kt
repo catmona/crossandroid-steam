@@ -114,11 +114,6 @@ class GameWebViewClient(
             return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
         }
 
-        // Auto-patch CCLoader JS to enable ccmod support on Android
-        if (normalizedPath == "ccloader/js/ccloader.js") {
-            return servePatchedCCLoader(requestedFile)
-        }
-
         val stream = FileInputStream(requestedFile)
 
         val mimeType =
@@ -209,57 +204,6 @@ class GameWebViewClient(
                 WebResourceResponse(mimeType, null, stream)
             }
         }
-    }
-
-    /**
-     * Serve CCLoader's main JS file with patches applied to enable ccmod support.
-     *
-     * CCLoader normally requires a Service Worker and Cache API to read .ccmod files,
-     * but these don't work reliably on Android WebView. Instead, CrossAndroid handles
-     * ccmod file access natively. These patches disable the Service Worker/Cache path
-     * when CrossAndroid's ccmodSupported() returns true.
-     */
-    private fun servePatchedCCLoader(file: File): WebResourceResponse {
-        var content = file.readText(Charsets.UTF_8)
-        var patchCount = 0
-
-        // Patch 1: Skip the "ccmod not supported" warning when ccmodSupported() is true
-        // Original: if (window.CrossAndroid) {
-        // Patched:  if (window.CrossAndroid && !window.CrossAndroid.ccmodSupported()) {
-        val patch1Old = "if (window.CrossAndroid) {"
-        val patch1New = "if (window.CrossAndroid && !window.CrossAndroid.ccmodSupported()) {"
-        if (content.contains(patch1Old)) {
-            content = content.replace(patch1Old, patch1New)
-            patchCount++
-        }
-
-        // Patch 2: Skip Service Worker initialization when ccmodSupported() is true
-        // Original: await this._initializeServiceWorker();
-        // Patched:  if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._initializeServiceWorker(); }
-        val patch2Old = "await this._initializeServiceWorker();"
-        val patch2New = "if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._initializeServiceWorker(); }"
-        if (content.contains(patch2Old)) {
-            content = content.replace(patch2Old, patch2New)
-            patchCount++
-        }
-
-        // Patch 3: Skip Cache API calls when ccmodSupported() is true
-        // Original: await this._sendPackedModNames(packedMods);
-        // Patched:  if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._sendPackedModNames(packedMods); }
-        val patch3Old = "await this._sendPackedModNames(packedMods);"
-        val patch3New = "if (!window.CrossAndroid || !window.CrossAndroid.ccmodSupported()) { await this._sendPackedModNames(packedMods); }"
-        if (content.contains(patch3Old)) {
-            content = content.replace(patch3Old, patch3New)
-            patchCount++
-        }
-
-        Log.i("CrossCode", "Applied $patchCount patches to CCLoader for ccmod support")
-
-        return WebResourceResponse(
-            "text/javascript",
-            "UTF-8",
-            ByteArrayInputStream(content.toByteArray(Charsets.UTF_8)),
-        )
     }
 
     /**

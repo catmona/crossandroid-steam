@@ -90,13 +90,6 @@ class GameWrapper(
         )
     }
 
-    /**
-     * Indicates that CrossAndroid supports .ccmod files.
-     * CCLoader can check this property to enable packed mod support.
-     */
-    @JavascriptInterface
-    fun ccmodSupported(): Boolean = true
-
     fun onPageLoaded() {
         Log.d("CrossCode", "Game page loaded.")
 
