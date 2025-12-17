@@ -16,7 +16,7 @@ If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), sea
 ## 3. Install CCLoader  
 
 Follow the steps at https://wiki.c2dl.info/CCLoader#Installation
-
+For support for .ccmod files, replace ccloader/js/ccloader.js with https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js
 ## 4. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.  
 
 Follow the guide on how to install mods [here](https://wiki.c2dl.info/Installing_mods).  

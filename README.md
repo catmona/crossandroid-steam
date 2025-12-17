@@ -21,9 +21,7 @@ suggestions for improvements.
 Pixelart by Ichiki Hayaite aka TheSparkstarScope
 
 ## Getting the app
-First, you can download the latest test APK from
-[here]( https://gitlab.com/namnodorel/crossandroid/-/jobs/artifacts/master/raw/app/build/outputs/apk/debug/app-debug.apk?job=assembleDebug).
-Install it, and open the app. A guide will appear that shows you how to
+Install the latest APK, and open the app. A guide will appear that shows you how to
 get the game files from your PC, package them for the app and copy them
 to your phone. 
 
