@@ -178,4 +178,9 @@ class LaunchActivity : AppCompatActivity() {
             .withSearchEnabled(true)
             .start(this)
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
+    }
 }

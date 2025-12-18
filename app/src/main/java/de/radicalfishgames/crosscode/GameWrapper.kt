@@ -13,7 +13,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import de.radicalfishgames.crosscode.features.Feature
 import java.util.LinkedList
-import kotlin.reflect.KClass
 
 class GameWrapper(
     private val webView: WebView,
@@ -118,8 +117,7 @@ class GameWrapper(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Feature> getFeature(ofType: KClass<T>): T = features.first { ofType.isInstance(it) } as T
+    inline fun <reified T : Feature> getFeature(): T = features.filterIsInstance<T>().first()
 
     @SuppressLint("JavascriptInterface")
     fun exposeJSInterface(
@@ -134,6 +132,10 @@ class GameWrapper(
     fun onPause() = runJS("window.dispatchEvent(new FocusEvent(\"blur\"));")
 
     fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        for (feature in features) {
+            feature.onDestroy()
+        }
         webViewClient.closeCcmodManager()
     }
 

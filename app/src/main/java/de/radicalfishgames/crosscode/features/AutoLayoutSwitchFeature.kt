@@ -13,13 +13,13 @@ class AutoLayoutSwitchFeature(
     private val enabled = hostActivity.preferences.getBoolean("switch_layout_automatically", true)
 
     override fun onPostGamePageLoad() {
-        val virtualControllerFeature = gameWrapper.getFeature(VirtualControllerFeature::class)
+        val virtualControllerFeature = gameWrapper.getFeature<VirtualControllerFeature>()
 
         if (!virtualControllerFeature.enabled || !enabled) {
             return
         }
 
-        gameWrapper.getFeature(GameEventManager::class).apply {
+        gameWrapper.getFeature<GameEventManager>().apply {
             onMenuEnter {
                 virtualControllerFeature.switchToLayout(MenuLayout)
             }

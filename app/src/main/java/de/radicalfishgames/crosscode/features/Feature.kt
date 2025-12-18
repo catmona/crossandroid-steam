@@ -12,6 +12,8 @@ abstract class Feature(
 
     open fun onPostGamePageLoad() {}
 
+    open fun onDestroy() {}
+
     internal fun runJS(
         js: String,
         callback: ValueCallback<String>? = null,

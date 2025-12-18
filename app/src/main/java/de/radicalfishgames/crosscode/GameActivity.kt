@@ -42,7 +42,7 @@ class GameActivity : AppCompatActivity() {
     // Activity Result API launcher for save export
     val createDocumentLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
-            gameWrapper.getFeature(ImportExportFeature::class).onCreateDocumentResult(uri)
+            gameWrapper.getFeature<ImportExportFeature>().onCreateDocumentResult(uri)
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {

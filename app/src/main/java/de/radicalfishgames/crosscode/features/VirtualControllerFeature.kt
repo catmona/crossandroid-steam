@@ -72,7 +72,7 @@ class VirtualControllerFeature(
             view.visibility = View.GONE
             layoutViews[controller] = view
 
-            controller.bindControls(gamepadState, view, this, gameWrapper.getFeature(GameEventManager::class))
+            controller.bindControls(gamepadState, view, this, gameWrapper.getFeature<GameEventManager>())
         }
     }
 

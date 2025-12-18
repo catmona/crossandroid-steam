@@ -12,7 +12,7 @@ class OverlayTransparencyFeature(
     private val enabled = transparency > 0
 
     override fun onPostGamePageLoad() {
-        val virtualControllerFeat = gameWrapper.getFeature(VirtualControllerFeature::class)
+        val virtualControllerFeat = gameWrapper.getFeature<VirtualControllerFeature>()
 
         if (!virtualControllerFeat.enabled || !enabled) {
             return

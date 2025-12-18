@@ -15,7 +15,7 @@ class OverlayScaleFeature(
     private val enabled = scaleFactor != 1.0F
 
     override fun onPostGamePageLoad() {
-        val virtualControllerFeature = gameWrapper.getFeature(VirtualControllerFeature::class)
+        val virtualControllerFeature = gameWrapper.getFeature<VirtualControllerFeature>()
 
         if (!virtualControllerFeature.enabled || !enabled) {
             return

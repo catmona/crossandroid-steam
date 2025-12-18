@@ -12,13 +12,13 @@ class CutsceneLayoutDisableFeature(
     private val enabled = hostActivity.preferences.getBoolean("disable_overlay_cutscenes", true)
 
     override fun onPostGamePageLoad() {
-        val virtualControllerFeature = gameWrapper.getFeature(VirtualControllerFeature::class)
+        val virtualControllerFeature = gameWrapper.getFeature<VirtualControllerFeature>()
 
         if (!virtualControllerFeature.enabled || !enabled) {
             return
         }
 
-        gameWrapper.getFeature(GameEventManager::class).apply {
+        gameWrapper.getFeature<GameEventManager>().apply {
             var inCutscene = false
 
             onCutsceneEnter {

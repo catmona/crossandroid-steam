@@ -1,20 +1,18 @@
 package de.radicalfishgames.crosscode.preferences
 
 import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import de.radicalfishgames.crosscode.R
-import java.io.BufferedReader
-import java.io.FileNotFoundException
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PreferencesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -52,37 +50,29 @@ class PreferenceFragment : PreferenceFragmentCompat() {
     private fun handleFilePickerResult(uri: Uri?) {
         if (uri == null) return
 
-        val preferences: SharedPreferences =
-            requireContext().getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
+        lifecycleScope.launch {
+            val content = withContext(Dispatchers.IO) {
+                readFileContent(uri)
+            }
 
-        var reader: BufferedReader? = null
-        try {
-            // open the user-picked file for reading:
-            val inputStream: InputStream? = requireActivity().contentResolver.openInputStream(uri)
-            // now read the content:
-            reader = BufferedReader(InputStreamReader(inputStream))
-            var line: String?
-            val builder = StringBuilder()
-            while (reader.readLine().also { line = it } != null) {
-                builder.append(line)
+            if (content != null) {
+                requireContext()
+                    .getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
+                    .edit()
+                    .putString("save_to_import", content)
+                    .apply()
             }
-            // Do something with the content in
-            preferences
-                .edit()
-                .putString("save_to_import", builder.toString())
-                .apply()
-        } catch (e: FileNotFoundException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close()
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                }
+        }
+    }
+
+    private fun readFileContent(uri: Uri): String? {
+        return try {
+            requireActivity().contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
+                reader.readText()
             }
+        } catch (e: Exception) {
+            Log.e("PreferenceFragment", "Failed to read file", e)
+            null
         }
     }
 }

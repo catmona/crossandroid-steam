@@ -6,8 +6,6 @@ import android.util.Log
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
 import de.radicalfishgames.crosscode.features.Feature
-import java.util.LinkedList
-import kotlin.collections.HashSet
 
 class GameEventManager(
     gameWrapper: GameWrapper,
@@ -49,43 +47,38 @@ class GameEventManager(
     override fun onPostGamePageLoad() {
         Log.d("CrossCode", "Injecting JS listeners...")
 
-        var requiredModulesJS = ""
-        val modulesAddedAlready = LinkedList<String>()
+        val modulesAddedAlready = mutableSetOf<String>()
+        val observerObjectsAddedAlready = mutableSetOf<String>()
 
-        var observerRegistrationJS = ""
-        val observerObjectsAddedAlready = LinkedList<String>()
-
-        var eventIfsJS = ""
-
-        for (listener in listeners) {
-            if (!modulesAddedAlready.contains(listener.requiredModuleName)) {
-                modulesAddedAlready.add(listener.requiredModuleName)
-
-                requiredModulesJS += ".requires(\"${listener.requiredModuleName}\")"
+        val requiredModulesJS = buildString {
+            for (listener in listeners) {
+                if (modulesAddedAlready.add(listener.requiredModuleName)) {
+                    append(".requires(\"${listener.requiredModuleName}\")")
+                }
             }
-
-            if (!observerObjectsAddedAlready.contains(listener.eventObjectName)) {
-                observerObjectsAddedAlready.add(listener.eventObjectName)
-
-                observerRegistrationJS += "sc.Model.addObserver(sc.${listener.eventObjectName}, this);"
-            }
-
-            eventIfsJS +=
-                """
-                    if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) {
-                        ${listener.onEventJS} 
-                    }
-                """
         }
 
-        var jsForAllListeners =
-            """
+        val observerRegistrationJS = buildString {
+            for (listener in listeners) {
+                if (observerObjectsAddedAlready.add(listener.eventObjectName)) {
+                    append("sc.Model.addObserver(sc.${listener.eventObjectName}, this);")
+                }
+            }
+        }
+
+        val eventIfsJS = buildString {
+            for (listener in listeners) {
+                append("if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) { ${listener.onEventJS} }")
+            }
+        }
+
+        val jsForAllListeners = """
             ig.module("crossandroid.events.listeners")$requiredModulesJS.defines(function(){
                 sc.CrossAndroidEventListener = ig.GameAddon.extend({
                     init: function() {
                         $observerRegistrationJS
                     },
-                    
+
                     modelChanged(origin, eventNumber, optionalArgs){
                         $eventIfsJS
                     }
@@ -94,12 +87,7 @@ class GameEventManager(
                     return sc.crossAndroidEventListener = new sc.CrossAndroidEventListener
                 })
             })
-        """
-
-        jsForAllListeners =
-            jsForAllListeners
-                .trimIndent()
-                .replace("\n", "")
+        """.trimIndent().replace("\n", "")
 
         runJS(jsForAllListeners)
     }
@@ -172,5 +160,16 @@ class GameEventManager(
                 it.invoke(elementMode)
             }
         }
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacksAndMessages(null)
+        onMenuEnter.clear()
+        onMenuExit.clear()
+        onCutsceneEnter.clear()
+        onCutsceneExit.clear()
+        onDirectLinkRing.clear()
+        onDirectLinkEnd.clear()
+        onElementChange.clear()
     }
 }

@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.overlay
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -8,6 +9,7 @@ import android.graphics.Paint
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.LruCache
 import android.util.SparseArray
 import android.view.MotionEvent
 import android.view.View
@@ -21,6 +23,19 @@ open class ControlView(
     context: Context,
     attrs: AttributeSet,
 ) : View(context, attrs) {
+
+    companion object {
+        private val bitmapCache = LruCache<Int, Bitmap>(16)
+
+        fun getCachedBitmap(resId: Int, resources: Resources): Bitmap {
+            return bitmapCache.get(resId) ?: run {
+                val options = BitmapFactory.Options().apply { inScaled = false }
+                BitmapFactory.decodeResource(resources, resId, options).also {
+                    bitmapCache.put(resId, it)
+                }
+            }
+        }
+    }
     private val onTouch: MutableSet<() -> Unit> = HashSet()
     private val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
     private val onRelease: MutableSet<() -> Unit> = HashSet()
@@ -37,12 +52,9 @@ open class ControlView(
 
     init {
         context.theme.obtainStyledAttributes(attrs, R.styleable.ControlView, 0, 0).apply {
-
             try {
                 val resId = getResourceId(R.styleable.ControlView_image, -1)
-                val options = BitmapFactory.Options()
-                options.inScaled = false
-                imageBitmap = BitmapFactory.decodeResource(context.resources, resId, options)
+                imageBitmap = getCachedBitmap(resId, context.resources)
             } finally {
                 recycle()
             }
