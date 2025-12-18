@@ -24,6 +24,17 @@ stages:
     - yes | sdkmanager --licenses > /dev/null 2>&1 || true
     - sdkmanager "platforms;android-${ANDROID_COMPILE_SDK}" "build-tools;${ANDROID_BUILD_TOOLS}" > /dev/null
     - chmod +x ./gradlew
+    # Set up signing if variables are present
+    - |
+      if [ -n "$KEYSTORE_FILE" ]; then
+        echo "$KEYSTORE_FILE" | base64 -d > crossandroid-release.keystore
+        cat > keystore.properties << EOF
+      storeFile=../crossandroid-release.keystore
+      storePassword=$KEYSTORE_PASSWORD
+      keyAlias=$KEY_ALIAS
+      keyPassword=$KEY_PASSWORD
+      EOF
+      fi
 
 # Automatic build on every push
 build:
@@ -85,7 +96,7 @@ release:publish:
     assets:
       links:
         - name: "CrossAndroid APK"
-          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/app/build/outputs/apk/release/app-release-unsigned.apk?job=release:build"
+          url: "${CI_PROJECT_URL}/-/jobs/artifacts/${CI_COMMIT_TAG}/raw/app/build/outputs/apk/release/app-release.apk?job=release:build"
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
