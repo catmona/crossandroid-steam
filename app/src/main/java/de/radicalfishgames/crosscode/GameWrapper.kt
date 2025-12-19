@@ -7,10 +7,13 @@ import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
+import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
+import de.radicalfishgames.crosscode.BuildConfig
 import de.radicalfishgames.crosscode.features.Feature
 import java.util.LinkedList
 
@@ -32,6 +35,9 @@ class GameWrapper(
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
         Log.d("CrossCode, ", "Initializing WebView")
+
+        // Enable WebView debugging for debug builds
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
@@ -59,6 +65,20 @@ class GameWrapper(
         }
 
         webView.webViewClient = webViewClient
+
+        // Log JavaScript console messages to logcat
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                val level = when (consoleMessage.messageLevel()) {
+                    ConsoleMessage.MessageLevel.ERROR -> Log.ERROR
+                    ConsoleMessage.MessageLevel.WARNING -> Log.WARN
+                    ConsoleMessage.MessageLevel.DEBUG -> Log.DEBUG
+                    else -> Log.INFO
+                }
+                Log.println(level, "CCLoader", "${consoleMessage.message()} [${consoleMessage.sourceId()}:${consoleMessage.lineNumber()}]")
+                return true
+            }
+        }
 
         // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->

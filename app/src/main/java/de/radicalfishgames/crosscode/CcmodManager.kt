@@ -19,6 +19,10 @@ class CcmodManager {
     // Maps asset paths (e.g., "media/gui/CCModManager.png") to ccmod file paths
     private val assetIndex = ConcurrentHashMap<String, String>()
 
+    // Maps JSON file paths (e.g., "data/lang/sc/gui.en_US.json") to list of patch locations
+    // Each patch location is a Pair of (ccmodPath, internalPath)
+    private val patchIndex = ConcurrentHashMap<String, MutableList<Pair<String, String>>>()
+
     /**
      * Get or open a ZipFile for the given ccmod path.
      */
@@ -243,12 +247,13 @@ class CcmodManager {
     }
 
     /**
-     * Build the asset index by scanning all .ccmod files in the mods directory.
+     * Build the asset and patch indices by scanning all .ccmod files in the mods directory.
      * Assets inside ccmod's "assets/" folder are indexed by their relative path.
-     * For example, "assets/media/gui/X.png" in foo.ccmod maps "media/gui/X.png" → foo.ccmod
+     * Patches (.json.patch files) are indexed by the target JSON file they patch.
      */
     fun buildAssetIndex(modsDir: File) {
         assetIndex.clear()
+        patchIndex.clear()
         val ccmodFiles = modsDir.listFiles { file -> file.name.endsWith(".ccmod") } ?: return
 
         for (ccmodFile in ccmodFiles) {
@@ -258,11 +263,11 @@ class CcmodManager {
                 Log.e(TAG, "Failed to index ccmod: ${ccmodFile.name}", e)
             }
         }
-        Log.i(TAG, "Asset index built with ${assetIndex.size} entries from ${ccmodFiles.size} ccmod files")
+        Log.i(TAG, "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files from ${ccmodFiles.size} ccmod files")
     }
 
     /**
-     * Index all assets from a single ccmod file.
+     * Index all assets and patches from a single ccmod file.
      */
     private fun indexCcmodAssets(ccmodPath: String) {
         val zipFile = getZipFile(ccmodPath) ?: return
@@ -274,7 +279,15 @@ class CcmodManager {
                 // Remove "assets/" prefix to get the relative asset path
                 val assetPath = name.removePrefix("assets/")
                 if (assetPath.isNotEmpty()) {
-                    assetIndex[assetPath] = ccmodPath
+                    // Check if this is a patch file
+                    if (assetPath.endsWith(".json.patch")) {
+                        // Map the target JSON file to this patch
+                        val targetPath = assetPath.removeSuffix(".patch")
+                        patchIndex.getOrPut(targetPath) { mutableListOf() }
+                            .add(Pair(ccmodPath, "assets/$assetPath"))
+                    } else {
+                        assetIndex[assetPath] = ccmodPath
+                    }
                 }
             }
         }
@@ -296,6 +309,43 @@ class CcmodManager {
         val ccmodPath = assetIndex[assetPath] ?: return null
         // Assets are stored with "assets/" prefix inside the ccmod
         return getFileStream(ccmodPath, "assets/$assetPath")
+    }
+
+    /**
+     * Check if a JSON file has patches available.
+     * @param assetPath The relative asset path (e.g., "data/lang/sc/gui.en_US.json")
+     * @return true if there are patches for this file
+     */
+    fun hasPatches(assetPath: String): Boolean = patchIndex.containsKey(assetPath)
+
+    /**
+     * Apply all patches to a JSON file.
+     * @param assetPath The relative asset path (e.g., "data/lang/sc/gui.en_US.json")
+     * @param originalJson The original JSON content
+     * @return The patched JSON content, or original if no patches or patching failed
+     */
+    fun applyPatches(assetPath: String, originalJson: String): String {
+        val patches = patchIndex[assetPath] ?: return originalJson
+
+        var result = originalJson
+        for ((ccmodPath, internalPath) in patches) {
+            try {
+                val patchStream = getFileStream(ccmodPath, internalPath)
+                if (patchStream != null) {
+                    val patchJson = patchStream.bufferedReader().use { it.readText() }
+                    val patched = PatchStepsApplier.apply(result, patchJson)
+                    if (patched != null) {
+                        result = patched
+                        Log.d(TAG, "Applied patch $internalPath from $ccmodPath to $assetPath")
+                    } else {
+                        Log.w(TAG, "Failed to apply patch $internalPath from $ccmodPath")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error applying patch from $ccmodPath: $internalPath", e)
+            }
+        }
+        return result
     }
 
     companion object {

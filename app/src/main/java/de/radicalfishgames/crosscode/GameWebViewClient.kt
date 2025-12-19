@@ -76,7 +76,21 @@ class GameWebViewClient(
             return handleCcmodRequest(request, ccmodPath.first, ccmodPath.second, normalizedPath)
         }
 
-        // Regular file handling
+        // Check ccmod assets FIRST (allows mods to override existing game assets)
+        if (normalizedPath.startsWith("assets/")) {
+            val assetPath = normalizedPath.removePrefix("assets/")
+            val stream = ccmodManager.getAssetStream(assetPath)
+            if (stream != null) {
+                Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
+                val extension = assetPath.substringAfterLast('.', "")
+                val mimeType =
+                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+                return WebResourceResponse(mimeType, null, stream)
+            }
+        }
+
+        // Fall back to regular file handling
         val requestedFile =
             try {
                 File(gameDir, normalizedPath).canonicalFile
@@ -86,19 +100,6 @@ class GameWebViewClient(
             }
 
         if (!requestedFile.exists()) {
-            // Check if this is an asset that exists in a ccmod
-            if (normalizedPath.startsWith("assets/")) {
-                val assetPath = normalizedPath.removePrefix("assets/")
-                val stream = ccmodManager.getAssetStream(assetPath)
-                if (stream != null) {
-                    Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
-                    val extension = assetPath.substringAfterLast('.', "")
-                    val mimeType =
-                        MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                            ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
-                    return WebResourceResponse(mimeType, null, stream)
-                }
-            }
             Log.w("CrossCode", "Path $urlPath not found! (resolved to ${requestedFile.absolutePath})")
             return WebResourceResponse(null, null, null)
         }
@@ -114,6 +115,14 @@ class GameWebViewClient(
             return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
         }
 
+        // Check if this is a JSON file with patches
+        if (normalizedPath.startsWith("assets/") && normalizedPath.endsWith(".json")) {
+            val assetPath = normalizedPath.removePrefix("assets/")
+            if (ccmodManager.hasPatches(assetPath)) {
+                return servePatchedJson(requestedFile, assetPath)
+            }
+        }
+
         val stream = FileInputStream(requestedFile)
 
         val mimeType =
@@ -121,6 +130,30 @@ class GameWebViewClient(
                 ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
 
         return WebResourceResponse(mimeType, null, stream)
+    }
+
+    /**
+     * Serve a JSON file with patches applied.
+     */
+    private fun servePatchedJson(originalFile: File, assetPath: String): WebResourceResponse {
+        return try {
+            val originalJson = originalFile.readText(Charsets.UTF_8)
+            val patchedJson = ccmodManager.applyPatches(assetPath, originalJson)
+            Log.d("CrossCode", "Serving patched JSON: $assetPath")
+            WebResourceResponse(
+                "application/json",
+                "UTF-8",
+                ByteArrayInputStream(patchedJson.toByteArray(Charsets.UTF_8)),
+            )
+        } catch (e: Exception) {
+            Log.e("CrossCode", "Failed to apply patches to $assetPath", e)
+            // Fall back to original file
+            WebResourceResponse(
+                "application/json",
+                "UTF-8",
+                FileInputStream(originalFile),
+            )
+        }
     }
 
     /**
