@@ -23,19 +23,21 @@ open class ControlView(
     context: Context,
     attrs: AttributeSet,
 ) : View(context, attrs) {
-
     companion object {
         private val bitmapCache = LruCache<Int, Bitmap>(16)
 
-        fun getCachedBitmap(resId: Int, resources: Resources): Bitmap {
-            return bitmapCache.get(resId) ?: run {
+        fun getCachedBitmap(
+            resId: Int,
+            resources: Resources,
+        ): Bitmap =
+            bitmapCache.get(resId) ?: run {
                 val options = BitmapFactory.Options().apply { inScaled = false }
                 BitmapFactory.decodeResource(resources, resId, options).also {
                     bitmapCache.put(resId, it)
                 }
             }
-        }
     }
+
     private val onTouch: MutableSet<() -> Unit> = HashSet()
     private val onMove: MutableSet<(x: Float, y: Float) -> Unit> = HashSet()
     private val onRelease: MutableSet<() -> Unit> = HashSet()

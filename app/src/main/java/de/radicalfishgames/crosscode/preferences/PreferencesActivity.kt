@@ -51,9 +51,10 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         if (uri == null) return
 
         lifecycleScope.launch {
-            val content = withContext(Dispatchers.IO) {
-                readFileContent(uri)
-            }
+            val content =
+                withContext(Dispatchers.IO) {
+                    readFileContent(uri)
+                }
 
             if (content != null) {
                 requireContext()
@@ -65,8 +66,8 @@ class PreferenceFragment : PreferenceFragmentCompat() {
         }
     }
 
-    private fun readFileContent(uri: Uri): String? {
-        return try {
+    private fun readFileContent(uri: Uri): String? =
+        try {
             requireActivity().contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader ->
                 reader.readText()
             }
@@ -74,5 +75,4 @@ class PreferenceFragment : PreferenceFragmentCompat() {
             Log.e("PreferenceFragment", "Failed to read file", e)
             null
         }
-    }
 }

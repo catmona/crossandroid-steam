@@ -67,18 +67,24 @@ class GameWrapper(
         webView.webViewClient = webViewClient
 
         // Log JavaScript console messages to logcat
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                val level = when (consoleMessage.messageLevel()) {
-                    ConsoleMessage.MessageLevel.ERROR -> Log.ERROR
-                    ConsoleMessage.MessageLevel.WARNING -> Log.WARN
-                    ConsoleMessage.MessageLevel.DEBUG -> Log.DEBUG
-                    else -> Log.INFO
+        webView.webChromeClient =
+            object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
+                    val level =
+                        when (consoleMessage.messageLevel()) {
+                            ConsoleMessage.MessageLevel.ERROR -> Log.ERROR
+                            ConsoleMessage.MessageLevel.WARNING -> Log.WARN
+                            ConsoleMessage.MessageLevel.DEBUG -> Log.DEBUG
+                            else -> Log.INFO
+                        }
+                    Log.println(
+                        level,
+                        "CCLoader",
+                        "${consoleMessage.message()} [${consoleMessage.sourceId()}:${consoleMessage.lineNumber()}]",
+                    )
+                    return true
                 }
-                Log.println(level, "CCLoader", "${consoleMessage.message()} [${consoleMessage.sourceId()}:${consoleMessage.lineNumber()}]")
-                return true
             }
-        }
 
         // Disable clicking the game, usually while custom controls are active
         webView.setOnTouchListener { view: View, motionEvent: MotionEvent ->

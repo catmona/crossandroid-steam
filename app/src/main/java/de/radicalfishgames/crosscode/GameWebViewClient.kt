@@ -135,8 +135,11 @@ class GameWebViewClient(
     /**
      * Serve a JSON file with patches applied.
      */
-    private fun servePatchedJson(originalFile: File, assetPath: String): WebResourceResponse {
-        return try {
+    private fun servePatchedJson(
+        originalFile: File,
+        assetPath: String,
+    ): WebResourceResponse =
+        try {
             val originalJson = originalFile.readText(Charsets.UTF_8)
             val patchedJson = ccmodManager.applyPatches(assetPath, originalJson)
             Log.d("CrossCode", "Serving patched JSON: $assetPath")
@@ -154,7 +157,6 @@ class GameWebViewClient(
                 FileInputStream(originalFile),
             )
         }
-    }
 
     /**
      * Handle requests for files inside .ccmod archives.

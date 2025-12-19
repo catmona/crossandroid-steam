@@ -263,7 +263,10 @@ class CcmodManager {
                 Log.e(TAG, "Failed to index ccmod: ${ccmodFile.name}", e)
             }
         }
-        Log.i(TAG, "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files from ${ccmodFiles.size} ccmod files")
+        Log.i(
+            TAG,
+            "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files from ${ccmodFiles.size} ccmod files",
+        )
     }
 
     /**
@@ -283,7 +286,8 @@ class CcmodManager {
                     if (assetPath.endsWith(".json.patch")) {
                         // Map the target JSON file to this patch
                         val targetPath = assetPath.removeSuffix(".patch")
-                        patchIndex.getOrPut(targetPath) { mutableListOf() }
+                        patchIndex
+                            .getOrPut(targetPath) { mutableListOf() }
                             .add(Pair(ccmodPath, "assets/$assetPath"))
                     } else {
                         assetIndex[assetPath] = ccmodPath
@@ -324,7 +328,10 @@ class CcmodManager {
      * @param originalJson The original JSON content
      * @return The patched JSON content, or original if no patches or patching failed
      */
-    fun applyPatches(assetPath: String, originalJson: String): String {
+    fun applyPatches(
+        assetPath: String,
+        originalJson: String,
+    ): String {
         val patches = patchIndex[assetPath] ?: return originalJson
 
         var result = originalJson

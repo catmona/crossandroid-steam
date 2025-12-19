@@ -50,29 +50,35 @@ class GameEventManager(
         val modulesAddedAlready = mutableSetOf<String>()
         val observerObjectsAddedAlready = mutableSetOf<String>()
 
-        val requiredModulesJS = buildString {
-            for (listener in listeners) {
-                if (modulesAddedAlready.add(listener.requiredModuleName)) {
-                    append(".requires(\"${listener.requiredModuleName}\")")
+        val requiredModulesJS =
+            buildString {
+                for (listener in listeners) {
+                    if (modulesAddedAlready.add(listener.requiredModuleName)) {
+                        append(".requires(\"${listener.requiredModuleName}\")")
+                    }
                 }
             }
-        }
 
-        val observerRegistrationJS = buildString {
-            for (listener in listeners) {
-                if (observerObjectsAddedAlready.add(listener.eventObjectName)) {
-                    append("sc.Model.addObserver(sc.${listener.eventObjectName}, this);")
+        val observerRegistrationJS =
+            buildString {
+                for (listener in listeners) {
+                    if (observerObjectsAddedAlready.add(listener.eventObjectName)) {
+                        append("sc.Model.addObserver(sc.${listener.eventObjectName}, this);")
+                    }
                 }
             }
-        }
 
-        val eventIfsJS = buildString {
-            for (listener in listeners) {
-                append("if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) { ${listener.onEventJS} }")
+        val eventIfsJS =
+            buildString {
+                for (listener in listeners) {
+                    append(
+                        "if(origin === sc.${listener.eventObjectName} && eventNumber === sc.${listener.eventType}) { ${listener.onEventJS} }",
+                    )
+                }
             }
-        }
 
-        val jsForAllListeners = """
+        val jsForAllListeners =
+            """
             ig.module("crossandroid.events.listeners")$requiredModulesJS.defines(function(){
                 sc.CrossAndroidEventListener = ig.GameAddon.extend({
                     init: function() {
@@ -87,7 +93,7 @@ class GameEventManager(
                     return sc.crossAndroidEventListener = new sc.CrossAndroidEventListener
                 })
             })
-        """.trimIndent().replace("\n", "")
+            """.trimIndent().replace("\n", "")
 
         runJS(jsForAllListeners)
     }
