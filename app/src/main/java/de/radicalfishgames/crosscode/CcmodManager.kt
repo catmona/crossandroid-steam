@@ -247,26 +247,85 @@ class CcmodManager {
     }
 
     /**
-     * Build the asset and patch indices by scanning all .ccmod files in the mods directory.
-     * Assets inside ccmod's "assets/" folder are indexed by their relative path.
+     * Build the asset and patch indices by scanning all mods in the mods directory.
+     * Supports both .ccmod files (zips) and unpacked mod folders.
+     * Assets inside the "assets/" folder are indexed by their relative path.
      * Patches (.json.patch files) are indexed by the target JSON file they patch.
      */
     fun buildAssetIndex(modsDir: File) {
         assetIndex.clear()
         patchIndex.clear()
-        val ccmodFiles = modsDir.listFiles { file -> file.name.endsWith(".ccmod") } ?: return
 
-        for (ccmodFile in ccmodFiles) {
+        val modEntries = modsDir.listFiles() ?: return
+        var packedCount = 0
+        var unpackedCount = 0
+
+        for (entry in modEntries) {
             try {
-                indexCcmodAssets(ccmodFile.absolutePath)
+                if (entry.isFile && entry.name.endsWith(".ccmod")) {
+                    // Packed ccmod (zip file)
+                    indexCcmodAssets(entry.absolutePath)
+                    packedCount++
+                } else if (entry.isDirectory && isUnpackedMod(entry)) {
+                    // Unpacked mod folder
+                    indexUnpackedModAssets(entry)
+                    unpackedCount++
+                }
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to index ccmod: ${ccmodFile.name}", e)
+                Log.e(TAG, "Failed to index mod: ${entry.name}", e)
             }
         }
         Log.i(
             TAG,
-            "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files from ${ccmodFiles.size} ccmod files",
+            "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files " +
+                "from $packedCount packed + $unpackedCount unpacked mods",
         )
+    }
+
+    /**
+     * Check if a directory is an unpacked mod (has package.json or ccmod.json).
+     */
+    private fun isUnpackedMod(dir: File): Boolean = File(dir, "package.json").exists() || File(dir, "ccmod.json").exists()
+
+    /**
+     * Index assets and patches from an unpacked mod folder.
+     */
+    private fun indexUnpackedModAssets(modDir: File) {
+        val assetsDir = File(modDir, "assets")
+        if (!assetsDir.exists() || !assetsDir.isDirectory) {
+            return
+        }
+
+        indexUnpackedDirectory(modDir.absolutePath, assetsDir, "")
+    }
+
+    /**
+     * Recursively index files in an unpacked mod's assets directory.
+     */
+    private fun indexUnpackedDirectory(
+        modPath: String,
+        dir: File,
+        relativePath: String,
+    ) {
+        val files = dir.listFiles() ?: return
+
+        for (file in files) {
+            val assetPath = if (relativePath.isEmpty()) file.name else "$relativePath/${file.name}"
+
+            if (file.isDirectory) {
+                indexUnpackedDirectory(modPath, file, assetPath)
+            } else {
+                if (assetPath.endsWith(".json.patch")) {
+                    // Map the target JSON file to this patch
+                    val targetPath = assetPath.removeSuffix(".patch")
+                    patchIndex
+                        .getOrPut(targetPath) { mutableListOf() }
+                        .add(Pair(modPath, "assets/$assetPath"))
+                } else {
+                    assetIndex[assetPath] = modPath
+                }
+            }
+        }
     }
 
     /**
@@ -307,12 +366,41 @@ class CcmodManager {
     /**
      * Get a file stream for an indexed asset.
      * @param assetPath The relative asset path (e.g., "media/gui/CCModManager.png")
-     * @return InputStream for the asset, or null if not found in any ccmod
+     * @return InputStream for the asset, or null if not found in any mod
      */
     fun getAssetStream(assetPath: String): InputStream? {
-        val ccmodPath = assetIndex[assetPath] ?: return null
-        // Assets are stored with "assets/" prefix inside the ccmod
-        return getFileStream(ccmodPath, "assets/$assetPath")
+        val modPath = assetIndex[assetPath] ?: return null
+        return getModFileStream(modPath, "assets/$assetPath")
+    }
+
+    /**
+     * Get a file stream from a mod (packed or unpacked).
+     * @param modPath Path to the mod (ccmod file or unpacked folder)
+     * @param internalPath Path inside the mod
+     * @return InputStream for the file, or null if not found
+     */
+    private fun getModFileStream(
+        modPath: String,
+        internalPath: String,
+    ): InputStream? {
+        val modFile = File(modPath)
+        return if (modFile.isDirectory) {
+            // Unpacked mod - read directly from filesystem
+            val file = File(modFile, internalPath)
+            if (file.exists() && file.isFile) {
+                try {
+                    file.inputStream()
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to read file: ${file.absolutePath}", e)
+                    null
+                }
+            } else {
+                null
+            }
+        } else {
+            // Packed ccmod - read from zip
+            getFileStream(modPath, internalPath)
+        }
     }
 
     /**
@@ -326,33 +414,93 @@ class CcmodManager {
      * Apply all patches to a JSON file.
      * @param assetPath The relative asset path (e.g., "data/lang/sc/gui.en_US.json")
      * @param originalJson The original JSON content
+     * @param gameFileResolver Optional resolver for "game:" protocol paths
      * @return The patched JSON content, or original if no patches or patching failed
      */
     fun applyPatches(
         assetPath: String,
         originalJson: String,
+        gameFileResolver: ((String) -> String?)? = null,
     ): String {
         val patches = patchIndex[assetPath] ?: return originalJson
 
         var result = originalJson
-        for ((ccmodPath, internalPath) in patches) {
+        for ((modPath, internalPath) in patches) {
             try {
-                val patchStream = getFileStream(ccmodPath, internalPath)
+                val patchStream = getModFileStream(modPath, internalPath)
                 if (patchStream != null) {
                     val patchJson = patchStream.bufferedReader().use { it.readText() }
-                    val patched = PatchStepsApplier.apply(result, patchJson)
+                    val fileResolver = createFileResolver(modPath, gameFileResolver)
+                    val patched = PatchStepsApplier.apply(result, patchJson, fileResolver)
                     if (patched != null) {
                         result = patched
-                        Log.d(TAG, "Applied patch $internalPath from $ccmodPath to $assetPath")
+                        Log.d(TAG, "Applied patch $internalPath from $modPath to $assetPath")
                     } else {
-                        Log.w(TAG, "Failed to apply patch $internalPath from $ccmodPath")
+                        Log.w(TAG, "Failed to apply patch $internalPath from $modPath")
                     }
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error applying patch from $ccmodPath: $internalPath", e)
+                Log.e(TAG, "Error applying patch from $modPath: $internalPath", e)
             }
         }
         return result
+    }
+
+    /**
+     * Create a file resolver for IMPORT/INCLUDE operations.
+     * Supports protocols:
+     * - "mod:" - resolve relative to the mod's root
+     * - "game:" - resolve relative to game assets
+     */
+    private fun createFileResolver(
+        modPath: String,
+        gameFileResolver: ((String) -> String?)?,
+    ): (String) -> String? =
+        { path ->
+            val (protocol, relativePath) = parseProtocol(path)
+            when (protocol) {
+                "mod" -> {
+                    readModFile(modPath, relativePath)
+                }
+
+                "game" -> {
+                    gameFileResolver?.invoke(relativePath)
+                }
+
+                else -> {
+                    Log.w(TAG, "Unknown protocol '$protocol' in path: $path")
+                    null
+                }
+            }
+        }
+
+    /**
+     * Parse protocol prefix from a path.
+     * @return Pair of (protocol or null, path without protocol)
+     */
+    private fun parseProtocol(path: String): Pair<String?, String> {
+        val colonIndex = path.indexOf(':')
+        return if (colonIndex > 0 && colonIndex < path.indexOf('/').let { if (it == -1) path.length else it }) {
+            Pair(path.substring(0, colonIndex), path.substring(colonIndex + 1).trimStart('/'))
+        } else {
+            Pair(null, path)
+        }
+    }
+
+    /**
+     * Read a file from a mod (for IMPORT/INCLUDE).
+     */
+    private fun readModFile(
+        modPath: String,
+        relativePath: String,
+    ): String? {
+        val stream = getModFileStream(modPath, relativePath) ?: return null
+        return try {
+            stream.bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to read mod file: $relativePath from $modPath", e)
+            null
+        }
     }
 
     companion object {

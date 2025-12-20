@@ -6,7 +6,9 @@ import org.json.JSONObject
 
 /**
  * Applies CCLoader Patch Steps to JSON data.
- * Supports the core operations: ENTER, EXIT, SET_KEY, INIT_KEY, ADD_ARRAY_ELEMENT, REMOVE_ARRAY_ELEMENT
+ * Implements the full specification including:
+ * ENTER, EXIT, SET_KEY, INIT_KEY, ADD_ARRAY_ELEMENT, REMOVE_ARRAY_ELEMENT,
+ * COPY, PASTE, IMPORT, INCLUDE, FOR_IN, DEBUG, COMMENT
  *
  * @see https://github.com/CCDirectLink/CLS/blob/master/standards/patch-steps.md
  */
@@ -15,20 +17,44 @@ class PatchStepsApplier {
         private const val TAG = "PatchStepsApplier"
 
         /**
+         * Callback to resolve file paths for IMPORT and INCLUDE operations.
+         * @param path The file path (may include protocol like "game:" or "mod:")
+         * @return The file contents as a string, or null if not found
+         */
+        typealias FileResolver = (path: String) -> String?
+
+        /**
          * Apply a patch to JSON data.
+         * Supports two formats:
+         * 1. Patch Steps format (JSONArray of operations)
+         * 2. Simple merge format (JSONObject to deep-merge)
+         *
          * @param originalJson The original JSON string
-         * @param patchJson The patch steps JSON array string
+         * @param patchJson The patch JSON string (array for Patch Steps, object for merge)
+         * @param fileResolver Optional callback to resolve file paths for IMPORT/INCLUDE
          * @return The patched JSON string, or null if patching failed
          */
         fun apply(
             originalJson: String,
             patchJson: String,
+            fileResolver: FileResolver? = null,
         ): String? =
             try {
                 val root = JSONObject(originalJson)
-                val steps = JSONArray(patchJson)
+                val cleanedPatch = stripTrailingCommas(patchJson)
+                val trimmed = cleanedPatch.trim()
 
-                applySteps(root, steps)
+                if (trimmed.startsWith("[")) {
+                    val steps = JSONArray(cleanedPatch)
+                    val state = PatchState(fileResolver = fileResolver, current = root)
+                    applySteps(root, steps, state)
+                } else if (trimmed.startsWith("{")) {
+                    val patch = JSONObject(cleanedPatch)
+                    deepMerge(root, patch)
+                } else {
+                    Log.e(TAG, "Invalid patch format - must be JSON array or object")
+                    return null
+                }
 
                 root.toString()
             } catch (e: Exception) {
@@ -36,68 +62,409 @@ class PatchStepsApplier {
                 null
             }
 
-        private fun applySteps(
-            root: JSONObject,
-            steps: JSONArray,
+        /**
+         * Internal state passed through patch step execution.
+         */
+        private class PatchState(
+            val memory: MutableMap<String, Any> = mutableMapOf(),
+            val fileResolver: FileResolver? = null,
+            var debugEnabled: Boolean = false,
+            val stack: MutableList<Any> = mutableListOf(),
+            var current: Any,
         ) {
-            // Stack of parent values for ENTER/EXIT navigation
-            val stack = mutableListOf<Any>()
-            var current: Any = root
+            /** Create child state for INCLUDE (fresh stack, same memory/resolver). */
+            fun childState(): PatchState =
+                PatchState(
+                    memory = memory,
+                    fileResolver = fileResolver,
+                    debugEnabled = debugEnabled,
+                    stack = mutableListOf(),
+                    current = current,
+                )
+        }
 
-            for (i in 0 until steps.length()) {
-                val step = steps.getJSONObject(i)
-                val type = step.getString("type")
+        /**
+         * Strip trailing commas from JSON (common in hand-written JSON but invalid).
+         * Uses a state machine to avoid corrupting strings containing ",}" or ",]".
+         */
+        private fun stripTrailingCommas(json: String): String {
+            val result = StringBuilder(json.length)
+            var inString = false
+            var escape = false
+            var pendingComma = -1
 
-                when (type) {
-                    "ENTER" -> {
-                        val index = step.get("index")
-                        stack.add(current)
-                        current = navigate(current, index)
+            for (ch in json) {
+                if (escape) {
+                    escape = false
+                    result.append(ch)
+                    continue
+                }
+
+                when {
+                    ch == '\\' && inString -> {
+                        escape = true
+                        result.append(ch)
                     }
 
-                    "EXIT" -> {
-                        if (stack.isNotEmpty()) {
-                            current = stack.removeAt(stack.lastIndex)
+                    ch == '"' -> {
+                        inString = !inString
+                        result.append(ch)
+                    }
+
+                    !inString && ch == ',' -> {
+                        pendingComma = result.length
+                        result.append(ch)
+                    }
+
+                    !inString && (ch == '}' || ch == ']') -> {
+                        if (pendingComma >= 0) {
+                            result.delete(pendingComma, result.length)
                         }
+                        result.append(ch)
+                        pendingComma = -1
                     }
 
-                    "SET_KEY" -> {
-                        val index = step.get("index")
-                        val content = step.opt("content")
-                        setKey(current, index, content)
-                    }
-
-                    "INIT_KEY" -> {
-                        val index = step.get("index")
-                        val content = step.opt("content")
-                        initKey(current, index, content)
-                    }
-
-                    "ADD_ARRAY_ELEMENT" -> {
-                        val index = step.optInt("index", -1)
-                        val content = step.get("content")
-                        addArrayElement(current, index, content)
-                    }
-
-                    "REMOVE_ARRAY_ELEMENT" -> {
-                        val index = step.getInt("index")
-                        removeArrayElement(current, index)
-                    }
-
-                    "COMMENT", "DEBUG" -> {
-                        // Ignore these steps
+                    !inString && ch.isWhitespace() -> {
+                        result.append(ch)
                     }
 
                     else -> {
-                        Log.w(TAG, "Unsupported patch step type: $type")
+                        pendingComma = -1
+                        result.append(ch)
+                    }
+                }
+            }
+
+            return result.toString()
+        }
+
+        /**
+         * Deep merge patch object into target object.
+         * Arrays are replaced, objects are recursively merged.
+         */
+        private fun deepMerge(
+            target: JSONObject,
+            patch: JSONObject,
+        ) {
+            for (key in patch.keys()) {
+                val patchValue = patch.opt(key) ?: continue
+
+                if (patchValue is JSONObject && target.has(key)) {
+                    val targetValue = target.opt(key)
+                    if (targetValue is JSONObject) {
+                        deepMerge(targetValue, patchValue)
+                        continue
+                    }
+                }
+
+                target.put(key, patchValue)
+            }
+        }
+
+        /**
+         * Merge source into target (works for both objects and arrays).
+         */
+        private fun mergeAny(
+            target: Any,
+            source: Any,
+        ) {
+            when {
+                target is JSONObject && source is JSONObject -> {
+                    deepMerge(target, source)
+                }
+
+                target is JSONArray && source is JSONArray -> {
+                    for (i in 0 until source.length()) {
+                        target.put(source.get(i))
+                    }
+                }
+
+                else -> {
+                    throw IllegalArgumentException(
+                        "Cannot merge ${source::class.simpleName} into ${target::class.simpleName}",
+                    )
+                }
+            }
+        }
+
+        /**
+         * Deep copy a JSON value.
+         */
+        private fun deepCopy(value: Any): Any =
+            when (value) {
+                is JSONObject -> JSONObject(value.toString())
+                is JSONArray -> JSONArray(value.toString())
+                else -> value // Primitives are immutable
+            }
+
+        /**
+         * Deep copy a nullable JSON value.
+         */
+        private fun deepCopyNullable(value: Any?): Any? = if (value == null) null else deepCopy(value)
+
+        private fun applySteps(
+            root: JSONObject,
+            steps: JSONArray,
+            state: PatchState,
+        ) {
+            for (i in 0 until steps.length()) {
+                try {
+                    val step = steps.getJSONObject(i)
+                    val type = step.getString("type")
+
+                    when (type) {
+                        "ENTER" -> {
+                            val index = step.get("index")
+                            state.stack.add(state.current)
+                            state.current = navigate(state.current, index)
+                        }
+
+                        "EXIT" -> {
+                            val count = step.optInt("count", 1)
+                            repeat(count) {
+                                if (state.stack.isEmpty()) {
+                                    throw IllegalStateException("EXIT: stack underflow (count=$count)")
+                                }
+                                state.current = state.stack.removeAt(state.stack.lastIndex)
+                            }
+                        }
+
+                        "SET_KEY" -> {
+                            val index = step.get("index")
+                            val content = step.opt("content")
+                            setKey(state.current, index, deepCopyNullable(content))
+                        }
+
+                        "INIT_KEY" -> {
+                            val index = step.get("index")
+                            val content = step.opt("content")
+                            initKey(state.current, index, deepCopyNullable(content))
+                        }
+
+                        "ADD_ARRAY_ELEMENT" -> {
+                            val index = step.optInt("index", -1)
+                            val content = step.get("content")
+                            addArrayElement(state.current, index, deepCopy(content))
+                        }
+
+                        "REMOVE_ARRAY_ELEMENT" -> {
+                            val index = step.getInt("index")
+                            removeArrayElement(state.current, index)
+                        }
+
+                        "COPY" -> {
+                            val alias = step.getString("alias")
+                            state.memory[alias] = deepCopy(state.current)
+                        }
+
+                        "PASTE" -> {
+                            val alias = step.getString("alias")
+                            val stored =
+                                state.memory[alias]
+                                    ?: throw IllegalArgumentException("Unknown COPY alias: $alias")
+                            val copied = deepCopy(stored)
+                            when (state.current) {
+                                is JSONArray -> {
+                                    // For arrays: ADD_ARRAY_ELEMENT behavior
+                                    val index = step.optInt("index", -1)
+                                    addArrayElement(state.current, index, copied)
+                                }
+
+                                is JSONObject -> {
+                                    // For objects: SET_KEY behavior (index required)
+                                    val index = step.get("index")
+                                    setKey(state.current, index, copied)
+                                }
+
+                                else -> {
+                                    throw IllegalArgumentException(
+                                        "PASTE not supported on ${state.current::class.simpleName}",
+                                    )
+                                }
+                            }
+                        }
+
+                        "IMPORT" -> {
+                            val src = step.getString("src")
+                            val resolver =
+                                state.fileResolver
+                                    ?: throw IllegalStateException("IMPORT requires fileResolver")
+                            // Default to game: protocol if no protocol specified
+                            val resolvedSrc = if (!src.contains(':')) "game:$src" else src
+                            val content =
+                                resolver(resolvedSrc)
+                                    ?: throw IllegalArgumentException("Failed to resolve IMPORT: $src")
+
+                            val cleaned = stripTrailingCommas(content)
+                            var imported: Any = JSONObject(cleaned)
+
+                            // Navigate to path if specified
+                            val path = step.optJSONArray("path")
+                            if (path != null) {
+                                imported = navigate(imported, path)
+                            }
+
+                            // Assign to index or merge
+                            val index = step.opt("index")
+                            if (index != null) {
+                                setKey(state.current, index, imported)
+                            } else {
+                                mergeAny(state.current, imported)
+                            }
+                        }
+
+                        "INCLUDE" -> {
+                            val src = step.getString("src")
+                            val resolver =
+                                state.fileResolver
+                                    ?: throw IllegalStateException("INCLUDE requires fileResolver")
+                            // Default to mod: protocol if no protocol specified
+                            val resolvedSrc = if (!src.contains(':')) "mod:$src" else src
+                            val patchContent =
+                                resolver(resolvedSrc)
+                                    ?: throw IllegalArgumentException("Failed to resolve INCLUDE: $src")
+
+                            val cleaned = stripTrailingCommas(patchContent)
+                            val includeSteps = JSONArray(cleaned)
+                            // Execute with fresh stack but same current position
+                            applySteps(root, includeSteps, state.childState())
+                        }
+
+                        "FOR_IN" -> {
+                            val values = step.get("values")
+                            val keyword = step.get("keyword")
+                            val body = step.getJSONArray("body")
+
+                            val valuesList =
+                                when (values) {
+                                    is JSONArray -> (0 until values.length()).map { values.get(it) }
+                                    else -> throw IllegalArgumentException("FOR_IN values must be array")
+                                }
+
+                            // Apply each iteration using the SAME state (stack persists)
+                            for (value in valuesList) {
+                                val substitutedBody = substituteKeyword(body, keyword, value)
+                                applySteps(root, substitutedBody, state)
+                            }
+                        }
+
+                        "DEBUG" -> {
+                            state.debugEnabled = step.optBoolean("value", false)
+                        }
+
+                        "COMMENT" -> {
+                            if (state.debugEnabled) {
+                                val commentValue = step.opt("value")
+                                Log.d(TAG, "COMMENT: $commentValue")
+                            }
+                        }
+
+                        else -> {
+                            Log.w(TAG, "Unsupported patch step type: $type")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to apply patch step $i", e)
+                    throw e
+                }
+            }
+        }
+
+        /**
+         * Substitute keyword occurrences in a patch body with a value.
+         * Handles both string keywords and object pattern matching.
+         * Uses regex replacement to match CCLoader behavior.
+         */
+        private fun substituteKeyword(
+            body: JSONArray,
+            keyword: Any,
+            value: Any,
+        ): JSONArray {
+            val clonedBody = JSONArray(body.toString())
+            when (keyword) {
+                is String -> {
+                    valueInsertion(clonedBody, keyword.toRegex(), value)
+                }
+
+                is JSONObject -> {
+                    // Object pattern matching - replace each key's pattern with value's corresponding key
+                    for (key in keyword.keys()) {
+                        val pattern = keyword.getString(key)
+                        val replacement =
+                            if (value is JSONObject) {
+                                value.opt(key) ?: JSONObject.NULL
+                            } else {
+                                value
+                            }
+                        valueInsertion(clonedBody, pattern.toRegex(), replacement)
+                    }
+                }
+            }
+            return clonedBody
+        }
+
+        /**
+         * Recursively replace regex matches within string values of an object/array.
+         * Matches CCLoader's valueInsertion behavior.
+         */
+        private fun valueInsertion(
+            obj: Any,
+            pattern: Regex,
+            replacement: Any,
+        ) {
+            val replacementStr =
+                when (replacement) {
+                    is String -> replacement
+                    is Number, is Boolean -> replacement.toString()
+                    JSONObject.NULL -> ""
+                    else -> replacement.toString()
+                }
+
+            when (obj) {
+                is JSONArray -> {
+                    for (i in 0 until obj.length()) {
+                        when (val child = obj.get(i)) {
+                            is String -> {
+                                obj.put(i, child.replace(pattern, replacementStr))
+                            }
+
+                            is JSONObject, is JSONArray -> {
+                                valueInsertion(child, pattern, replacement)
+                            }
+                        }
+                    }
+                }
+
+                is JSONObject -> {
+                    for (key in obj.keys().asSequence().toList()) {
+                        when (val child = obj.opt(key)) {
+                            is String -> {
+                                obj.put(key, child.replace(pattern, replacementStr))
+                            }
+
+                            is JSONObject, is JSONArray -> {
+                                valueInsertion(child, pattern, replacement)
+                            }
+                        }
                     }
                 }
             }
         }
 
         /**
+         * Convert a value to its JSON string representation.
+         */
+        private fun valueToJsonString(value: Any): String =
+            when (value) {
+                is String -> JSONObject.quote(value)
+                is JSONObject, is JSONArray -> value.toString()
+                is Number, is Boolean -> value.toString()
+                JSONObject.NULL -> "null"
+                else -> JSONObject.quote(value.toString())
+            }
+
+        /**
          * Navigate into a nested structure.
-         * Index can be a single key/index or an array of keys/indices for deep navigation.
          */
         private fun navigate(
             current: Any,
@@ -123,13 +490,17 @@ class PatchStepsApplier {
         ): Any =
             when (current) {
                 is JSONObject -> current.get(key.toString())
-                is JSONArray -> current.get(key as Int)
+                is JSONArray -> current.get(toArrayIndex(key))
                 else -> throw IllegalArgumentException("Cannot navigate into $current with key $key")
             }
 
-        /**
-         * Set a key/index to a value.
-         */
+        private fun toArrayIndex(index: Any): Int =
+            when (index) {
+                is Int -> index
+                is Number -> index.toInt()
+                else -> index.toString().toInt()
+            }
+
         private fun setKey(
             current: Any,
             index: Any,
@@ -145,13 +516,7 @@ class PatchStepsApplier {
                 }
 
                 is JSONArray -> {
-                    val idx =
-                        when (index) {
-                            is Int -> index
-                            is Number -> index.toInt()
-                            else -> index.toString().toInt()
-                        }
-                    current.put(idx, content ?: JSONObject.NULL)
+                    current.put(toArrayIndex(index), content ?: JSONObject.NULL)
                 }
 
                 else -> {
@@ -160,9 +525,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Set a key only if it doesn't exist.
-         */
         private fun initKey(
             current: Any,
             index: Any,
@@ -177,12 +539,7 @@ class PatchStepsApplier {
                 }
 
                 is JSONArray -> {
-                    val idx =
-                        when (index) {
-                            is Int -> index
-                            is Number -> index.toInt()
-                            else -> index.toString().toInt()
-                        }
+                    val idx = toArrayIndex(index)
                     if (idx >= current.length() || current.isNull(idx)) {
                         current.put(idx, content ?: JSONObject.NULL)
                     }
@@ -194,9 +551,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Add an element to an array.
-         */
         private fun addArrayElement(
             current: Any,
             index: Int,
@@ -208,10 +562,8 @@ class PatchStepsApplier {
             }
 
             if (index < 0 || index >= current.length()) {
-                // Append to end
                 current.put(content)
             } else {
-                // Insert at index - need to shift elements
                 val newArray = JSONArray()
                 for (i in 0 until current.length()) {
                     if (i == index) {
@@ -219,7 +571,6 @@ class PatchStepsApplier {
                     }
                     newArray.put(current.get(i))
                 }
-                // Replace contents
                 while (current.length() > 0) {
                     current.remove(0)
                 }
@@ -229,9 +580,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Remove an element from an array.
-         */
         private fun removeArrayElement(
             current: Any,
             index: Int,
