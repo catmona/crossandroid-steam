@@ -18,6 +18,8 @@ import com.mikepenz.aboutlibraries.LibsBuilder
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
+import de.radicalfishgames.crosscode.preferences.SaveImportActivity
+import de.radicalfishgames.crosscode.preferences.SaveImportManager
 
 class LaunchActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLaunchBinding
@@ -34,12 +36,21 @@ class LaunchActivity : AppCompatActivity() {
 
         gameFolderManager = GameFolderManager(this)
 
+        // Clear any leftover import queue from previous session
+        if (savedInstanceState == null) {
+            SaveImportManager(this).clear()
+        }
+
         binding.launchButton.setOnClickListener {
             launchGameActivity()
         }
 
         binding.preferencesButton.setOnClickListener {
             launchPreferencesActivity()
+        }
+
+        binding.importSavesButton.setOnClickListener {
+            launchSaveImportActivity()
         }
 
         binding.aboutButton.setOnClickListener {
@@ -166,6 +177,11 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun launchPreferencesActivity() {
         val intent = Intent(this, PreferencesActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun launchSaveImportActivity() {
+        val intent = Intent(this, SaveImportActivity::class.java)
         startActivity(intent)
     }
 

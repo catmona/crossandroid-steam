@@ -7,6 +7,7 @@ import android.webkit.JavascriptInterface
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.preferences.SaveImportManager
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
 import java.io.IOException
@@ -15,7 +16,8 @@ class ImportExportFeature(
     gameWrapper: GameWrapper,
     hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-    private val saveStringToImport = hostActivity.preferences.getString("save_to_import", "")
+    private val saveImportManager = SaveImportManager(hostActivity)
+    private val savesToImport = saveImportManager.consumeAll()
     private val exportSaveEnabled = hostActivity.preferences.getBoolean("export_save", false)
 
     private var saveStringToExport: String? = null
@@ -25,17 +27,14 @@ class ImportExportFeature(
     }
 
     override fun onPostGamePageLoad() {
-        val importJS: String
-        if (saveStringToImport != null && saveStringToImport.isNotEmpty()) {
-            importJS = "ig.storage.pushSlotData(\"${saveStringToImport.trim()}\");"
-
-            hostActivity.preferences
-                .edit()
-                .putString("save_to_import", "")
-                .apply()
-        } else {
-            importJS = ""
-        }
+        val importJS =
+            if (savesToImport.isNotEmpty()) {
+                savesToImport.joinToString("\n") { save ->
+                    "ig.storage.pushSlotData(\"${save.trim()}\");"
+                }
+            } else {
+                ""
+            }
 
         val exportJS: String
         if (exportSaveEnabled) {

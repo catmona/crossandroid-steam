@@ -53,16 +53,6 @@
         android:summary="@string/vibration_on_rumble_summary"
         android:title="@string/vibration_on_rumble_title" />
 
-    <EditTextPreference
-        android:key="save_to_import"
-        android:summary="@string/import_save_summary"
-        android:title="@string/import_save_title" />
-
-    <Preference
-        android:key="fileToImport"
-        android:summary="@string/import_file_summary"
-        android:title="@string/import_file_title" />
-
     <SwitchPreference
         android:defaultValue="false"
         android:key="export_save"
