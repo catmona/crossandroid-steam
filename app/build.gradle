@@ -1,7 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'com.mikepenz.aboutlibraries.plugin' version '11.2.3'
+    id 'org.jetbrains.kotlin.plugin.compose' version "$kotlin_version"
+    id 'com.mikepenz.aboutlibraries.plugin.android' version '13.2.1'
 }
 
 def keystorePropertiesFile = rootProject.file("keystore.properties")
@@ -53,6 +54,7 @@ android {
     buildFeatures {
         viewBinding = true
         buildConfig = true
+        compose = true
     }
 
     compileOptions {
@@ -85,7 +87,14 @@ dependencies {
     // Material Design
     implementation 'com.google.android.material:material:1.13.0'
 
-    // About screen with auto-generated license info
-    implementation 'com.mikepenz:aboutlibraries-core:11.2.3'
-    implementation 'com.mikepenz:aboutlibraries:11.2.3'
+    // Compose
+    def composeBom = platform('androidx.compose:compose-bom:2025.12.00')
+    implementation composeBom
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-core'
+    implementation 'androidx.activity:activity-compose:1.10.1'
+
+    // About screen with auto-generated license info (Compose UI)
+    implementation 'com.mikepenz:aboutlibraries-core:13.2.1'
+    implementation 'com.mikepenz:aboutlibraries-compose-m3:13.2.1'
 }

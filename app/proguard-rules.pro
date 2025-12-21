@@ -19,3 +19,6 @@
 
 # Keep AboutLibraries classes (required by the library)
 -keep class com.mikepenz.aboutlibraries.** { *; }
+
+# Keep Material Design R class attributes (required by AboutLibraries)
+-keep class com.google.android.material.R$attr { *; }

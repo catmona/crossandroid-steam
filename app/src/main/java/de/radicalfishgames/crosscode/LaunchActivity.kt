@@ -14,7 +14,6 @@ import android.widget.ScrollView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.mikepenz.aboutlibraries.LibsBuilder
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
@@ -186,13 +185,8 @@ class LaunchActivity : AppCompatActivity() {
     }
 
     private fun launchAboutActivity() {
-        LibsBuilder()
-            .withAboutAppName("CrossAndroid")
-            .withAboutIconShown(true)
-            .withAboutVersionShown(true)
-            .withActivityTitle("About")
-            .withSearchEnabled(true)
-            .start(this)
+        val intent = Intent(this, AboutActivity::class.java)
+        startActivity(intent)
     }
 
     override fun onDestroy() {
