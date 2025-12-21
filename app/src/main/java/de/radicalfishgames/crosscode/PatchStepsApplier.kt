@@ -70,15 +70,19 @@ class PatchStepsApplier {
             val fileResolver: FileResolver? = null,
             var debugEnabled: Boolean = false,
             val stack: MutableList<Any> = mutableListOf(),
+            val pathStack: MutableList<String> = mutableListOf(),
             var current: Any,
         ) {
-            /** Create child state for INCLUDE (fresh stack, same memory/resolver). */
+            fun currentPath(): String = pathStack.joinToString("/").ifEmpty { "<root>" }
+
+            /** Create child state for INCLUDE (fresh stacks, same memory/resolver). */
             fun childState(): PatchState =
                 PatchState(
                     memory = memory,
                     fileResolver = fileResolver,
                     debugEnabled = debugEnabled,
                     stack = mutableListOf(),
+                    pathStack = mutableListOf(),
                     current = current,
                 )
         }
@@ -208,24 +212,34 @@ class PatchStepsApplier {
             state: PatchState,
         ) {
             for (i in 0 until steps.length()) {
+                val step = steps.getJSONObject(i)
+                val type = step.getString("type")
                 try {
-                    val step = steps.getJSONObject(i)
-                    val type = step.getString("type")
-
                     when (type) {
                         "ENTER" -> {
                             val index = step.get("index")
-                            state.stack.add(state.current)
-                            state.current = navigate(state.current, index)
+                            if (index is JSONArray) {
+                                for (j in 0 until index.length()) {
+                                    val idx = index.get(j)
+                                    state.stack.add(state.current)
+                                    state.pathStack.add(idx.toString())
+                                    state.current = navigateSingle(state.current, idx)
+                                }
+                            } else {
+                                state.stack.add(state.current)
+                                state.pathStack.add(index.toString())
+                                state.current = navigateSingle(state.current, index)
+                            }
                         }
 
                         "EXIT" -> {
                             val count = step.optInt("count", 1)
                             repeat(count) {
-                                if (state.stack.isEmpty()) {
-                                    throw IllegalStateException("EXIT: stack underflow (count=$count)")
+                                if (state.stack.isEmpty() || state.pathStack.isEmpty()) {
+                                    throw IllegalStateException("EXIT: stack underflow (count=$count) at path ${state.currentPath()}")
                                 }
                                 state.current = state.stack.removeAt(state.stack.lastIndex)
+                                state.pathStack.removeAt(state.pathStack.lastIndex)
                             }
                         }
 
@@ -359,12 +373,28 @@ class PatchStepsApplier {
                             }
                         }
 
+                        "IF" -> {
+                            // IF callable - JavaScript condition evaluation not supported on Android
+                            val condition = step.opt("condition")
+                            val thenSteps = step.optJSONArray("thenSteps")
+                            val elseSteps = step.optJSONArray("elseSteps")
+                            Log.w(
+                                TAG,
+                                "IF condition not evaluated (JS not supported), executing thenSteps unconditionally. " +
+                                    "Condition: $condition, elseSteps present: ${elseSteps != null}",
+                            )
+                            if (thenSteps != null) {
+                                applySteps(root, thenSteps, state)
+                            }
+                        }
+
                         else -> {
                             Log.w(TAG, "Unsupported patch step type: $type")
                         }
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to apply patch step $i", e)
+                    Log.e(TAG, "Failed to apply patch step $i ($type) at path: ${state.currentPath()}")
+                    Log.e(TAG, "Step content: $step", e)
                     throw e
                 }
             }
@@ -516,7 +546,12 @@ class PatchStepsApplier {
                 }
 
                 is JSONArray -> {
-                    current.put(toArrayIndex(index), content ?: JSONObject.NULL)
+                    val arrayIndex = index.toString().toIntOrNull()
+                    if (arrayIndex != null) {
+                        current.put(arrayIndex, content ?: JSONObject.NULL)
+                    } else {
+                        Log.w(TAG, "Cannot set string key '$index' on JSONArray (not supported in JSON)")
+                    }
                 }
 
                 else -> {
