@@ -42,6 +42,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".preferences.SaveExportActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".AboutActivity"
             android:exported="false" />
 

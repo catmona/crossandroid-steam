@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
+import de.radicalfishgames.crosscode.preferences.SaveExportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportManager
 
@@ -50,6 +51,10 @@ class LaunchActivity : AppCompatActivity() {
 
         binding.importSavesButton.setOnClickListener {
             launchSaveImportActivity()
+        }
+
+        binding.exportSavesButton.setOnClickListener {
+            launchSaveExportActivity()
         }
 
         binding.aboutButton.setOnClickListener {
@@ -181,6 +186,11 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun launchSaveImportActivity() {
         val intent = Intent(this, SaveImportActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun launchSaveExportActivity() {
+        val intent = Intent(this, SaveExportActivity::class.java)
         startActivity(intent)
     }
 

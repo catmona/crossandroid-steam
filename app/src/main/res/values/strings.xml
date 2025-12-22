@@ -30,6 +30,15 @@
     <string name="import_error_title">Import Failed</string>
     <string name="import_error_read_failed">Failed to read file</string>
     <string name="import_saves_button">Import Save Games</string>
+    <string name="export_saves_button">Export Save Games</string>
+    <string name="save_export_header">Select a save slot to export as a text file.</string>
+    <string name="save_export_empty">No save data found. Start the game and save at least once.</string>
+    <string name="save_export_done">Done</string>
+    <string name="export_button">Export</string>
+    <string name="export_error_title">Export Failed</string>
+    <string name="export_error_read_failed">Failed to read save data. Make sure the game is not running.</string>
+    <string name="export_error_write_failed">Failed to write file: %1$s</string>
+    <string name="slot_number">Slot %1$d</string>
     <string name="save_import_header">The selected save games will be imported during game launch.</string>
     <string name="import_string_button">Import Save String</string>
     <string name="import_files_button">Import Save Files</string>
