@@ -144,7 +144,8 @@ class SaveExportActivity : AppCompatActivity() {
             view: View,
         ) : RecyclerView.ViewHolder(view) {
             val slotNumber: TextView = view.findViewById(R.id.slot_number)
-            val savePreview: TextView = view.findViewById(R.id.save_preview)
+            val saveStats: TextView = view.findViewById(R.id.save_stats)
+            val saveLocation: TextView = view.findViewById(R.id.save_location)
             val exportButton: Button = view.findViewById(R.id.export_button)
         }
 
@@ -164,8 +165,17 @@ class SaveExportActivity : AppCompatActivity() {
             position: Int,
         ) {
             val save = saves[position]
-            holder.slotNumber.text = holder.itemView.context.getString(R.string.slot_number, position + 1)
-            holder.savePreview.text = save.take(50) + if (save.length > 50) "..." else ""
+            holder.slotNumber.text = "${position + 1}."
+
+            val info = SaveParser.parse(save)
+            if (info != null) {
+                holder.saveStats.text = info.formatStats()
+                holder.saveLocation.text = info.formatLocation()
+            } else {
+                holder.saveStats.text = save.take(50) + if (save.length > 50) "…" else ""
+                holder.saveLocation.text = ""
+            }
+
             holder.exportButton.setOnClickListener {
                 onExport(holder.bindingAdapterPosition)
             }

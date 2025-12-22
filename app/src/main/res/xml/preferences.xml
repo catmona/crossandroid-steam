@@ -53,10 +53,4 @@
         android:summary="@string/vibration_on_rumble_summary"
         android:title="@string/vibration_on_rumble_title" />
 
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="export_save"
-        app:summary="@string/export_save_summary"
-        app:title="@string/export_save_title" />
-
 </PreferenceScreen>

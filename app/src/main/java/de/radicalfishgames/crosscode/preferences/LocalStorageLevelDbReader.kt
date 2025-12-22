@@ -269,13 +269,21 @@ class LocalStorageLevelDbReader(
 
             if (inString) {
                 when (c) {
-                    '\\' -> i++ // Skip escaped character
+                    '\\' -> i++
+
+                    // Skip escaped character
                     '"' -> inString = false
                 }
             } else {
                 when (c) {
-                    '"' -> inString = true
-                    '{' -> depth++
+                    '"' -> {
+                        inString = true
+                    }
+
+                    '{' -> {
+                        depth++
+                    }
+
                     '}' -> {
                         depth--
                         if (depth == 0) {

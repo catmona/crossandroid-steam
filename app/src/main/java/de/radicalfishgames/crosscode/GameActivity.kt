@@ -2,13 +2,11 @@ package de.radicalfishgames.crosscode
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.InputDevice
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -38,12 +36,6 @@ class GameActivity : AppCompatActivity() {
     // This SharedPreferences files is the one the preference activity automatically generates
     val preferences: SharedPreferences
         get() = getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
-
-    // Activity Result API launcher for save export
-    val createDocumentLauncher =
-        registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
-            gameWrapper.getFeature<ImportExportFeature>().onCreateDocumentResult(uri)
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -25,8 +25,6 @@
     <string name="import_save_summary">Paste a Save String here, and it will be imported to the game when it next starts (one at a time only)</string>
     <string name="import_file_title">Import Save File</string>
     <string name="import_file_summary">Select a save file and it will be imported to the game when it next starts (one at a time only)</string>
-    <string name="export_save_title">Show Exported Save String</string>
-    <string name="export_save_summary">Display a dialog with the Save String of the latest Save on game start</string>
     <string name="import_error_title">Import Failed</string>
     <string name="import_error_read_failed">Failed to read file</string>
     <string name="import_saves_button">Import Save Games</string>
