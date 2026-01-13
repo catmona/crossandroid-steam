@@ -77,7 +77,7 @@ class SaveImportActivity : AppCompatActivity() {
                 if (content.isNotBlank()) {
                     when (val result = manager.addSave(content)) {
                         is SaveValidationResult.Valid -> refreshList()
-                        is SaveValidationResult.Invalid -> showError(result.reason)
+                        is SaveValidationResult.Invalid -> showError(getString(result.reasonResId))
                     }
                 }
             }.setNegativeButton(android.R.string.cancel, null)
@@ -105,7 +105,7 @@ class SaveImportActivity : AppCompatActivity() {
                     is SaveValidationResult.Valid -> {}
 
                     is SaveValidationResult.Invalid -> {
-                        errors.add(result.reason)
+                        errors.add(getString(result.reasonResId))
                     }
                 }
             }

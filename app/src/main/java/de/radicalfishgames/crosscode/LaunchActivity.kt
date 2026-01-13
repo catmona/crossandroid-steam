@@ -76,7 +76,7 @@ class LaunchActivity : AppCompatActivity() {
         val gameDir = gameFolderManager.getGameDir()
         if (gameDir == null) {
             Log.e("CrossCode", "External storage not available")
-            Toast.makeText(this, "External storage not available", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, R.string.error_external_storage_unavailable, Toast.LENGTH_LONG).show()
             return
         }
 
@@ -84,13 +84,13 @@ class LaunchActivity : AppCompatActivity() {
 
         if (!gameFolderManager.hasValidGameFolder()) {
             Log.i("CrossCode", "Game folder not found")
-            instanceNotFound(showDialogOnFailure, "Game folder not found at:\n${gameDir.absolutePath}")
+            instanceNotFound(showDialogOnFailure, getString(R.string.error_game_folder_not_found, gameDir.absolutePath))
             return
         }
 
         if (!gameFolderManager.hasAssetsFolder()) {
             Log.i("CrossCode", "Assets folder not found in game folder")
-            instanceNotFound(showDialogOnFailure, "The 'assets' folder was not found in the game folder.")
+            instanceNotFound(showDialogOnFailure, getString(R.string.error_assets_folder_not_found))
             return
         }
 
@@ -101,7 +101,7 @@ class LaunchActivity : AppCompatActivity() {
         val hasModLoader = gameFolderManager.findModLoaderEntry() != null
 
         if (!gameFolderManager.exists("assets/node-webkit.html") && !hasModLoader) {
-            instanceNotFound(showDialogOnFailure, "CCLoader not found. Make sure you installed CCLoader before copying the game files.")
+            instanceNotFound(showDialogOnFailure, getString(R.string.error_ccloader_not_found))
         } else {
             gameFilesIntact()
         }
@@ -125,9 +125,9 @@ class LaunchActivity : AppCompatActivity() {
         if (showDialog && message != null) {
             AlertDialog
                 .Builder(this)
-                .setTitle("Game files not found")
+                .setTitle(R.string.error_game_files_not_found_title)
                 .setMessage(message)
-                .setPositiveButton("OK", null)
+                .setPositiveButton(android.R.string.ok, null)
                 .show()
         }
         showCurrentGuide()

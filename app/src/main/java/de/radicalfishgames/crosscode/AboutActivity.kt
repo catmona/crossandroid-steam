@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
@@ -42,10 +43,10 @@ class AboutActivity : ComponentActivity() {
                 Scaffold(
                     topBar = {
                         TopAppBar(
-                            title = { Text("About") },
+                            title = { Text(stringResource(R.string.about_app)) },
                             navigationIcon = {
                                 IconButton(onClick = { finish() }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                                 }
                             },
                         )
@@ -67,7 +68,7 @@ class AboutActivity : ComponentActivity() {
                                     )
                                     Spacer(Modifier.height(8.dp))
                                     Text(
-                                        text = "CrossAndroid",
+                                        text = stringResource(R.string.app_name),
                                         style = MaterialTheme.typography.headlineSmall,
                                     )
                                     Text(
@@ -76,13 +77,7 @@ class AboutActivity : ComponentActivity() {
                                     )
                                     Spacer(Modifier.height(16.dp))
                                     Text(
-                                        text =
-                                            "A port/wrapper app to run CrossCode on Android devices developed by Namnodorel.\n\n" +
-                                                "Contributors:\n" +
-                                                "• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart\n" +
-                                                "• Dmytro Meleshko - Enhanced modloader support\n" +
-                                                "• Alyxia & Xinto - CCLoader3 support\n" +
-                                                "• krypek - Changed CrossCode instance format loading from .obb files to a regular directory",
+                                        text = stringResource(R.string.about_credits),
                                         style = MaterialTheme.typography.bodyMedium,
                                         textAlign = TextAlign.Start,
                                         modifier = Modifier.fillMaxWidth(),

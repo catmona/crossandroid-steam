@@ -73,7 +73,7 @@ class GameActivity : AppCompatActivity() {
         Log.d("CrossCode", "Native controller found: $nativeControllerActive")
 
         if (!gameFolderManager.hasValidGameFolder()) {
-            Toast.makeText(this@GameActivity, "No game folder selected", Toast.LENGTH_LONG).show()
+            Toast.makeText(this@GameActivity, R.string.error_no_game_folder, Toast.LENGTH_LONG).show()
             finish()
             return
         }

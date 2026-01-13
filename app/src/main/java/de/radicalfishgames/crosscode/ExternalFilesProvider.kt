@@ -139,9 +139,9 @@ class ExternalFilesProvider : DocumentsProvider() {
         parentDocumentId: String?,
         documentId: String?,
     ): Boolean {
-        val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID)
-        val child = getFileForDocId(documentId ?: return false)
-        return child.absolutePath.startsWith(parent.absolutePath)
+        val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID).canonicalPath
+        val child = getFileForDocId(documentId ?: return false).canonicalPath
+        return child == parent || child.startsWith(parent + File.separator)
     }
 
     private fun getFileForDocId(documentId: String): File {

@@ -62,4 +62,28 @@
     <string name="disable_swipe_dash_summary">Only dash when the dash area is tapped (not swiped into) to avoid dashing by accident</string>
     <string name="force_virtual_summary">Always use the virtual controller, even when a physical controller is connected.</string>
     <string name="force_virtual_title">Force Virtual Controller</string>
+
+    <!-- ErrorHandler -->
+    <string name="crash_title">Crash</string>
+    <string name="crash_message">Looks like there was an error in the app! Please report the log message you can copy below.</string>
+    <string name="crash_copy_button">Copy to Clipboard and Close</string>
+
+    <!-- GameActivity -->
+    <string name="error_no_game_folder">No game folder selected</string>
+
+    <!-- LaunchActivity -->
+    <string name="error_external_storage_unavailable">External storage not available</string>
+    <string name="error_game_folder_not_found">Game folder not found at:\n%1$s</string>
+    <string name="error_assets_folder_not_found">The \'assets\' folder was not found in the game folder.</string>
+    <string name="error_ccloader_not_found">CCLoader not found. Make sure you installed CCLoader before copying the game files.</string>
+    <string name="error_game_files_not_found_title">Game files not found</string>
+
+    <!-- SaveValidator -->
+    <string name="error_save_empty">Save string is empty</string>
+    <string name="error_save_invalid_header">Invalid save format: missing header</string>
+    <string name="error_save_decryption_failed">Invalid save format: decryption failed</string>
+
+    <!-- AboutActivity -->
+    <string name="back">Back</string>
+    <string name="about_credits">A port/wrapper app to run CrossCode on Android devices developed by Namnodorel.\n\nContributors:\n• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart\n• Dmytro Meleshko - Enhanced modloader support\n• Alyxia &amp; Xinto - CCLoader3 support\n• krypek - Changed CrossCode instance format loading from .obb files to a regular directory</string>
 </resources>

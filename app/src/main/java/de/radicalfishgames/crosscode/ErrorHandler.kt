@@ -17,9 +17,9 @@ class ErrorHandler(
         e: Throwable,
     ) {
         MaterialAlertDialogBuilder(hostActivity)
-            .setTitle("Crash")
-            .setMessage("Looks like there was an error in the app! Please report the log message you can copy below.")
-            .setPositiveButton("Copy to Clipboard and Close") { dialog: DialogInterface, which: Int ->
+            .setTitle(R.string.crash_title)
+            .setMessage(R.string.crash_message)
+            .setPositiveButton(R.string.crash_copy_button) { dialog: DialogInterface, which: Int ->
                 val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                 val clip = ClipData.newPlainText("CrossAndroid Error", errorToString(e))
                 clipboard.setPrimaryClip(clip)
