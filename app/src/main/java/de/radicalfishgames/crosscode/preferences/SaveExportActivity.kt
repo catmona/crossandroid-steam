@@ -30,7 +30,6 @@ class SaveExportActivity : AppCompatActivity() {
 
     companion object {
         private const val KEY_PENDING_INDEX = "pending_export_index"
-        private const val KEY_SAVE_SLOTS = "save_slots"
     }
 
     private val createDocument =
@@ -52,13 +51,6 @@ class SaveExportActivity : AppCompatActivity() {
 
         if (savedInstanceState != null) {
             pendingExportIndex = savedInstanceState.getInt(KEY_PENDING_INDEX, -1)
-            @Suppress("UNCHECKED_CAST")
-            val restored = savedInstanceState.getStringArrayList(KEY_SAVE_SLOTS)
-            if (restored != null) {
-                saveSlots = restored
-                showSlots()
-                return
-            }
         }
 
         loadSaveSlots()
@@ -67,7 +59,6 @@ class SaveExportActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(KEY_PENDING_INDEX, pendingExportIndex)
-        outState.putStringArrayList(KEY_SAVE_SLOTS, ArrayList(saveSlots))
     }
 
     private fun loadSaveSlots() {
@@ -118,7 +109,9 @@ class SaveExportActivity : AppCompatActivity() {
                 contentResolver.openFileDescriptor(uri, "w")?.use { pfd ->
                     FileOutputStream(pfd.fileDescriptor).use { stream ->
                         stream.write(saveSlots[index].toByteArray())
+                        stream.flush()
                     }
+                    pfd.fileDescriptor.sync()
                 }
             } catch (e: Exception) {
                 showError(getString(R.string.export_error_write_failed, e.message ?: e.javaClass.simpleName))
