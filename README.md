@@ -46,25 +46,24 @@ You can adjust the size and transparency of the virtual controller in
 the settings of the app.
 
 # Import/Export of saves
-CrossAndroid handles import/export of saves with a feature called _Save
-Strings_. The way this works is you can retrieve and import a "Save
-String" (piece of unreadable text that contains your save data) of the
-latest save. You then need to manually copy that Save String into your
-other game installation, and the new save pops up at the bottom of your
-saves list.
+CrossAndroid lets you transfer save games between devices or between
+your PC and this app. You can access the import and export features
+from the two buttons on the launcher screen.
 
-### Exporting a Save String from CrossAndroid
-To export a Save String, open the app settings and toggle on "Show
-Exported Save String". On the next game start, the app will now show you
-a dialog that lets you copy the Save String from your latest save. You
-can turn the option off again when you have retrieved your Save String.
+### Exporting saves from CrossAndroid
+Tap "Export Save Games" on the launcher. You'll see a list of your save
+slots with a preview of each (level, chapter, playtime, location, and
+credits). Tap the export button on the slot you want, and choose where
+to save the file on your device.
 
-### Importing a Save String into CrossAndroid
-To import a Save String, go into the app settings and tap "Import Save
-String". A dialog will appear where you can enter a previously retrieved
-Save String. Paste your Save String here _(only one at a time!)_. When
-you launch the game the next time, the Save String will be imported into
-the game and added on the bottom of your saves list.
+### Importing saves into CrossAndroid
+Tap "Import Save Games" on the launcher. You have two options:
+- **Import from files:** Select one or more previously exported save
+  files from your device.
+- **Import from string:** Paste a Save String directly.
+
+Imported saves are queued and will be added to your saves list the next
+time you launch the game.
 
 ### Exporting/Importing a Save String from/into CrossCode on your PC
 The procedure on a PC is very similar to the one with CrossAndroid. Open
