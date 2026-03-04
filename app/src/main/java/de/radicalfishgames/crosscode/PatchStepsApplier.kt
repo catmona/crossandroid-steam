@@ -5,6 +5,13 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
+ * Callback to resolve file paths for IMPORT and INCLUDE operations.
+ * @param path The file path (may include protocol like "game:" or "mod:")
+ * @return The file contents as a string, or null if not found
+ */
+typealias FileResolver = (path: String) -> String?
+
+/**
  * Applies CCLoader Patch Steps to JSON data.
  * Implements the full specification including:
  * ENTER, EXIT, SET_KEY, INIT_KEY, ADD_ARRAY_ELEMENT, REMOVE_ARRAY_ELEMENT,
@@ -15,13 +22,6 @@ import org.json.JSONObject
 class PatchStepsApplier {
     companion object {
         private const val TAG = "PatchStepsApplier"
-
-        /**
-         * Callback to resolve file paths for IMPORT and INCLUDE operations.
-         * @param path The file path (may include protocol like "game:" or "mod:")
-         * @return The file contents as a string, or null if not found
-         */
-        typealias FileResolver = (path: String) -> String?
 
         /**
          * Apply a patch to JSON data.
@@ -38,8 +38,8 @@ class PatchStepsApplier {
             originalJson: String,
             patchJson: String,
             fileResolver: FileResolver? = null,
-        ): String? =
-            try {
+        ): String? {
+            return try {
                 val root = JSONObject(originalJson)
                 val cleanedPatch = stripTrailingCommas(patchJson)
                 val trimmed = cleanedPatch.trim()
@@ -61,6 +61,7 @@ class PatchStepsApplier {
                 Log.e(TAG, "Failed to apply patch", e)
                 null
             }
+        }
 
         /**
          * Internal state passed through patch step execution.
