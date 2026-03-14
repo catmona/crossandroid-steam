@@ -19,4 +19,14 @@ allprojects {
         google()
         mavenCentral()
     }
+    // AGP 9.1.0 hardcodes compose-group-mapping:2.2.10, but that version was never published
+    // (the artifact was introduced in Kotlin 2.3.0). Force it to use the available version.
+    configurations.all {
+        resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+            if (details.requested.group == 'org.jetbrains.kotlin' &&
+                    details.requested.name == 'compose-group-mapping') {
+                details.useVersion kotlin_version
+            }
+        }
+    }
 }
