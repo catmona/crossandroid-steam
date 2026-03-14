@@ -17,6 +17,7 @@ class GameWebViewClient(
     private val gameWrapper: GameWrapper,
 ) : WebViewClient() {
     private val gameDir = gameWrapper.gameFolderManager.getGameDir()
+    private val canonicalGameDir: String? = try { gameDir?.canonicalPath } catch (_: IOException) { null }
     private val ccmodManager = CcmodManager()
 
     override fun onPageFinished(
@@ -41,10 +42,11 @@ class GameWebViewClient(
         view: WebView?,
         request: WebResourceRequest?,
     ): WebResourceResponse? {
-        if (view == null || request == null) {
-            return null
-        }
+        if (view == null || request == null) return null
+        return handleRequest(request)
+    }
 
+    internal fun handleRequest(request: WebResourceRequest): WebResourceResponse? {
         if (gameDir == null) {
             Log.e("CrossCode", "gameDir is null, cannot serve files!")
             return null
@@ -52,11 +54,17 @@ class GameWebViewClient(
 
         val url = request.url
         val urlPath = url.path
-        if (!(url.scheme == VIRTUAL_ORIGIN_SCHEME && url.authority == VIRTUAL_ORIGIN_DOMAIN && urlPath != null)) {
+        // CCLoader3's service worker fetches mod assets via https://mods/<mod>.ccmod/... URLs.
+        // Intercept those in addition to the normal virtual origin so we can serve them from ZIPs.
+        val isVirtualOrigin = url.scheme == VIRTUAL_ORIGIN_SCHEME && url.authority == VIRTUAL_ORIGIN_DOMAIN
+        val isModsScheme = url.scheme == VIRTUAL_ORIGIN_SCHEME && url.authority == "mods"
+        if ((!isVirtualOrigin && !isModsScheme) || urlPath == null) {
             return null
         }
 
-        val normalizedPath = urlPath.trimStart('/')
+        // For https://mods/<mod>.ccmod/... prepend "mods/" so the existing assets/ fallback
+        // resolves it to assets/mods/<mod>.ccmod/... where the ZIP file actually lives.
+        val normalizedPath = if (isModsScheme) "mods/${urlPath.trimStart('/')}" else urlPath.trimStart('/')
         var fullPath = File(gameDir, normalizedPath).canonicalPath
 
         // Check if this is a request for a file inside a .ccmod archive
@@ -73,31 +81,65 @@ class GameWebViewClient(
                     ccmodPath = altCcmodPath
                 }
             }
+            // Service worker can pass through requests without the assets/ prefix (e.g.
+            // /mods/mymod.ccmod/package.json instead of /assets/mods/mymod.ccmod/package.json).
+            if (!File(ccmodPath.first).exists() && !normalizedPath.startsWith("assets/")) {
+                val altFullPath = File(gameDir, "assets/$normalizedPath").canonicalPath
+                val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
+                if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
+                    fullPath = altFullPath
+                    ccmodPath = altCcmodPath
+                }
+            }
+            val canonicalCcmod = ccmodPath.first
+            if (canonicalGameDir == null || !canonicalCcmod.startsWith("$canonicalGameDir/")) {
+                Log.w("CrossCode", "Path traversal rejected: $canonicalCcmod")
+                return WebResourceResponse(null, null, null)
+            }
             return handleCcmodRequest(request, ccmodPath.first, ccmodPath.second, normalizedPath)
         }
 
-        // Check ccmod assets FIRST (allows mods to override existing game assets)
-        if (normalizedPath.startsWith("assets/")) {
-            val assetPath = normalizedPath.removePrefix("assets/")
-            val stream = ccmodManager.getAssetStream(assetPath)
-            if (stream != null) {
-                Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
-                val extension = assetPath.substringAfterLast('.', "")
-                val mimeType =
-                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
-                return WebResourceResponse(mimeType, null, stream)
-            }
+        // Check ccmod assets FIRST (allows mods to override existing game assets).
+        // removePrefix is a no-op when the prefix is absent, so this also handles service worker
+        // pass-through requests that arrive without the "assets/" prefix (e.g. /media/face/x.png).
+        val assetPath = normalizedPath.removePrefix("assets/")
+        val ccmodStream = ccmodManager.getAssetStream(assetPath)
+        if (ccmodStream != null) {
+            Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
+            val extension = assetPath.substringAfterLast('.', "")
+            val mimeType =
+                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+                    ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
+            return WebResourceResponse(mimeType, null, ccmodStream)
         }
 
-        // Fall back to regular file handling
-        val requestedFile =
+        // Fall back to regular file handling. If the file isn't found at the direct path and the
+        // path doesn't already have an "assets/" prefix, also try "assets/<path>". This handles
+        // CCLoader3's service worker passing through requests like "/data/changelog.json" whose
+        // files actually live under "assets/" in the CrossCode directory layout.
+        val (requestedFile, effectiveNormalizedPath) =
             try {
-                File(gameDir, normalizedPath).canonicalFile
+                val directFile = File(gameDir, normalizedPath).canonicalFile
+                if (!directFile.exists() && !normalizedPath.startsWith("assets/")) {
+                    val assetsFile = File(gameDir, "assets/$normalizedPath").canonicalFile
+                    if (assetsFile.exists()) {
+                        Log.d("CrossCode", "Remapping /$normalizedPath to /assets/$normalizedPath")
+                        Pair(assetsFile, "assets/$normalizedPath")
+                    } else {
+                        Pair(directFile, normalizedPath)
+                    }
+                } else {
+                    Pair(directFile, normalizedPath)
+                }
             } catch (e: IOException) {
                 Log.w("CrossCode", "Failed to resolve path $urlPath!", e)
                 return WebResourceResponse(null, null, null)
             }
+
+        if (canonicalGameDir == null || !requestedFile.canonicalPath.startsWith("$canonicalGameDir/")) {
+            Log.w("CrossCode", "Path traversal rejected: ${requestedFile.absolutePath}")
+            return WebResourceResponse(null, null, null)
+        }
 
         if (!requestedFile.exists()) {
             Log.w("CrossCode", "Path $urlPath not found! (resolved to ${requestedFile.absolutePath})")
@@ -116,8 +158,8 @@ class GameWebViewClient(
         }
 
         // Check if this is a JSON file with patches
-        if (normalizedPath.startsWith("assets/") && normalizedPath.endsWith(".json")) {
-            val assetPath = normalizedPath.removePrefix("assets/")
+        if (effectiveNormalizedPath.startsWith("assets/") && effectiveNormalizedPath.endsWith(".json")) {
+            val assetPath = effectiveNormalizedPath.removePrefix("assets/")
             if (ccmodManager.hasPatches(assetPath)) {
                 return servePatchedJson(requestedFile, assetPath)
             }

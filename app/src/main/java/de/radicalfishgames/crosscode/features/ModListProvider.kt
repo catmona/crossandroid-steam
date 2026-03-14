@@ -36,7 +36,7 @@ class ModListProvider(
 
         for (modFile in modsDirFiles) {
             var modFileName = modFile.name
-            if (modFile.isDirectory) {
+            if (modFile.isDirectory || modFile.name.endsWith(".ccmod")) {
                 modFileName += "/"
             }
 

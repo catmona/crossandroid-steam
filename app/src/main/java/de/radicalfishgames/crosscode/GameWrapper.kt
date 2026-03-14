@@ -11,8 +11,12 @@ import android.webkit.ConsoleMessage
 import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.webkit.ServiceWorkerClientCompat
+import androidx.webkit.ServiceWorkerControllerCompat
 import de.radicalfishgames.crosscode.BuildConfig
 import de.radicalfishgames.crosscode.features.Feature
 import java.util.LinkedList
@@ -65,6 +69,13 @@ class GameWrapper(
         }
 
         webView.webViewClient = webViewClient
+
+        ServiceWorkerControllerCompat.getInstance().setServiceWorkerClient(
+            object : ServiceWorkerClientCompat() {
+                override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? =
+                    webViewClient.handleRequest(request)
+            },
+        )
 
         // Log JavaScript console messages to logcat
         webView.webChromeClient =
