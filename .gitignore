@@ -81,6 +81,9 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
+# Claude Code
+.claude/
+
 # CrossCode game files
 app/src/main/assets/www/data
 app/src/main/assets/www/game
