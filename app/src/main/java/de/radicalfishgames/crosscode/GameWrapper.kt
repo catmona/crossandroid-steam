@@ -26,6 +26,7 @@ class GameWrapper(
     val modLoaderPresent: Boolean,
     val gameFolderManager: GameFolderManager,
     private val hardwareAcceleration: Boolean = true,
+    private val pixelatedScaling: Boolean = false,
 ) {
     val features = LinkedList<Feature>()
 
@@ -145,6 +146,20 @@ class GameWrapper(
                         if(type==='2d') attrs=Object.assign({willReadFrequently:true},attrs||{});
                         return orig.call(this,type,attrs);
                     };
+                })();""",
+            )
+        }
+
+        // Nearest-neighbor scaling: use pixelated rendering to avoid bilinear blur
+        // on the pixel art when the canvas is CSS-stretched to fill the screen.
+        if (pixelatedScaling) {
+            runJS(
+                """(function(){
+                    var iv=setInterval(function(){
+                        if(typeof ig==='undefined'||!ig.system)return;
+                        clearInterval(iv);
+                        ig.system.canvas.style.imageRendering='pixelated';
+                    },100);
                 })();""",
             )
         }

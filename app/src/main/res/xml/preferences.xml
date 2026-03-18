@@ -20,6 +20,12 @@
             android:summary="@string/hardware_acceleration_summary"
             android:title="@string/hardware_acceleration_title" />
 
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pixelated_scaling"
+            android:summary="@string/pixelated_scaling_summary"
+            android:title="@string/pixelated_scaling_title" />
+
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/pref_category_overlay_controls">

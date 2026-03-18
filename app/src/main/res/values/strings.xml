@@ -67,6 +67,8 @@
     <string name="pref_category_overlay_controls">Overlay</string>
     <string name="hardware_acceleration_title">Enable hardware acceleration</string>
     <string name="hardware_acceleration_summary">Use GPU rendering for the game canvas. Disable this if text appears garbled.</string>
+    <string name="pixelated_scaling_title">Sharp pixel scaling</string>
+    <string name="pixelated_scaling_summary">Use nearest-neighbor scaling for sharp pixel art edges. May cause slightly uneven pixel sizes.</string>
 
     <!-- ErrorHandler -->
     <string name="crash_title">Crash</string>
