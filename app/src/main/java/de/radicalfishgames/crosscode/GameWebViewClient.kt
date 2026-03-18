@@ -17,7 +17,12 @@ class GameWebViewClient(
     private val gameWrapper: GameWrapper,
 ) : WebViewClient() {
     private val gameDir = gameWrapper.gameFolderManager.getGameDir()
-    private val canonicalGameDir: String? = try { gameDir?.canonicalPath } catch (_: IOException) { null }
+    private val canonicalGameDir: String? =
+        try {
+            gameDir?.canonicalPath
+        } catch (_: IOException) {
+            null
+        }
     private val ccmodManager = CcmodManager()
 
     override fun onPageFinished(

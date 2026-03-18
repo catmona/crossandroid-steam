@@ -89,7 +89,8 @@ class GameActivity : AppCompatActivity() {
 
         Log.d("CrossCode", "Game entry point: $gameEntryPoint Attempting to load.")
 
-        gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager)
+        val hardwareAcceleration = preferences.getBoolean("hardware_acceleration", true)
+        gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager, hardwareAcceleration)
         gameWrapper.initWebView()
 
         // Order is important, since some of these depend on one another and this is also the initialization order

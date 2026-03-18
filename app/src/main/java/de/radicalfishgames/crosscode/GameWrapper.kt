@@ -25,6 +25,7 @@ class GameWrapper(
     private val webView: WebView,
     val modLoaderPresent: Boolean,
     val gameFolderManager: GameFolderManager,
+    private val hardwareAcceleration: Boolean = true,
 ) {
     val features = LinkedList<Feature>()
 
@@ -128,6 +129,25 @@ class GameWrapper(
 
     fun onPageLoaded() {
         Log.d("CrossCode", "Game page loaded.")
+
+        // Fix font rendering on Android WebView by forcing CPU-backed 2D canvases.
+        // GPU-backed canvases in Android WebView cause font issues: getImageData returns
+        // corrupted alpha values (breaking _loadMetrics character boundary detection), and
+        // drawImage with non-integer source coordinates triggers bilinear filtering even with
+        // imageSmoothingEnabled=false (breaking _drawChar font rendering).
+        // CPU canvases handle both correctly via exact pixel readback and nearest-neighbor
+        // sampling.
+        if (!hardwareAcceleration) {
+            runJS(
+                """(function(){
+                    var orig=HTMLCanvasElement.prototype.getContext;
+                    HTMLCanvasElement.prototype.getContext=function(type,attrs){
+                        if(type==='2d') attrs=Object.assign({willReadFrequently:true},attrs||{});
+                        return orig.call(this,type,attrs);
+                    };
+                })();""",
+            )
+        }
 
         if (!modLoaderPresent) {
             Log.d("CrossCode", "Starting game manually.")
