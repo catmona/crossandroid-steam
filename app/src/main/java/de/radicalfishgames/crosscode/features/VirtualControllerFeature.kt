@@ -16,7 +16,7 @@ class VirtualControllerFeature(
     gameWrapper: GameWrapper,
     hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-    private val gamepadState: GamepadJsonBridge = GamepadJsonBridge { updateGamepadJS() }
+    internal val gamepadState: GamepadJsonBridge = GamepadJsonBridge { updateGamepadJS() }
 
     private val forceVirtualController = hostActivity.preferences.getBoolean("force_virtual", false)
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
@@ -33,11 +33,9 @@ class VirtualControllerFeature(
     private var isControllerReady = false
 
     override fun onPostGamePageLoad() {
-        if (!enabled) {
-            return
-        }
-
-        // Hook the getGamepads-function to only return our gamepad
+        // Always inject the getGamepads hook — for virtual overlay AND physical controllers.
+        // WebView's built-in Gamepad API has broken button mapping on some devices,
+        // so we always route through our own GamepadJsonBridge.
         runJS(
             """
             var $JS_GAMEPADS_VAR = [];
@@ -48,6 +46,15 @@ class VirtualControllerFeature(
                 .replace("\n", ""),
         )
 
+        isControllerReady = true
+
+        // Push initial gamepad state so the game detects a controller immediately
+        updateGamepadJS()
+
+        if (!enabled) {
+            return
+        }
+
         CombatLayout.alwaysSprint = combatAlwaysSprint
         CombatLayout.dashOnlyOnTap = dashOnlyOnTap
 
@@ -57,8 +64,6 @@ class VirtualControllerFeature(
         DirectLayout.layoutToEnable = MenuLayout
         gameWrapper.blockWebViewClicks = false
         layoutViews[DirectLayout]!!.visibility = View.VISIBLE
-
-        isControllerReady = true
     }
 
     private fun initializeLayouts() {
@@ -90,10 +95,6 @@ class VirtualControllerFeature(
     }
 
     private fun updateGamepadJS() {
-        if (!enabled) {
-            return
-        }
-
         if (isControllerReady) {
             val jsonGamepad = gamepadState.asJsonString
 

@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.InputDevice
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +32,7 @@ class GameActivity : AppCompatActivity() {
     val errorHandler = ErrorHandler(this)
 
     private lateinit var gameWrapper: GameWrapper
+    private var physicalControllerBridge: PhysicalControllerBridge? = null
     lateinit var gameFolderManager: GameFolderManager
         private set
 
@@ -110,6 +113,13 @@ class GameActivity : AppCompatActivity() {
             ),
         )
 
+        // Only bridge physical controller input when the virtual overlay is off.
+        // If force_virtual is on, physical input is intentionally ignored.
+        val vcf = gameWrapper.getFeature<VirtualControllerFeature>()
+        if (!vcf.enabled) {
+            physicalControllerBridge = PhysicalControllerBridge(vcf.gamepadState)
+        }
+
         gameWrapper.loadGame(gameEntryPoint)
     }
 
@@ -127,6 +137,26 @@ class GameActivity : AppCompatActivity() {
         }
 
         return false
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val device = event.device
+        if (device != null && isController(device)) {
+            if (physicalControllerBridge?.onKeyEvent(event) == true) {
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        val device = event.device
+        if (device != null && isController(device)) {
+            if (physicalControllerBridge?.onMotionEvent(event) == true) {
+                return true
+            }
+        }
+        return super.dispatchGenericMotionEvent(event)
     }
 
     private fun isController(device: InputDevice?): Boolean {
