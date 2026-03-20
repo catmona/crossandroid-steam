@@ -99,83 +99,33 @@ class GameEventManager(
     }
 
     fun onMenuEnter(run: () -> Unit) = onMenuEnter.add(run)
-
-    internal fun onMenuEnter() {
-        handler.post {
-            onMenuEnter.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onMenuEnter() = fireEvent(onMenuEnter) { it() }
 
     fun onMenuExit(run: () -> Unit) = onMenuExit.add(run)
-
-    internal fun onMenuExit() {
-        handler.post {
-            onMenuExit.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onMenuExit() = fireEvent(onMenuExit) { it() }
 
     fun onCutsceneEnter(run: () -> Unit) = onCutsceneEnter.add(run)
-
-    internal fun onCutsceneEnter() {
-        handler.post {
-            onCutsceneEnter.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onCutsceneEnter() = fireEvent(onCutsceneEnter) { it() }
 
     fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
-
-    internal fun onCutsceneExit() {
-        handler.post {
-            onCutsceneExit.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onCutsceneExit() = fireEvent(onCutsceneExit) { it() }
 
     fun onDirectLinkRing(run: () -> Unit) = onDirectLinkRing.add(run)
-
-    internal fun onDirectLinkRing() {
-        handler.post {
-            onDirectLinkRing.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onDirectLinkRing() = fireEvent(onDirectLinkRing) { it() }
 
     fun onDirectLinkEnd(run: () -> Unit) = onDirectLinkEnd.add(run)
-
-    internal fun onDirectLinkEnd() {
-        handler.post {
-            onDirectLinkEnd.forEach {
-                it.invoke()
-            }
-        }
-    }
+    internal fun onDirectLinkEnd() = fireEvent(onDirectLinkEnd) { it() }
 
     fun onElementChange(run: (element: ElementMode) -> Unit) = onElementChange.add(run)
+    internal fun onElementModeChange(elementMode: ElementMode) = fireEvent(onElementChange) { it(elementMode) }
 
-    internal fun onElementModeChange(elementMode: ElementMode) {
-        handler.post {
-            onElementChange.forEach {
-                it.invoke(elementMode)
-            }
-        }
+    private fun <T> fireEvent(listeners: Set<T>, invoke: (T) -> Unit) {
+        handler.post { listeners.forEach(invoke) }
     }
 
     override fun onDestroy() {
         handler.removeCallbacksAndMessages(null)
-        onMenuEnter.clear()
-        onMenuExit.clear()
-        onCutsceneEnter.clear()
-        onCutsceneExit.clear()
-        onDirectLinkRing.clear()
-        onDirectLinkEnd.clear()
-        onElementChange.clear()
+        listOf(onMenuEnter, onMenuExit, onCutsceneEnter, onCutsceneExit, onDirectLinkRing, onDirectLinkEnd, onElementChange)
+            .forEach { it.clear() }
     }
 }

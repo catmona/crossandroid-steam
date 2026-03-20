@@ -40,7 +40,7 @@ class GameWrapper(
 
     @SuppressLint("SetJavaScriptEnabled", "ClickableViewAccessibility")
     fun initWebView() {
-        Log.d("CrossCode, ", "Initializing WebView")
+        Log.d("CrossCode", "Initializing WebView")
 
         // Enable WebView debugging for debug builds
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)

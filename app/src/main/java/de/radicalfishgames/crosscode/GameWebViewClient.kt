@@ -73,35 +73,32 @@ class GameWebViewClient(
         var fullPath = File(gameDir, normalizedPath).canonicalPath
 
         // Check if this is a request for a file inside a .ccmod archive
-        var ccmodPath = CcmodManager.parseCcmodPath(fullPath)
-        if (ccmodPath != null) {
-            // CCLoader runs from ccloader/ directory, but ccmod files are in assets/mods/
-            // If the ccmod file doesn't exist at the resolved path, try without the ccloader/ prefix
-            if (!File(ccmodPath.first).exists() && normalizedPath.startsWith("ccloader/")) {
-                val pathWithoutCcloader = normalizedPath.removePrefix("ccloader/")
-                val altFullPath = File(gameDir, pathWithoutCcloader).canonicalPath
-                val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
-                if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
-                    fullPath = altFullPath
-                    ccmodPath = altCcmodPath
+        val initialCcmodPath = CcmodManager.parseCcmodPath(fullPath)
+        if (initialCcmodPath != null) {
+            // Try alternative paths if the ccmod file doesn't exist at the resolved path:
+            // 1. CCLoader runs from ccloader/ but ccmod files are in assets/mods/ — try without prefix
+            // 2. Service worker may omit the assets/ prefix — try with it prepended
+            var resolved = initialCcmodPath
+            if (!File(resolved.first).exists() && normalizedPath.startsWith("ccloader/")) {
+                val fallback = tryCcmodFallback(normalizedPath.removePrefix("ccloader/"))
+                if (fallback != null) {
+                    fullPath = fallback.first
+                    resolved = fallback.second
                 }
             }
-            // Service worker can pass through requests without the assets/ prefix (e.g.
-            // /mods/mymod.ccmod/package.json instead of /assets/mods/mymod.ccmod/package.json).
-            if (!File(ccmodPath.first).exists() && !normalizedPath.startsWith("assets/")) {
-                val altFullPath = File(gameDir, "assets/$normalizedPath").canonicalPath
-                val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
-                if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
-                    fullPath = altFullPath
-                    ccmodPath = altCcmodPath
+            if (!File(resolved.first).exists() && !normalizedPath.startsWith("assets/")) {
+                val fallback = tryCcmodFallback("assets/$normalizedPath")
+                if (fallback != null) {
+                    fullPath = fallback.first
+                    resolved = fallback.second
                 }
             }
-            val canonicalCcmod = ccmodPath.first
+            val canonicalCcmod = resolved.first
             if (canonicalGameDir == null || !canonicalCcmod.startsWith("$canonicalGameDir/")) {
                 Log.w("CrossCode", "Path traversal rejected: $canonicalCcmod")
                 return WebResourceResponse(null, null, null)
             }
-            return handleCcmodRequest(request, ccmodPath.first, ccmodPath.second, normalizedPath)
+            return handleCcmodRequest(request, resolved.first, resolved.second, normalizedPath)
         }
 
         // Check ccmod assets FIRST (allows mods to override existing game assets).
@@ -112,10 +109,7 @@ class GameWebViewClient(
         if (ccmodStream != null) {
             Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
             val extension = assetPath.substringAfterLast('.', "")
-            val mimeType =
-                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                    ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
-            return WebResourceResponse(mimeType, null, ccmodStream)
+            return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(extension), null, ccmodStream)
         }
 
         // Fall back to regular file handling. If the file isn't found at the direct path and the
@@ -171,12 +165,7 @@ class GameWebViewClient(
         }
 
         val stream = FileInputStream(requestedFile)
-
-        val mimeType =
-            MimeTypeMap.getSingleton().getMimeTypeFromExtension(requestedFile.extension)
-                ?: FallbackMimeTypeMap.getMimeTypeFromExtension(requestedFile.extension)
-
-        return WebResourceResponse(mimeType, null, stream)
+        return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(requestedFile.extension), null, stream)
     }
 
     /**
@@ -279,11 +268,7 @@ class GameWebViewClient(
 
                 // Determine MIME type from the internal file extension
                 val extension = internalPath.substringAfterLast('.', "")
-                val mimeType =
-                    MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-                        ?: FallbackMimeTypeMap.getMimeTypeFromExtension(extension)
-
-                WebResourceResponse(mimeType, null, stream)
+                WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(extension), null, stream)
             }
         }
     }
@@ -296,6 +281,19 @@ class GameWebViewClient(
         if (modsDir != null && modsDir.exists()) {
             ccmodManager.buildAssetIndex(modsDir)
         }
+    }
+
+    /**
+     * Try resolving a ccmod path from an alternative normalized path.
+     * Returns the (fullPath, ccmodPath) pair if the ccmod file exists, or null.
+     */
+    private fun tryCcmodFallback(altNormalizedPath: String): Pair<String, Pair<String, String>>? {
+        val altFullPath = File(gameDir!!, altNormalizedPath).canonicalPath
+        val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
+        if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
+            return Pair(altFullPath, altCcmodPath)
+        }
+        return null
     }
 
     /**
@@ -385,4 +383,11 @@ object FallbackMimeTypeMap {
 
     fun getMimeTypeFromExtension(extension: String): String? =
         if (extension.isNotEmpty()) extensionsToMimeTypesMap[extension.lowercase(Locale.ROOT)] else null
+
+    /**
+     * Resolve MIME type using Android's built-in map first, falling back to our custom map.
+     */
+    fun resolveMimeType(extension: String): String? =
+        MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+            ?: getMimeTypeFromExtension(extension)
 }

@@ -21,9 +21,7 @@ class GamepadJsonBridge(
         }
 
     val asJsonString: String
-        get() {
-            return jsonGamepad.toString()
-        }
+        get() = jsonGamepad.toString()
 
     // This is basically just a convenience interface for setting the JSON states
     // Mapping layout from https://w3c.github.io/gamepad/standard_gamepad.svg
@@ -77,14 +75,7 @@ class GamepadJsonBridge(
             }
 
             set(value) {
-                val jsonValue =
-                    if (value) {
-                        1.0
-                    } else {
-                        0.0
-                    }
-                jsonButtons.put(jsonIndex, jsonValue)
-
+                jsonButtons.put(jsonIndex, if (value) 1.0 else 0.0)
                 onControlUpdate()
             }
 
