@@ -21,7 +21,7 @@
             android:title="@string/hardware_acceleration_title" />
 
         <SwitchPreference
-            android:defaultValue="false"
+            android:defaultValue="true"
             android:key="pixelated_scaling"
             android:summary="@string/pixelated_scaling_summary"
             android:title="@string/pixelated_scaling_title" />
