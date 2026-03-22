@@ -1,5 +1,7 @@
 package de.radicalfishgames.crosscode.features
 
+import android.app.UiModeManager
+import android.content.res.Configuration
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
@@ -26,7 +28,12 @@ class VirtualControllerFeature(
     lateinit var currentLayout: VirtualControllerLayout
         private set
 
-    internal val enabled = !hostActivity.isNativeControllerActive() || forceVirtualController
+    private val isTelevision =
+        hostActivity
+            .getSystemService(UiModeManager::class.java)
+            .currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
+
+    internal val enabled = !isTelevision && (!hostActivity.isNativeControllerActive() || forceVirtualController)
 
     val layoutViews = HashMap<VirtualControllerLayout, ViewGroup>()
 

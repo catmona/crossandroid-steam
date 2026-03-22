@@ -28,7 +28,9 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/pref_category_overlay_controls">
+    <PreferenceCategory
+        android:key="pref_category_overlay_controls"
+        android:title="@string/pref_category_overlay_controls">
 
         <SwitchPreference
             android:defaultValue="true"

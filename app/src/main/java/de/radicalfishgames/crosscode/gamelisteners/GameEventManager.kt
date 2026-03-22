@@ -99,27 +99,37 @@ class GameEventManager(
     }
 
     fun onMenuEnter(run: () -> Unit) = onMenuEnter.add(run)
+
     internal fun onMenuEnter() = fireEvent(onMenuEnter) { it() }
 
     fun onMenuExit(run: () -> Unit) = onMenuExit.add(run)
+
     internal fun onMenuExit() = fireEvent(onMenuExit) { it() }
 
     fun onCutsceneEnter(run: () -> Unit) = onCutsceneEnter.add(run)
+
     internal fun onCutsceneEnter() = fireEvent(onCutsceneEnter) { it() }
 
     fun onCutsceneExit(run: () -> Unit) = onCutsceneExit.add(run)
+
     internal fun onCutsceneExit() = fireEvent(onCutsceneExit) { it() }
 
     fun onDirectLinkRing(run: () -> Unit) = onDirectLinkRing.add(run)
+
     internal fun onDirectLinkRing() = fireEvent(onDirectLinkRing) { it() }
 
     fun onDirectLinkEnd(run: () -> Unit) = onDirectLinkEnd.add(run)
+
     internal fun onDirectLinkEnd() = fireEvent(onDirectLinkEnd) { it() }
 
     fun onElementChange(run: (element: ElementMode) -> Unit) = onElementChange.add(run)
+
     internal fun onElementModeChange(elementMode: ElementMode) = fireEvent(onElementChange) { it(elementMode) }
 
-    private fun <T> fireEvent(listeners: Set<T>, invoke: (T) -> Unit) {
+    private fun <T> fireEvent(
+        listeners: Set<T>,
+        invoke: (T) -> Unit,
+    ) {
         handler.post { listeners.forEach(invoke) }
     }
 
