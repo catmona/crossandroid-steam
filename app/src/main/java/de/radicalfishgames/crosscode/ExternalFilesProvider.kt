@@ -39,7 +39,9 @@ class ExternalFilesProvider : DocumentsProvider() {
     }
 
     private val baseDir: File
-        get() = context!!.getExternalFilesDir(null)!!
+        get() =
+            context?.getExternalFilesDir(null)
+                ?: throw IllegalStateException("External storage unavailable")
 
     override fun onCreate(): Boolean = true
 
@@ -104,8 +106,10 @@ class ExternalFilesProvider : DocumentsProvider() {
         mimeType: String?,
         displayName: String?,
     ): String {
+        val name = displayName ?: "new_file"
+        validateDisplayName(name)
         val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID)
-        val file = File(parent, displayName ?: "new_file")
+        val file = File(parent, name)
 
         if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
             file.mkdirs()
@@ -130,7 +134,9 @@ class ExternalFilesProvider : DocumentsProvider() {
         displayName: String?,
     ): String {
         val file = getFileForDocId(documentId ?: throw FileNotFoundException())
-        val newFile = File(file.parentFile, displayName ?: file.name)
+        val name = displayName ?: file.name
+        validateDisplayName(name)
+        val newFile = File(file.parentFile, name)
         file.renameTo(newFile)
         return getDocIdForFile(newFile)
     }
@@ -139,16 +145,36 @@ class ExternalFilesProvider : DocumentsProvider() {
         parentDocumentId: String?,
         documentId: String?,
     ): Boolean {
-        val parent = getFileForDocId(parentDocumentId ?: ROOT_DOC_ID).canonicalPath
-        val child = getFileForDocId(documentId ?: return false).canonicalPath
-        return child == parent || child.startsWith(parent + File.separator)
+        return try {
+            val parent = resolveDocumentFile(parentDocumentId ?: ROOT_DOC_ID).canonicalPath
+            val child = resolveDocumentFile(documentId ?: return false).canonicalPath
+            child == parent || child.startsWith(parent + File.separator)
+        } catch (_: FileNotFoundException) {
+            false
+        }
     }
 
-    private fun getFileForDocId(documentId: String): File {
+    private fun resolveDocumentFile(documentId: String): File {
         if (documentId == ROOT_DOC_ID) {
             return baseDir
         }
-        return File(baseDir, documentId)
+        val file = File(baseDir, documentId)
+        val canonicalBase = baseDir.canonicalPath
+        val canonicalFile = file.canonicalPath
+        if (canonicalFile != canonicalBase &&
+            !canonicalFile.startsWith(canonicalBase + File.separator)
+        ) {
+            throw FileNotFoundException("Document ID resolves outside base directory: $documentId")
+        }
+        return file
+    }
+
+    private fun getFileForDocId(documentId: String): File = resolveDocumentFile(documentId)
+
+    private fun validateDisplayName(name: String) {
+        if (name.contains('/') || name.contains('\\')) {
+            throw FileNotFoundException("Invalid display name: $name")
+        }
     }
 
     private fun getDocIdForFile(file: File): String {
