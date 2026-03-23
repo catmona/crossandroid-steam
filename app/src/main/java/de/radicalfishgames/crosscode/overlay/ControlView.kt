@@ -139,14 +139,15 @@ open class ControlView(
         }
 
         // Check if main pointer still exists, is inside the view, etc.
-        val hadOldMainPointer = mainPointerId != null
+        val currentMainId = mainPointerId
+        val hadOldMainPointer = currentMainId != null
 
         val mainPointerStillValid =
-            hadOldMainPointer &&
-                activePointers.containsKey(mainPointerId!!) &&
+            currentMainId != null &&
+                activePointers.containsKey(currentMainId) &&
                 isWithinView(
-                    activePointers[mainPointerId!!].x,
-                    activePointers[mainPointerId!!].y,
+                    activePointers[currentMainId].x,
+                    activePointers[currentMainId].y,
                 )
 
         if (!mainPointerStillValid) {
@@ -200,11 +201,10 @@ open class ControlView(
     fun onMove(run: (x: Float, y: Float) -> Unit) = onMove.add(run)
 
     private fun onMove() {
+        val id = mainPointerId ?: return
+        val pointer = activePointers[id]
         onMove.forEach {
-            it.invoke(
-                activePointers[mainPointerId!!].x,
-                activePointers[mainPointerId!!].y,
-            )
+            it.invoke(pointer.x, pointer.y)
         }
     }
 
