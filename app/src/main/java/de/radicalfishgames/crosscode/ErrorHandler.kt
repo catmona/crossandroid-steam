@@ -16,14 +16,16 @@ class ErrorHandler(
         t: Thread,
         e: Throwable,
     ) {
-        MaterialAlertDialogBuilder(hostActivity)
-            .setTitle(R.string.crash_title)
-            .setMessage(R.string.crash_message)
-            .setPositiveButton(R.string.crash_copy_button) { dialog: DialogInterface, which: Int ->
-                val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("CrossAndroid Error", errorToString(e))
-                clipboard.setPrimaryClip(clip)
-            }.show()
+        hostActivity.runOnUiThread {
+            MaterialAlertDialogBuilder(hostActivity)
+                .setTitle(R.string.crash_title)
+                .setMessage(R.string.crash_message)
+                .setPositiveButton(R.string.crash_copy_button) { dialog: DialogInterface, which: Int ->
+                    val clipboard = hostActivity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    val clip = ClipData.newPlainText("CrossAndroid Error", errorToString(e))
+                    clipboard.setPrimaryClip(clip)
+                }.show()
+        }
     }
 
     private fun errorToString(e: Throwable): String {
