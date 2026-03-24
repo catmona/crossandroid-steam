@@ -1,45 +1,57 @@
 # Installing and updating the game files
 
-## 1. The game files are going to be placed in your phones storage.  
+## 1. Find the game files
 
-In order to execute them later, this app needs your permission to access this storage.  
-Make sure now that the app has the "Storage" permission enabled.  
-
-## 2. Now you have to find the game files.  
-
-The location of them can vary depending on how you installed CrossCode.  
-If you used Steam, the location should be  
-`C:\Program Files (x86)\Steam\steamapps\common\CrossCode` on Windows, or  
-`~/.steam/steam/steamapps/common/CrossCode` on Linux.  
+The location of them can vary depending on how you installed CrossCode.
+If you used Steam, the location should be
+`C:\Program Files (x86)\Steam\steamapps\common\CrossCode` on Windows, or
+`~/.steam/steam/steamapps/common/CrossCode` on Linux, or
+`~/Library/Application Support/Steam/steamapps/common/CrossCode/CrossCode.app/Contents/Resources/app.nw` on Mac.
 If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), search on the internet where games for that are usually saved.
 
-## 3. Install CCLoader  
+## 2. Install CCLoader
 
 Follow the steps at https://wiki.c2dl.info/CCLoader#Installation
 For support for .ccmod files, replace ccloader/js/ccloader.js with https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js
-## 4. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.  
 
-Follow the guide on how to install mods [here](https://wiki.c2dl.info/Installing_mods).  
-You can download it directly from [here](https://github.com/krypciak/cc-font-fix/releases/tag/v1.0.0).  
+## 3. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
 
-## 5. OPTIONAL: Install your favorite mods
+Download the zip from [here](https://github.com/krypciak/cc-font-fix/releases/latest).
+Unpack the zip and copy the `cc-font-fix` folder into `CrossCode/assets/mods/`.
 
-Be aware that some mods may not work on Android.
+## 4. OPTIONAL: Install your favorite mods
 
-## 6. Copy the directory to your phone
+Browse and download mods at [c2dl.info/cc/mods](https://c2dl.info/cc/mods).
+Most mods work on Android, but some may not.
+The `extension-asset-preloader` mod is built in and not needed on Android.
 
-Grab the folder called `CrossCode` and copy it to  
+## 5. Copy the folder to your phone
+
+Make sure you have launched the app at least once so the target directory is created.
+
+Grab the folder called `CrossCode` and copy it to
 `Android/data/de.radicalfishgames.crosscode/files`
 
-**Verify that your files look like this:**
-- `Android`
-  - `data`
-    - `de.radicalfishgames.crosscode`
-      - `files`
-        - `CrossCode` (the main game directory)
-          - `assets`
-          - `ccloader`
-          - `...`
+You can copy the folder to your device's `Download` folder using MTP and then move it to the Android/data location by using a file manager that supports app-specific directories, such as
+[DocumentsUI](https://play.google.com/store/apps/details?id=su.axi.documentsui) or
+[Material Files](https://play.google.com/store/apps/details?id=me.zhanghai.android.files).
+Alternatively, see the [ADB Transfer Guide](ADB_TRANSFER.md) to transfer files from a computer.
+
+**Verify that your file structure looks like this:**
+```
+Android
+└── data
+    └── de.radicalfishgames.crosscode
+        └── files
+            └── CrossCode
+                ├── assets
+                │   ├── data
+                │   ├── media
+                │   ├── mods
+                │   └── ...
+                ├── ccloader
+                ├── package.json
+                └── ...
+```
 
 ### That's it. You are done!
-

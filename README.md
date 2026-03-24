@@ -1,4 +1,6 @@
 # CrossAndroid
+
+[![Discord](https://img.shields.io/discord/382339402338402315?label=Discord&logo=discord)](https://discord.gg/3Xw69VjXfW)
 Welcome to CrossAndroid! This is an app that allows you to play
 CrossCode on your Android device.
 
@@ -12,22 +14,16 @@ Current features:
 - Import/Export saves between your PC and this app! _(for details, see
   below)_
 
-The whole project is still experimental, which is why there is no
-"release" yet. But you can already try it out, use most of the games'
-functionality and help improve the app by reporting bugs or making
+Help improve the app by reporting bugs or making
 suggestions for improvements.
 
 ## Credits
 Pixelart by Ichiki Hayaite aka TheSparkstarScope
 
 ## Getting the app
-Install the latest APK, and open the app. A guide will appear that shows you how to
-get the game files from your PC, package them for the app and copy them
-to your phone. 
+Install the latest APK, then follow the [setup guide](SETUP.md) to copy the game files to your device.
 
-You can update the app later independently of the game files. However,
-if you want to update the game or install mods, you will have to [follow
-the same steps again](SETUP.md).
+You can update the app independently of the game files. To update the game or install mods, follow the [setup guide](SETUP.md) again.
 
 ## Using the virtual controller
 Here's an overview of the combat controls overlay:
@@ -65,13 +61,12 @@ Tap "Import Save Games" on the launcher. You have two options:
 Imported saves are queued and will be added to your saves list the next
 time you launch the game.
 
-### Exporting/Importing a Save String from/into CrossCode on your PC
-The procedure on a PC is very similar to the one with CrossAndroid. Open
-the game, and press `F10` in the title screen/menu. A window will pop up
+### Exporting/Importing a Save String from/into CrossCode on your PC/Mac
+On your PC/Mac, open the game, and press `F10` in the title screen/menu. A window will pop up
 that lets you both copy the latest Save String and paste a Save String
 to import into the game.
 
 ## Feedback
 Speaking of suggestions: If you have any, suggest them either
-[here](https://gitlab.com/Namnodorel/crossandroid/issues) or in the #crossandroid channel 
+[here](https://gitlab.com/rumpnisse/crossandroid/issues) or in the #crossandroid channel 
 on the [Community Modding Discord Server](https://discord.gg/3Xw69VjXfW)
