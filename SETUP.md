@@ -3,16 +3,18 @@
 ## 1. Find the game files
 
 The location of them can vary depending on how you installed CrossCode.
-If you used Steam, the location should be
-`C:\Program Files (x86)\Steam\steamapps\common\CrossCode` on Windows, or
-`~/.steam/steam/steamapps/common/CrossCode` on Linux, or
-`~/Library/Application Support/Steam/steamapps/common/CrossCode/CrossCode.app/Contents/Resources/app.nw` on Mac.
+If you used Steam, the location should be:
+
+- Windows: `C:\Program Files (x86)\Steam\steamapps\common\CrossCode`
+- Linux: `~/.steam/steam/steamapps/common/CrossCode`
+- Mac: `~/Library/Application Support/Steam/steamapps/common/CrossCode/CrossCode.app/Contents/Resources/app.nw`
+
 If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), search on the internet where games for that are usually saved.
 
 ## 2. Install CCLoader
 
 Follow the steps at https://wiki.c2dl.info/CCLoader#Installation
-For support for .ccmod files, replace ccloader/js/ccloader.js with https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js
+For support for .ccmod files, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
 
 ## 3. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
 
