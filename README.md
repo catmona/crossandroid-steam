@@ -1,6 +1,7 @@
 # CrossAndroid
 
 [![Discord](https://img.shields.io/discord/382339402338402315?label=Discord&logo=discord)](https://discord.gg/3Xw69VjXfW)
+
 Welcome to CrossAndroid! This is an app that allows you to play
 CrossCode on your Android device.
 
