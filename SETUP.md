@@ -17,7 +17,8 @@ If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), sea
 
 ## 3. Install CCLoader
 
-Follow the steps at https://wiki.c2dl.info/CCLoader#Installation
+Follow the steps at [https://wiki.c2dl.info/CCLoader#Installation](https://wiki.c2dl.info/CCLoader#Installation)
+
 For support for .ccmod files, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
 
 ## 4. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
@@ -37,6 +38,8 @@ Make sure you have launched the app at least once so the target directory is cre
 
 Grab the folder called `CrossCode` and copy it to
 `Android/data/de.radicalfishgames.crosscode/files`
+
+Both internal storage and SD card are supported. The app will use whichever location already has the `CrossCode` folder, checking internal storage first.
 
 You can copy the folder to your device's `Download` folder using MTP and then move it to the Android/data location by using a file manager that supports app-specific directories, such as
 [DocumentsUI](https://play.google.com/store/apps/details?id=su.axi.documentsui) or

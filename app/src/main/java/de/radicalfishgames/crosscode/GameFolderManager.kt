@@ -1,7 +1,6 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
-import android.util.Log
 import java.io.File
 
 /**
@@ -13,10 +12,21 @@ class GameFolderManager(
 ) {
     /**
      * Returns the game directory, or null if external storage is not available.
+     * Scans all external storage volumes (internal + SD card) and returns the first
+     * volume where a CrossCode folder already exists. Falls back to the primary volume
+     * when none are found, so the UI can still show a sensible "put files here" path.
      */
     fun getGameDir(): File? {
-        val externalFilesDir = context.getExternalFilesDir(null) ?: return null
-        return File(externalFilesDir, "CrossCode")
+        val dirs = context.getExternalFilesDirs(null)
+        if (dirs.isEmpty()) return null
+        for (dir in dirs) {
+            if (dir == null) continue
+            val candidate = File(dir, "CrossCode")
+            if (candidate.exists() && candidate.isDirectory && candidate.canRead()) {
+                return candidate
+            }
+        }
+        return File(dirs[0] ?: return null, "CrossCode")
     }
 
     /**
