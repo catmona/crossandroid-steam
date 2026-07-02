@@ -1,6 +1,10 @@
 # Installing and updating the game files
 
-## 1. Find the game files
+## 1. Install the app
+
+Download the latest APK file at https://gitlab.com/rumpnisse/crossandroid/-/releases and install on your device.
+
+## 2. Find the game asset files
 
 The location of them can vary depending on how you installed CrossCode.
 If you used Steam, the location should be:
@@ -11,23 +15,23 @@ If you used Steam, the location should be:
 
 If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), search on the internet where games for that are usually saved.
 
-## 2. Install CCLoader
+## 3. Install CCLoader
 
 Follow the steps at https://wiki.c2dl.info/CCLoader#Installation
 For support for .ccmod files, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
 
-## 3. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
+## 4. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
 
 Download the zip from [here](https://github.com/krypciak/cc-font-fix/releases/latest).
 Unpack the zip and copy the `cc-font-fix` folder into `CrossCode/assets/mods/`.
 
-## 4. OPTIONAL: Install your favorite mods
+## 5. OPTIONAL: Install your favorite mods
 
 Browse and download mods at [c2dl.info/cc/mods](https://c2dl.info/cc/mods).
-Most mods work on Android, but some may not.
-The `extension-asset-preloader` mod is built in and not needed on Android.
+All mods should work on Android.
+The `extension-asset-preloader` mod's functionality is built in and the mod is not needed on Android.
 
-## 5. Copy the folder to your phone
+## 6. Copy the folder to your phone
 
 Make sure you have launched the app at least once so the target directory is created.
 
