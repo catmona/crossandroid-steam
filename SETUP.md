@@ -19,7 +19,8 @@ If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), sea
 
 Follow the steps at [https://wiki.c2dl.info/CCLoader#Installation](https://wiki.c2dl.info/CCLoader#Installation)
 
-For support for .ccmod files, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
+**.ccmod files are supported in CrossAndroid from CCLoader version 2.26.0.**
+For earlier versions, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
 
 ## 4. Install the [cc-font-fix](https://github.com/krypciak/cc-font-fix) mod.
 
@@ -29,8 +30,8 @@ Unpack the zip and copy the `cc-font-fix` folder into `CrossCode/assets/mods/`.
 ## 5. OPTIONAL: Install your favorite mods
 
 Browse and download mods at [c2dl.info/cc/mods](https://c2dl.info/cc/mods).
-All mods should work on Android.
-The `extension-asset-preloader` mod's functionality is built in and the mod is not needed on Android.
+All mods should work on Android. Create an issue if you find a mod that is not supported.
+The `extension-asset-preloader` mod is built in and not needed on Android.
 
 ## 6. Copy the folder to your phone
 
