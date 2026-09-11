@@ -25,9 +25,12 @@ class SliderPreference
 
         init {
             layoutResource = R.layout.pref_slider
-            context.obtainStyledAttributes(attrs, R.styleable.SliderPreference).use { a ->
+            val a = context.obtainStyledAttributes(attrs, R.styleable.SliderPreference)
+            try {
                 max = a.getInt(R.styleable.SliderPreference_android_max, 100)
                 showValue = a.getBoolean(R.styleable.SliderPreference_showSliderValue, false)
+            } finally {
+                a.recycle()
             }
         }
 
