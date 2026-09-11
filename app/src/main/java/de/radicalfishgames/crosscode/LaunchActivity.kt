@@ -17,19 +17,20 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 import de.radicalfishgames.crosscode.preferences.SaveExportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportManager
+import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -54,9 +55,11 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         binding = ActivityLaunchBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        binding.root.applySystemBarInsetsAsPadding()
 
         gameFolderManager = GameFolderManager(this)
 
@@ -100,7 +103,7 @@ class LaunchActivity : AppCompatActivity() {
         val gameDir = gameFolderManager.getGameDir()
         if (gameDir == null) {
             Log.e("CrossCode", "External storage not available")
-            Toast.makeText(this, R.string.error_external_storage_unavailable, Toast.LENGTH_LONG).show()
+            Snackbar.make(binding.root, R.string.error_external_storage_unavailable, Snackbar.LENGTH_LONG).show()
             return
         }
 
@@ -155,8 +158,7 @@ class LaunchActivity : AppCompatActivity() {
         message: String? = null,
     ) {
         if (showDialog && message != null) {
-            AlertDialog
-                .Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.error_game_files_not_found_title)
                 .setMessage(message)
                 .setPositiveButton(android.R.string.ok, null)
@@ -185,27 +187,19 @@ class LaunchActivity : AppCompatActivity() {
         binding.launchContainer.visibility = GONE
         setupContainer.visibility = VISIBLE
 
-        // Show all steps
-        guide.selectFolderTitleTv.visibility = VISIBLE
-        guide.selectFolderTextTv.visibility = VISIBLE
-        guide.installCcloaderTextTv.visibility = VISIBLE
-        guide.copyInstanceTextTv.visibility = VISIBLE
-
-        // Show the adb push target path in step 3
+        // Show the adb push target path so the full guide can be followed
         val gamePath = gameFolderManager.getDisplayPath() ?: "Unknown"
-        guide.copyInstanceTextTv.text = getString(R.string.copy_instance_explanation, gamePath)
+        guide.gameFolderPathTv.text = getString(R.string.game_folder_path, gamePath)
 
-        guide.importInstanceBtn.visibility = VISIBLE
         guide.importInstanceBtn.setOnClickListener {
             try {
                 openGameFolder.launch(null)
             } catch (e: ActivityNotFoundException) {
                 // Android TV and some stripped ROMs ship without a DocumentsUI
-                Toast.makeText(this, R.string.import_instance_no_picker, Toast.LENGTH_LONG).show()
+                Snackbar.make(binding.root, R.string.import_instance_no_picker, Snackbar.LENGTH_LONG).show()
             }
         }
 
-        guide.copyInstanceBtn.visibility = VISIBLE
         guide.copyInstanceBtn.setOnClickListener {
             handler.post {
                 tryToAccessInstance(showDialogOnFailure = true)
@@ -216,7 +210,7 @@ class LaunchActivity : AppCompatActivity() {
     private fun chooseImportTarget(uri: Uri) {
         val targets = gameFolderManager.getCandidateGameDirs()
         when (targets.size) {
-            0 -> Toast.makeText(this, R.string.error_external_storage_unavailable, Toast.LENGTH_LONG).show()
+            0 -> Snackbar.make(binding.root, R.string.error_external_storage_unavailable, Snackbar.LENGTH_LONG).show()
             1 -> confirmAndImportGameFolder(uri, targets[0])
             else -> {
                 val labels =
@@ -242,8 +236,7 @@ class LaunchActivity : AppCompatActivity() {
         target: File,
     ) {
         if (target.exists() && target.canRead()) {
-            AlertDialog
-                .Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.import_instance_replace_title)
                 .setMessage(getString(R.string.import_instance_replace_message, target.absolutePath))
                 .setPositiveButton(R.string.import_instance_replace_confirm) { _, _ -> importGameFolder(uri, target) }
@@ -260,13 +253,15 @@ class LaunchActivity : AppCompatActivity() {
     ) {
         val progressText =
             TextView(this).apply {
-                val pad = (16 * resources.displayMetrics.density).toInt()
-                setPadding(pad, pad, pad, pad)
+                // Match the M3 dialog content inset (24dp) so the text lines up with the title
+                val density = resources.displayMetrics.density
+                val horizontal = (24 * density).toInt()
+                setPadding(horizontal, (8 * density).toInt(), horizontal, (24 * density).toInt())
+                setTextAppearance(com.google.android.material.R.style.TextAppearance_Material3_BodyMedium)
                 text = getString(R.string.import_instance_counting)
             }
         val progressDialog =
-            AlertDialog
-                .Builder(this)
+            MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.import_instance_progress_title)
                 .setView(progressText)
                 .setCancelable(false)
@@ -302,8 +297,7 @@ class LaunchActivity : AppCompatActivity() {
                             Log.e("CrossCode", "Game folder import failed", e)
                             e.message ?: e.toString()
                         }
-                    AlertDialog
-                        .Builder(this@LaunchActivity)
+                    MaterialAlertDialogBuilder(this@LaunchActivity)
                         .setTitle(R.string.import_instance_error_title)
                         .setMessage(message)
                         .setPositiveButton(android.R.string.ok, null)
@@ -311,8 +305,7 @@ class LaunchActivity : AppCompatActivity() {
                 }.onSuccess { imported ->
                     val movedAside = imported.movedAside
                     if (movedAside != null) {
-                        AlertDialog
-                            .Builder(this@LaunchActivity)
+                        MaterialAlertDialogBuilder(this@LaunchActivity)
                             .setTitle(R.string.import_instance_moved_aside_title)
                             .setMessage(getString(R.string.import_instance_moved_aside_message, movedAside.absolutePath))
                             .setPositiveButton(android.R.string.ok) { _, _ -> tryToAccessInstance(showDialogOnFailure = true) }

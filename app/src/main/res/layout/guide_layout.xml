@@ -2,7 +2,6 @@
 <ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -13,11 +12,10 @@
 
         <TextView
             android:id="@+id/welcome_tv"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:padding="8dp"
             android:text="@string/welcome"
-            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+            android:textAppearance="?attr/textAppearanceHeadlineSmall"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -26,100 +24,54 @@
             android:id="@+id/game_files_explanation_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@string/game_files_explanation"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/welcome_tv"
-            tools:visibility="gone" />
+            app:layout_constraintTop_toBottomOf="@+id/welcome_tv" />
 
         <TextView
-            android:id="@+id/select_folder_title_tv"
+            android:id="@+id/setup_guide_link_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:padding="4dp"
-            android:text="@string/select_folder_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
+            android:autoLink="web"
+            android:text="@string/setup_guide_link"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColorLink="?attr/colorPrimary"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/game_files_explanation_tv"
-            tools:visibility="gone" />
+            app:layout_constraintTop_toBottomOf="@+id/game_files_explanation_tv" />
 
         <TextView
-            android:id="@+id/select_folder_text_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/select_folder_explanation"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/select_folder_title_tv" />
-
-        <TextView
-            android:id="@+id/install_ccloader_title_tv"
+            android:id="@+id/game_folder_path_tv"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:padding="4dp"
-            android:text="@string/install_ccloader_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
+            android:textAppearance="?attr/textAppearanceBodyMedium"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:textIsSelectable="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/select_folder_text_tv" />
-
-        <TextView
-            android:id="@+id/install_ccloader_text_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/install_ccloader_explanation"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/install_ccloader_title_tv" />
-
-        <TextView
-            android:id="@+id/copy_instance_title_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:padding="4dp"
-            android:text="@string/copy_instance_title"
-            android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:textColor="@android:color/white"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/install_ccloader_text_tv"
-            tools:visibility="visible" />
-
-        <TextView
-            android:id="@+id/copy_instance_text_tv"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="@string/copy_instance_explanation"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/copy_instance_title_tv"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toBottomOf="@+id/setup_guide_link_tv" />
 
         <Button
             android:id="@+id/import_instance_btn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="@string/import_instance_button"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/copy_instance_text_tv"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toBottomOf="@+id/game_folder_path_tv" />
 
         <Button
             android:id="@+id/copy_instance_btn"
+            style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:text="@string/finish_guide"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/import_instance_btn" />
 

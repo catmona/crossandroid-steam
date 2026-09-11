@@ -6,15 +6,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,7 +26,7 @@ import java.io.FileOutputStream
 class SaveExportActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var emptyText: TextView
-    private lateinit var loadingProgress: ProgressBar
+    private lateinit var loadingProgress: CircularProgressIndicator
 
     private var saveSlots: List<String> = emptyList()
     private var pendingExportIndex: Int = -1
@@ -39,15 +42,16 @@ class SaveExportActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_save_export)
+        findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        findViewById<View>(R.id.content).applySystemBarInsetsAsPadding(top = false)
 
         recyclerView = findViewById(R.id.saves_recycler_view)
         emptyText = findViewById(R.id.empty_text)
         loadingProgress = findViewById(R.id.loading_progress)
 
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        findViewById<View>(R.id.done_button).setOnClickListener { finish() }
 
         if (savedInstanceState != null) {
             pendingExportIndex = savedInstanceState.getInt(KEY_PENDING_INDEX, -1)

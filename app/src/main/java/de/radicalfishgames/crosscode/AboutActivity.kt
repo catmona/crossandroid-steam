@@ -1,10 +1,11 @@
 package de.radicalfishgames.crosscode
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,9 +23,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -32,14 +36,14 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 
-class AboutActivity : ComponentActivity() {
+class AboutActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val libraries by produceLibraries()
-            MaterialTheme(colorScheme = darkColorScheme()) {
+            MaterialTheme(colorScheme = appColorScheme()) {
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -92,3 +96,30 @@ class AboutActivity : ComponentActivity() {
         }
     }
 }
+
+/** Mirrors the brand palette of [R.style.AppTheme] so About matches the View-based launcher. */
+@Composable
+private fun appColorScheme() =
+    if (isSystemInDarkTheme()) {
+        darkColorScheme(
+            primary = colorResource(R.color.colorPrimary),
+            onPrimary = colorResource(R.color.colorOnPrimary),
+            primaryContainer = colorResource(R.color.colorPrimaryContainer),
+            onPrimaryContainer = colorResource(R.color.colorOnPrimaryContainer),
+            secondary = colorResource(R.color.colorSecondary),
+            onSecondary = colorResource(R.color.colorOnSecondary),
+            secondaryContainer = colorResource(R.color.colorSecondaryContainer),
+            onSecondaryContainer = colorResource(R.color.colorOnSecondaryContainer),
+        )
+    } else {
+        lightColorScheme(
+            primary = colorResource(R.color.colorPrimary),
+            onPrimary = colorResource(R.color.colorOnPrimary),
+            primaryContainer = colorResource(R.color.colorPrimaryContainer),
+            onPrimaryContainer = colorResource(R.color.colorOnPrimaryContainer),
+            secondary = colorResource(R.color.colorSecondary),
+            onSecondary = colorResource(R.color.colorOnSecondary),
+            secondaryContainer = colorResource(R.color.colorSecondaryContainer),
+            onSecondaryContainer = colorResource(R.color.colorOnSecondaryContainer),
+        )
+    }

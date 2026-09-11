@@ -2,9 +2,13 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="@string/pref_category_general">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        android:title="@string/pref_category_general">
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="vibration_on_rumble"
             android:summary="@string/vibration_on_rumble_summary"
@@ -12,15 +16,21 @@
 
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="@string/pref_category_graphics">
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        android:title="@string/pref_category_graphics">
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="hardware_acceleration"
             android:summary="@string/hardware_acceleration_summary"
             android:title="@string/hardware_acceleration_title" />
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="pixelated_scaling"
             android:summary="@string/pixelated_scaling_summary"
@@ -30,48 +40,59 @@
 
     <PreferenceCategory
         android:key="pref_category_overlay_controls"
+        app:iconSpaceReserved="false"
         android:title="@string/pref_category_overlay_controls">
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="switch_layout_automatically"
             android:summary="@string/switch_layout_automatically_summary"
             android:title="@string/switch_layout_automatically" />
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="disable_overlay_cutscenes"
             android:summary="@string/disable_overlay_cutscenes_automatically_summary"
             android:title="@string/disable_overlay_cutscenes" />
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="false"
             android:key="force_virtual"
             app:summary="@string/force_virtual_summary"
             app:title="@string/force_virtual_title" />
 
-        <SeekBarPreference
+        <de.radicalfishgames.crosscode.preferences.SliderPreference
             android:defaultValue="0"
             android:key="overlay_transparency"
             android:max="100"
-            app:showSeekBarValue="true"
+            app:showSliderValue="true"
             app:summary="@string/overlay_transparency_summary"
             app:title="@string/overlay_transparency_title" />
 
-        <SeekBarPreference
+        <de.radicalfishgames.crosscode.preferences.SliderPreference
             android:defaultValue="5"
             android:key="overlay_scale_factor"
             android:max="10"
             app:summary="@string/overlay_size_summary"
             app:title="@string/overlay_size_title" />
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
             android:key="always_sprint"
             android:summary="@string/always_sprint_summary"
             android:title="@string/always_sprint_title" />
 
-        <SwitchPreference
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="false"
             android:key="disable_swipe_dash"
             android:summary="@string/disable_swipe_dash_summary"

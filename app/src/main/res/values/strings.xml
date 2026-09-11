@@ -1,15 +1,10 @@
 <resources>
     <string name="app_name">CrossAndroid</string>
     <string name="welcome">Welcome to CrossAndroid!</string>
-    <string name="game_files_explanation">For ethical, legal, and technical reasons, this app does not come bundled with the CrossCode game files. But there is a way you can add them yourself!\nThis in-app guide will show you how.\n\nYou\'ll need a PC or Laptop with internet and a cable to connect your phone.</string>
-    <string name="select_folder_title">Step One: Get the game files</string>
-    <string name="select_folder_explanation">Purchase CrossCode on Steam, GOG, or another platform and download it to your computer.</string>
-    <string name="select_folder">Select Folder</string>
+    <string name="game_files_explanation">This app does not come bundled with the CrossCode game files. You need to copy your own CrossCode installation (with CCLoader) to this device, then import it below.</string>
+    <string name="setup_guide_link">Full setup guide:\nhttps://gitlab.com/rumpnisse/crossandroid/-/blob/master/SETUP.md</string>
+    <string name="game_folder_path">Game folder location (for adb push):\n%1$s</string>
     <string name="continue_guide">Continue</string>
-    <string name="install_ccloader_title">Step Two: Install CCLoader and the cc-font-fix mod</string>
-    <string name="install_ccloader_explanation">Install the modloader named CCLoader into your game folder.\nFollow the instructions on:\nhttps://wiki.c2dl.info/CCLoader\n\nThen, install the mod to fix an issue with the game font:\nhttps://github.com/krypciak/cc-font-fix</string>
-    <string name="copy_instance_title">Step Three: Copy the game files to your phone</string>
-    <string name="copy_instance_explanation">Copy the entire CrossCode folder (with CCLoader installed) to your phone using one of these methods:\n\nOption A: Copy the folder anywhere on your phone (e.g. Download) via USB, then tap "Import game folder…" below and select it.\n\nOption B: From a computer with adb:\nadb push CrossCode %1$s\n\nDo not move the folder into Android/data with a file manager or adb shell — the app will not be able to read it.</string>
 
     <string name="finish_guide">Finish</string>
     <string name="launch_game">Launch CrossCode</string>

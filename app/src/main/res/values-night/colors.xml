@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material 3 tonal palette derived from the brand blue #40C4FF (dark scheme) -->
+    <color name="colorPrimary">#65D3FF</color>
+    <color name="colorOnPrimary">#003545</color>
+    <color name="colorPrimaryContainer">#004D63</color>
+    <color name="colorOnPrimaryContainer">#BBE9FF</color>
+    <color name="colorSecondary">#B4CAD6</color>
+    <color name="colorOnSecondary">#1F333D</color>
+    <color name="colorSecondaryContainer">#354A54</color>
+    <color name="colorOnSecondaryContainer">#D0E6F2</color>
+</resources>

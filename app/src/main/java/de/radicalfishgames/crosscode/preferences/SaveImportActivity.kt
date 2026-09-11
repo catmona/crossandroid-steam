@@ -6,15 +6,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
-import android.widget.ImageButton
 import android.widget.TextView
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -32,7 +34,10 @@ class SaveImportActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContentView(R.layout.activity_save_import)
+        findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        findViewById<View>(R.id.content).applySystemBarInsetsAsPadding(top = false)
 
         manager = SaveImportManager(this)
         adapter =
@@ -55,23 +60,16 @@ class SaveImportActivity : AppCompatActivity() {
             openMultipleDocuments.launch(arrayOf("text/plain", "*/*"))
         }
 
-        findViewById<View>(R.id.done_button).setOnClickListener {
-            finish()
-        }
-
         updateEmptyState()
     }
 
     private fun showImportStringDialog() {
-        val editText =
-            EditText(this).apply {
-                hint = getString(R.string.import_string_hint)
-                minLines = 3
-            }
+        val view = layoutInflater.inflate(R.layout.dialog_import_string, null)
+        val editText = view.findViewById<EditText>(R.id.import_string_edit)
 
-        MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_Dialog_FilledPositive)
             .setTitle(R.string.import_string_dialog_title)
-            .setView(editText)
+            .setView(view)
             .setPositiveButton(R.string.import_string_dialog_import) { _, _ ->
                 val content = editText.text.toString()
                 if (content.isNotBlank()) {
@@ -154,7 +152,7 @@ class SaveImportActivity : AppCompatActivity() {
             val indexText: TextView = view.findViewById(R.id.save_index)
             val saveStats: TextView = view.findViewById(R.id.save_stats)
             val saveLocation: TextView = view.findViewById(R.id.save_location)
-            val deleteButton: ImageButton = view.findViewById(R.id.delete_button)
+            val deleteButton: View = view.findViewById(R.id.delete_button)
         }
 
         override fun onCreateViewHolder(

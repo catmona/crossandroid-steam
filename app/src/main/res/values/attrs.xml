@@ -6,4 +6,8 @@
     </declare-styleable>
 
 
+    <declare-styleable name="SliderPreference">
+        <attr name="android:max" />
+        <attr name="showSliderValue" format="boolean" />
+    </declare-styleable>
 </resources>

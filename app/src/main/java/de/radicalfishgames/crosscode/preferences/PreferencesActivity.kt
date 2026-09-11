@@ -3,16 +3,23 @@ package de.radicalfishgames.crosscode.preferences
 import android.app.UiModeManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.View
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
+import com.google.android.material.appbar.MaterialToolbar
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
 
 class PreferencesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         setContentView(R.layout.actvitity_preferences)
+        findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }
+        findViewById<View>(R.id.preferences_placeholder).applySystemBarInsetsAsPadding(top = false)
 
         supportFragmentManager
             .beginTransaction()
