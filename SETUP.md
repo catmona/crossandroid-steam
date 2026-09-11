@@ -37,15 +37,32 @@ The `extension-asset-preloader` mod is built in and not needed on Android.
 
 Make sure you have launched the app at least once so the target directory is created.
 
+### Recommended: import from within the app
+
+1. Copy the `CrossCode` folder to any regular location on your device, e.g. `Download`, using MTP/USB.
+2. Open CrossAndroid and tap **Import game folder…** in the setup guide.
+3. Select the `CrossCode` folder. The app copies it into its own data directory.
+
+This is the most reliable method: the app writes the files itself, so they always have the correct
+permissions. The copy in `Download` can be deleted afterwards.
+
+### Alternative: copy manually
+
 Grab the folder called `CrossCode` and copy it to
 `Android/data/de.radicalfishgames.crosscode/files`
 
 Both internal storage and SD card are supported. The app will use whichever location already has the `CrossCode` folder, checking internal storage first.
 
-You can copy the folder to your device's `Download` folder using MTP and then move it to the Android/data location by using a file manager that supports app-specific directories, such as
+You can move the folder there with a file manager that supports app-specific directories, such as
 [DocumentsUI](https://play.google.com/store/apps/details?id=su.axi.documentsui) or
-[Material Files](https://play.google.com/store/apps/details?id=me.zhanghai.android.files).
-Alternatively, see the [ADB Transfer Guide](ADB_TRANSFER.md) to transfer files from a computer.
+[Material Files](https://play.google.com/store/apps/details?id=me.zhanghai.android.files),
+or see the [ADB Transfer Guide](ADB_TRANSFER.md) to transfer files from a computer.
+
+> **Warning:** files written into `Android/data` by adb or by file managers that use Shizuku/shell
+> access end up owned by a different user, and the app may not be allowed to read them. The app will
+> then report *"A game folder exists but the app is not allowed to read it"*. If that happens, use the
+> in-app import above, or copy the folder through the system **Files** app into the **CrossCode**
+> location it lists.
 
 **Verify that your file structure looks like this:**
 ```

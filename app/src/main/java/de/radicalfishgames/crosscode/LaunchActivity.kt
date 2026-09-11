@@ -1,28 +1,39 @@
 package de.radicalfishgames.crosscode
 
 import android.app.UiModeManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.format.Formatter
 import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 import de.radicalfishgames.crosscode.preferences.SaveExportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class LaunchActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLaunchBinding
@@ -30,6 +41,11 @@ class LaunchActivity : AppCompatActivity() {
     private lateinit var gameFolderManager: GameFolderManager
 
     private val handler = Handler(Looper.getMainLooper())
+
+    private val openGameFolder =
+        registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) chooseImportTarget(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val uiModeManager = getSystemService(UiModeManager::class.java)
@@ -91,6 +107,12 @@ class LaunchActivity : AppCompatActivity() {
         Log.i("CrossCode", "Game directory: ${gameDir.absolutePath}")
 
         if (!gameFolderManager.hasValidGameFolder()) {
+            val unreadable = gameFolderManager.findUnreadableGameFolder()
+            if (unreadable != null) {
+                Log.w("CrossCode", "Game folder exists but is not readable by the app: ${unreadable.absolutePath}")
+                instanceNotFound(showDialogOnFailure, getString(R.string.error_game_folder_unreadable, unreadable.absolutePath))
+                return
+            }
             Log.i("CrossCode", "Game folder not found")
             instanceNotFound(showDialogOnFailure, getString(R.string.error_game_folder_not_found, gameDir.absolutePath))
             return
@@ -169,17 +191,137 @@ class LaunchActivity : AppCompatActivity() {
         guide.installCcloaderTextTv.visibility = VISIBLE
         guide.copyInstanceTextTv.visibility = VISIBLE
 
-        // Show the path in step 3
+        // Show the adb push target path in step 3
         val gamePath = gameFolderManager.getDisplayPath() ?: "Unknown"
-        guide.selectedFolderLabelTv.visibility = VISIBLE
-        guide.selectedFolderLabelTv.text = getString(R.string.selected_folder_label, gamePath)
+        guide.copyInstanceTextTv.text = getString(R.string.copy_instance_explanation, gamePath)
 
-        // Single button at the end
+        guide.importInstanceBtn.visibility = VISIBLE
+        guide.importInstanceBtn.setOnClickListener {
+            try {
+                openGameFolder.launch(null)
+            } catch (e: ActivityNotFoundException) {
+                // Android TV and some stripped ROMs ship without a DocumentsUI
+                Toast.makeText(this, R.string.import_instance_no_picker, Toast.LENGTH_LONG).show()
+            }
+        }
+
         guide.copyInstanceBtn.visibility = VISIBLE
         guide.copyInstanceBtn.setOnClickListener {
             handler.post {
                 tryToAccessInstance(showDialogOnFailure = true)
             }
+        }
+    }
+
+    private fun chooseImportTarget(uri: Uri) {
+        val targets = gameFolderManager.getCandidateGameDirs()
+        when (targets.size) {
+            0 -> Toast.makeText(this, R.string.error_external_storage_unavailable, Toast.LENGTH_LONG).show()
+            1 -> confirmAndImportGameFolder(uri, targets[0])
+            else -> {
+                val labels =
+                    targets
+                        .map { dir ->
+                            val free = Formatter.formatFileSize(this, dir.parentFile?.freeSpace ?: 0)
+                            getString(R.string.import_instance_target_entry, gameFolderManager.getVolumeLabel(dir), free)
+                        }.toTypedArray()
+                var selected = 0
+                MaterialAlertDialogBuilder(this, R.style.ThemeOverlay_App_Dialog_FilledPositive)
+                    .setTitle(R.string.import_instance_target_title)
+                    .setSingleChoiceItems(labels, selected) { _, which -> selected = which }
+                    .setPositiveButton(R.string.import_instance_target_copy) { _, _ ->
+                        confirmAndImportGameFolder(uri, targets[selected])
+                    }.setNegativeButton(android.R.string.cancel, null)
+                    .show()
+            }
+        }
+    }
+
+    private fun confirmAndImportGameFolder(
+        uri: Uri,
+        target: File,
+    ) {
+        if (target.exists() && target.canRead()) {
+            AlertDialog
+                .Builder(this)
+                .setTitle(R.string.import_instance_replace_title)
+                .setMessage(getString(R.string.import_instance_replace_message, target.absolutePath))
+                .setPositiveButton(R.string.import_instance_replace_confirm) { _, _ -> importGameFolder(uri, target) }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        } else {
+            importGameFolder(uri, target)
+        }
+    }
+
+    private fun importGameFolder(
+        uri: Uri,
+        target: File,
+    ) {
+        val progressText =
+            TextView(this).apply {
+                val pad = (16 * resources.displayMetrics.density).toInt()
+                setPadding(pad, pad, pad, pad)
+                text = getString(R.string.import_instance_counting)
+            }
+        val progressDialog =
+            AlertDialog
+                .Builder(this)
+                .setTitle(R.string.import_instance_progress_title)
+                .setView(progressText)
+                .setCancelable(false)
+                .show()
+        guideBinding?.importInstanceBtn?.isEnabled = false
+        guideBinding?.copyInstanceBtn?.isEnabled = false
+
+        lifecycleScope.launch {
+            val result =
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        GameFolderImporter(this@LaunchActivity).import(uri, target) { copied, total, name ->
+                            // Throttle UI updates; posting for every file just floods the main thread
+                            if (copied % 20 == 0 || copied == total) {
+                                progressText.post {
+                                    progressText.text = getString(R.string.import_instance_progress, copied, total, name)
+                                }
+                            }
+                        }
+                    }
+                }
+
+            progressDialog.dismiss()
+            guideBinding?.importInstanceBtn?.isEnabled = true
+            guideBinding?.copyInstanceBtn?.isEnabled = true
+
+            result
+                .onFailure { e ->
+                    val message =
+                        if (e is GameFolderImporter.NotAGameFolderException) {
+                            getString(R.string.import_instance_error_not_game_folder)
+                        } else {
+                            Log.e("CrossCode", "Game folder import failed", e)
+                            e.message ?: e.toString()
+                        }
+                    AlertDialog
+                        .Builder(this@LaunchActivity)
+                        .setTitle(R.string.import_instance_error_title)
+                        .setMessage(message)
+                        .setPositiveButton(android.R.string.ok, null)
+                        .show()
+                }.onSuccess { imported ->
+                    val movedAside = imported.movedAside
+                    if (movedAside != null) {
+                        AlertDialog
+                            .Builder(this@LaunchActivity)
+                            .setTitle(R.string.import_instance_moved_aside_title)
+                            .setMessage(getString(R.string.import_instance_moved_aside_message, movedAside.absolutePath))
+                            .setPositiveButton(android.R.string.ok) { _, _ -> tryToAccessInstance(showDialogOnFailure = true) }
+                            .setCancelable(false)
+                            .show()
+                    } else {
+                        tryToAccessInstance(showDialogOnFailure = true)
+                    }
+                }
         }
     }
 

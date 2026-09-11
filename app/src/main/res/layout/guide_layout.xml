@@ -24,7 +24,7 @@
 
         <TextView
             android:id="@+id/game_files_explanation_tv"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/game_files_explanation"
             app:layout_constraintEnd_toEndOf="parent"
@@ -48,7 +48,7 @@
 
         <TextView
             android:id="@+id/select_folder_text_tv"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/select_folder_explanation"
             android:visibility="gone"
@@ -71,7 +71,7 @@
 
         <TextView
             android:id="@+id/install_ccloader_text_tv"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/install_ccloader_explanation"
             android:visibility="gone"
@@ -94,25 +94,24 @@
             tools:visibility="visible" />
 
         <TextView
-            android:id="@+id/selected_folder_label_tv"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:visibility="gone"
-            android:textStyle="italic"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/copy_instance_title_tv" />
-
-        <TextView
             android:id="@+id/copy_instance_text_tv"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/copy_instance_explanation"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/selected_folder_label_tv"
+            app:layout_constraintTop_toBottomOf="@+id/copy_instance_title_tv"
+            tools:visibility="visible" />
+
+        <Button
+            android:id="@+id/import_instance_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/import_instance_button"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/copy_instance_text_tv"
             tools:visibility="visible" />
 
         <Button
@@ -122,7 +121,7 @@
             android:text="@string/finish_guide"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/copy_instance_text_tv" />
+            app:layout_constraintTop_toBottomOf="@+id/import_instance_btn" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -1,6 +1,8 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
+import android.os.Build
+import android.os.storage.StorageManager
 import java.io.File
 
 /**
@@ -27,6 +29,45 @@ class GameFolderManager(
             }
         }
         return File(dirs[0] ?: return null, "CrossCode")
+    }
+
+    /**
+     * Returns the possible game directories, one per mounted external volume (internal first),
+     * i.e. the places an in-app import can be written to.
+     */
+    fun getCandidateGameDirs(): List<File> = context.getExternalFilesDirs(null).filterNotNull().map { File(it, "CrossCode") }
+
+    /**
+     * Human-readable name of the volume that [dir] lives on, e.g. "Internal shared storage" or "SD card".
+     */
+    fun getVolumeLabel(dir: File): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            val label =
+                context
+                    .getSystemService(StorageManager::class.java)
+                    ?.getStorageVolume(dir)
+                    ?.getDescription(context)
+            if (!label.isNullOrBlank()) return label
+        }
+        return if (dir.absolutePath.startsWith("/storage/emulated/")) "Internal storage" else "SD card"
+    }
+
+    /**
+     * Returns a CrossCode folder that exists but cannot be read by this app, or null.
+     * This happens when the folder was created by another uid (adb shell, Shizuku-based file
+     * managers): the files end up owned by `shell` with mode 700, which the app cannot repair.
+     */
+    fun findUnreadableGameFolder(): File? {
+        for (dir in context.getExternalFilesDirs(null)) {
+            if (dir == null) continue
+            val candidate = File(dir, "CrossCode")
+            // exists() only needs search permission on the app-owned parent, so it works even
+            // when the folder itself is mode 700 and owned by another uid.
+            if (candidate.exists() && !candidate.canRead()) {
+                return candidate
+            }
+        }
+        return null
     }
 
     /**

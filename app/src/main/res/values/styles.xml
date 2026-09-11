@@ -8,4 +8,9 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
+
+    <!-- Dialog whose positive button is a filled (contained) button instead of a text button -->
+    <style name="ThemeOverlay.App.Dialog.FilledPositive" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.MaterialComponents.Button</item>
+    </style>
 </resources>

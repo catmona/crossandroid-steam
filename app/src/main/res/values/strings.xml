@@ -5,12 +5,11 @@
     <string name="select_folder_title">Step One: Get the game files</string>
     <string name="select_folder_explanation">Purchase CrossCode on Steam, GOG, or another platform and download it to your computer.</string>
     <string name="select_folder">Select Folder</string>
-    <string name="selected_folder_label">Copy files to:\n%1$s</string>
     <string name="continue_guide">Continue</string>
     <string name="install_ccloader_title">Step Two: Install CCLoader and the cc-font-fix mod</string>
     <string name="install_ccloader_explanation">Install the modloader named CCLoader into your game folder.\nFollow the instructions on:\nhttps://wiki.c2dl.info/CCLoader\n\nThen, install the mod to fix an issue with the game font:\nhttps://github.com/krypciak/cc-font-fix</string>
     <string name="copy_instance_title">Step Three: Copy the game files to your phone</string>
-    <string name="copy_instance_explanation">Connect your phone to your computer and copy the entire CrossCode game folder (with CCLoader installed) to the path shown above.\n\nThe folder should contain the "assets" subfolder with the game files.</string>
+    <string name="copy_instance_explanation">Copy the entire CrossCode folder (with CCLoader installed) to your phone using one of these methods:\n\nOption A: Copy the folder anywhere on your phone (e.g. Download) via USB, then tap "Import game folder…" below and select it.\n\nOption B: From a computer with adb:\nadb push CrossCode %1$s\n\nDo not move the folder into Android/data with a file manager or adb shell — the app will not be able to read it.</string>
 
     <string name="finish_guide">Finish</string>
     <string name="launch_game">Launch CrossCode</string>
@@ -84,6 +83,24 @@
     <string name="error_assets_folder_not_found">The \'assets\' folder was not found in the game folder.</string>
     <string name="error_ccloader_not_found">CCLoader not found. Make sure you installed CCLoader before copying the game files.</string>
     <string name="error_game_files_not_found_title">Game files not found</string>
+    <string name="error_game_folder_unreadable">A game folder exists but the app is not allowed to read it:\n%1$s\n\nThis happens when the folder was moved there with adb shell commands (mv/cp) or a file manager (e.g. via Shizuku): the files then belong to a different user and the app cannot repair this. A plain adb push works fine.\n\nInstead, use the \"Import game folder\" button to copy the files safely.</string>
+
+    <!-- Game folder import -->
+    <string name="import_instance_button">Import game folder…</string>
+    <string name="import_instance_target_title">Copy game folder to android/data on</string>
+    <string name="import_instance_target_copy">Copy</string>
+    <string name="import_instance_moved_aside_title">Old game folder left behind</string>
+    <string name="import_instance_moved_aside_message">The unreadable game folder was renamed to:\n%1$s\n\nThe app cannot delete it. To free the space, remove it from a computer with:\nadb shell rm -r \"%1$s\"</string>
+    <string name="import_instance_no_picker">No file picker available on this device. Use adb push instead.</string>
+    <string name="import_instance_target_entry">%1$s (%2$s free)</string>
+    <string name="import_instance_progress_title">Importing game folder</string>
+    <string name="import_instance_progress">%1$d / %2$d files\n%3$s</string>
+    <string name="import_instance_counting">Counting files…</string>
+    <string name="import_instance_replace_title">Replace existing game folder?</string>
+    <string name="import_instance_replace_message">A game folder already exists at:\n%1$s\n\nIt will be deleted and replaced by the imported folder.</string>
+    <string name="import_instance_replace_confirm">Replace</string>
+    <string name="import_instance_error_title">Import failed</string>
+    <string name="import_instance_error_not_game_folder">The selected folder does not contain an \'assets\' folder. Select the CrossCode folder itself.</string>
 
     <!-- SaveValidator -->
     <string name="error_save_empty">Save string is empty</string>

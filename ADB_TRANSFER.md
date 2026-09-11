@@ -50,6 +50,24 @@ adb shell ls /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/
 
 You should see `assets`, `ccloader`, `package.json`, and other game files.
 
+## Fixing "not allowed to read" errors
+
+If the app reports that the game folder exists but it is not allowed to read it, the files are owned
+by the `shell` user without group permissions. This typically happens after moving the folder around
+with `adb shell mv` or `cp` (a plain `adb push` is usually fine). Restore group access with:
+
+```
+adb shell chmod -R g+rwX,g+s /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode
+```
+
+Alternatively, use **Import game folder…** in the app instead. The app cannot delete the unreadable
+folder itself, so it renames it to `CrossCode_unreadable_<timestamp>` and leaves it behind. Remove it
+to free the space:
+
+```
+adb shell rm -r /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode_unreadable_*
+```
+
 ## Transferring mods later
 
 To add a mod after the initial setup, push it directly into the mods directory:
