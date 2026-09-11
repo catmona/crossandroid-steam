@@ -2,6 +2,7 @@ package de.radicalfishgames.crosscode.preferences
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.ContextCompat
 import org.json.JSONObject
 import java.io.File
 import java.io.RandomAccessFile
@@ -38,7 +39,7 @@ class LocalStorageLevelDbReader(
 
     private val targetKey: ByteArray by lazy { buildLocalStorageKey(ORIGIN, KEY) }
 
-    private fun getLevelDbPath(): File = File(context.dataDir, "app_webview/Default/Local Storage/leveldb")
+    private fun getLevelDbPath(): File = File(ContextCompat.getDataDir(context), "app_webview/Default/Local Storage/leveldb")
 
     /**
      * Reads all save slots from localStorage LevelDB.

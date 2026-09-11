@@ -118,7 +118,7 @@ open class ControlView(
                     val movedId = event.getPointerId(index)
 
                     // A pointer moved into our View from another View
-                    if (!activePointers.contains(movedId)) {
+                    if (activePointers.indexOfKey(movedId) < 0) {
                         activePointers[movedId] = PointF()
                     }
 

@@ -210,8 +210,14 @@ class LaunchActivity : AppCompatActivity() {
     private fun chooseImportTarget(uri: Uri) {
         val targets = gameFolderManager.getCandidateGameDirs()
         when (targets.size) {
-            0 -> Snackbar.make(binding.root, R.string.error_external_storage_unavailable, Snackbar.LENGTH_LONG).show()
-            1 -> confirmAndImportGameFolder(uri, targets[0])
+            0 -> {
+                Snackbar.make(binding.root, R.string.error_external_storage_unavailable, Snackbar.LENGTH_LONG).show()
+            }
+
+            1 -> {
+                confirmAndImportGameFolder(uri, targets[0])
+            }
+
             else -> {
                 val labels =
                     targets
