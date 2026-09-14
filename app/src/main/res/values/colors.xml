@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Material 3 tonal palette derived from the brand blue #40C4FF (light scheme) -->
-    <color name="colorPrimary">#006783</color>
+    <!-- CrossCode-inspired Material 3 palette (light scheme) -->
+    <color name="colorPrimary">#226AC1</color>
     <color name="colorOnPrimary">#FFFFFF</color>
-    <color name="colorPrimaryContainer">#BBE9FF</color>
-    <color name="colorOnPrimaryContainer">#001F2A</color>
-    <color name="colorSecondary">#4D616C</color>
+    <color name="colorPrimaryContainer">#DEE2ED</color>
+    <color name="colorOnPrimaryContainer">#0D2A55</color>
+    <color name="colorSecondary">#5E606F</color>
     <color name="colorOnSecondary">#FFFFFF</color>
-    <color name="colorSecondaryContainer">#D0E6F2</color>
-    <color name="colorOnSecondaryContainer">#081E28</color>
+    <color name="colorSecondaryContainer">#EDEFF3</color>
+    <color name="colorOnSecondaryContainer">#1B1C24</color>
+    <color name="colorSurface">#FAFBFD</color>
+    <color name="colorOnSurface">#1A1C22</color>
+    <color name="colorSurfaceVariant">#EDEFF3</color>
+    <color name="colorOnSurfaceVariant">#5E606F</color>
+    <color name="colorSurfaceContainerLowest">#FFFFFF</color>
+    <color name="colorSurfaceContainerLow">#F5F6FA</color>
+    <color name="colorSurfaceContainer">#F1F3F7</color>
+    <color name="colorSurfaceContainerHigh">#EDEFF3</color>
+    <color name="colorSurfaceContainerHighest">#E6E8EE</color>
+    <color name="colorOutline">#74777F</color>
+    <color name="colorOutlineVariant">#C4C6D0</color>
 </resources>
