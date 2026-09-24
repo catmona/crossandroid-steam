@@ -150,6 +150,26 @@ class GameWrapper(
             )
         }
 
+        // Smooth frame pacing: ig.Timer.step uses Date.now(), which in WebView jitters by several
+        // ms per frame, so objects move uneven distances each frame and scrolling stutters even at
+        // a steady 60 fps. Advance the game clock by the vsync-aligned animation frame time instead.
+        // document.timeline is used rather than a rAF hook because the game loop doesn't always run
+        // through window.requestAnimationFrame (e.g. during loading).
+        runJS(
+            """(function(){
+                var iv=setInterval(function(){
+                    if(typeof ig==='undefined'||!ig.Timer||!ig.Timer.step)return;
+                    clearInterval(iv);
+                    ig.Timer._last=document.timeline.currentTime;
+                    ig.Timer.step=function(){
+                        var now=document.timeline.currentTime;
+                        ig.Timer.time+=Math.min((now-ig.Timer._last)/1E3,ig.Timer.maxStep)*ig.Timer.timeScale;
+                        ig.Timer._last=now;
+                    };
+                },100);
+            })();""",
+        )
+
         // Nearest-neighbor scaling: use pixelated rendering to avoid bilinear blur
         // on the pixel art when the canvas is CSS-stretched to fill the screen.
         if (pixelatedScaling) {
