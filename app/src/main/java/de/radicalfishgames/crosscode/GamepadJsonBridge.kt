@@ -75,12 +75,14 @@ class GamepadJsonBridge(
             }
 
             set(value) {
-                jsonButtons.put(jsonIndex, if (value) 1.0 else 0.0)
+                val newValue = if (value) 1.0 else 0.0
+                if (jsonButtons.opt(jsonIndex) == newValue) return
+                jsonButtons.put(jsonIndex, newValue)
                 onControlUpdate()
             }
 
         init {
-            pressed = false
+            jsonButtons.put(jsonIndex, 0.0)
         }
     }
 
@@ -99,12 +101,13 @@ class GamepadJsonBridge(
                         else -> value
                     }
 
+                if (jsonAxes.opt(jsonIndex) == actualValue) return
                 jsonAxes.put(jsonIndex, actualValue)
                 onControlUpdate()
             }
 
         init {
-            state = 0.0
+            jsonAxes.put(jsonIndex, 0.0)
         }
     }
 }

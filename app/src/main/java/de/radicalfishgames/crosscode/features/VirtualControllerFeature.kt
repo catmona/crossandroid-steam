@@ -3,6 +3,7 @@ package de.radicalfishgames.crosscode.features
 import android.app.UiModeManager
 import android.content.res.Configuration
 import android.util.Log
+import android.view.Choreographer
 import android.view.View
 import android.view.ViewGroup
 import de.radicalfishgames.crosscode.GameActivity
@@ -18,7 +19,7 @@ class VirtualControllerFeature(
     gameWrapper: GameWrapper,
     hostActivity: GameActivity,
 ) : Feature(gameWrapper, hostActivity) {
-    internal val gamepadState: GamepadJsonBridge = GamepadJsonBridge { updateGamepadJS() }
+    internal val gamepadState: GamepadJsonBridge = GamepadJsonBridge { scheduleGamepadUpdate() }
 
     private val forceVirtualController = hostActivity.preferences.getBoolean("force_virtual", false)
     private val combatAlwaysSprint = hostActivity.preferences.getBoolean("always_sprint", true)
@@ -38,6 +39,15 @@ class VirtualControllerFeature(
     val layoutViews = HashMap<VirtualControllerLayout, ViewGroup>()
 
     private var isControllerReady = false
+
+    // Input events can arrive far faster than the display refreshes and each one changes several
+    // buttons/axes, so coalesce pushes to at most one evaluateJavascript per frame
+    private var gamepadUpdatePending = false
+    private val gamepadFrameCallback =
+        Choreographer.FrameCallback {
+            gamepadUpdatePending = false
+            updateGamepadJS()
+        }
 
     override fun onPostGamePageLoad() {
         // Always inject the getGamepads hook — for virtual overlay AND physical controllers.
@@ -101,12 +111,23 @@ class VirtualControllerFeature(
         gameWrapper.blockWebViewClicks = !currentLayout.allowWebViewInteraction
     }
 
+    private fun scheduleGamepadUpdate() {
+        if (!gamepadUpdatePending) {
+            gamepadUpdatePending = true
+            Choreographer.getInstance().postFrameCallback(gamepadFrameCallback)
+        }
+    }
+
     private fun updateGamepadJS() {
         if (isControllerReady) {
             val jsonGamepad = gamepadState.asJsonString
 
             runJS("$JS_GAMEPADS_VAR = [JSON.parse('$jsonGamepad')];")
         }
+    }
+
+    override fun onDestroy() {
+        Choreographer.getInstance().removeFrameCallback(gamepadFrameCallback)
     }
 
     companion object {
