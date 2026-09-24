@@ -10,10 +10,15 @@ class PhysicalControllerBridge(
         const val DEAD_ZONE = 0.1
     }
 
+    // Triggers and D-pad can arrive both as key events and as axes (e.g. digital trigger mode sends
+    // BUTTON_R2 while the axis stays 0). Track each source separately so one doesn't release the other.
+    private val keyHeld = HashSet<GamepadJsonBridge.Button>()
+    private val axisHeld = HashSet<GamepadJsonBridge.Button>()
+
     fun onKeyEvent(event: KeyEvent): Boolean {
         val pressed = event.action == KeyEvent.ACTION_DOWN
         val button = mapButton(event.keyCode) ?: return false
-        button.pressed = pressed
+        setHeld(button, pressed, keyHeld)
         return true
     }
 
@@ -23,19 +28,29 @@ class PhysicalControllerBridge(
         gamepadState.rightStick.horizontal.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_Z))
         gamepadState.rightStick.vertical.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_RZ))
 
-        val lt = event.getAxisValue(MotionEvent.AXIS_LTRIGGER).toDouble()
-        val rt = event.getAxisValue(MotionEvent.AXIS_RTRIGGER).toDouble()
-        gamepadState.leftTrigger.pressed = lt > DEAD_ZONE
-        gamepadState.rightTrigger.pressed = rt > DEAD_ZONE
+        // Some layouts report triggers as BRAKE/GAS instead of LTRIGGER/RTRIGGER
+        val lt = maxOf(event.getAxisValue(MotionEvent.AXIS_LTRIGGER), event.getAxisValue(MotionEvent.AXIS_BRAKE))
+        val rt = maxOf(event.getAxisValue(MotionEvent.AXIS_RTRIGGER), event.getAxisValue(MotionEvent.AXIS_GAS))
+        setHeld(gamepadState.leftTrigger, lt > DEAD_ZONE, axisHeld)
+        setHeld(gamepadState.rightTrigger, rt > DEAD_ZONE, axisHeld)
 
         val hatX = event.getAxisValue(MotionEvent.AXIS_HAT_X)
         val hatY = event.getAxisValue(MotionEvent.AXIS_HAT_Y)
-        gamepadState.leftCross.left.pressed = hatX < -0.5f
-        gamepadState.leftCross.right.pressed = hatX > 0.5f
-        gamepadState.leftCross.top.pressed = hatY < -0.5f
-        gamepadState.leftCross.bottom.pressed = hatY > 0.5f
+        setHeld(gamepadState.leftCross.left, hatX < -0.5f, axisHeld)
+        setHeld(gamepadState.leftCross.right, hatX > 0.5f, axisHeld)
+        setHeld(gamepadState.leftCross.top, hatY < -0.5f, axisHeld)
+        setHeld(gamepadState.leftCross.bottom, hatY > 0.5f, axisHeld)
 
         return true
+    }
+
+    private fun setHeld(
+        button: GamepadJsonBridge.Button,
+        held: Boolean,
+        source: MutableSet<GamepadJsonBridge.Button>,
+    ) {
+        if (held) source.add(button) else source.remove(button)
+        button.pressed = button in keyHeld || button in axisHeld
     }
 
     private fun mapButton(keyCode: Int): GamepadJsonBridge.Button? =
