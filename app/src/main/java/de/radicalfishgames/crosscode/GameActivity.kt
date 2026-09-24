@@ -151,7 +151,9 @@ class GameActivity : AppCompatActivity() {
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
         val device = event.device
-        if (device != null && isController(device)) {
+        // Controllers can also emit touchpad/mouse motion (e.g. DualShock touchpad), which reads all
+        // joystick axes as 0 and would reset sticks, triggers and hat mid-input
+        if (device != null && isController(device) && event.isFromSource(InputDevice.SOURCE_JOYSTICK)) {
             if (physicalControllerBridge?.onMotionEvent(event) == true) {
                 return true
             }
