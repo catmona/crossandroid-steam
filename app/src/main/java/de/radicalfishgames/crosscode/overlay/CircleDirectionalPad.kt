@@ -22,7 +22,7 @@ class CircleDirectionalPad(
         val xDiff = xTouch - centerX
         val yDiff = yTouch - centerY
 
-        // Return the values as values ranging from -1.0 to 1.0
+        // Normalize to -1.0..1.0 relative to the pad radius
         val xDir = xDiff / radius
         val yDir = yDiff / radius
 

@@ -38,10 +38,7 @@ object SaveParser {
     private const val PREFIX = "[-!_0_!-]"
     private const val PASSWORD = ":_.NaN0"
 
-    /**
-     * Parses a save string and extracts display info.
-     * Returns null if parsing fails.
-     */
+    /** Extracts display info for the save picker; null if the save can't be decrypted or parsed. */
     fun parse(saveString: String): SaveInfo? {
         val json = decrypt(saveString) ?: return null
         return try {
@@ -91,11 +88,8 @@ object SaveParser {
         }
     }
 
-    /**
-     * Extracts location (floor) using game logic: specialMap > map.
-     */
     private fun extractLocation(json: JSONObject): String? {
-        // Game uses specialMap if it has langUid, otherwise falls back to map
+        // Mirrors the game: a localized specialMap name wins over the raw map path
         val specialMap = extractLocalizedString(json, "specialMap")
         if (specialMap != null) return capitalize(specialMap)
 
@@ -103,12 +97,7 @@ object SaveParser {
         return map?.let { capitalize(it.substringAfterLast("/").replace("-", " ")) }
     }
 
-    /**
-     * Extracts chapter from player JSON object.
-     * Game displays chapter+1, with special cases:
-     * - chapter 10 (display 11) without DLC = "Epilogue"
-     * - chapter 10 (display 11) with DLC = "Chapter 11"
-     */
+    /** The game shows chapter + 1, except chapter 10 is "Epilogue" without the DLC. */
     private fun extractChapter(
         player: JSONObject,
         isDlc: Boolean,
@@ -123,7 +112,7 @@ object SaveParser {
     }
 
     /**
-     * Decrypts a save string and returns the JSON object.
+     * Saves are [PREFIX] + base64 of an OpenSSL `Salted__` AES-256-CBC blob with a fixed passphrase.
      * Returns null if decryption fails.
      */
     fun decrypt(saveString: String): JSONObject? {
@@ -161,9 +150,7 @@ object SaveParser {
      */
     fun formatCredit(credit: Int): String = NumberFormat.getNumberInstance(Locale.US).format(credit)
 
-    /**
-     * Capitalizes first letter of each word (e.g., "epilogue" -> "Epilogue").
-     */
+    /** Capitalizes each word, treating '-' and '_' as spaces (e.g., "rhombus-dng" -> "Rhombus Dng"). */
     fun capitalize(text: String): String =
         text
             .split(" ", "-", "_")

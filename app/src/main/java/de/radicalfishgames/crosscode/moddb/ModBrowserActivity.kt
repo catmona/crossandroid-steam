@@ -577,9 +577,8 @@ private fun installProgressCaption(progress: InstallProgress): String? =
         if (it.totalBytes > 0) {
             stringResource(R.string.mod_install_progress_percent, (it.bytesRead * 100 / it.totalBytes).toInt())
         } else {
-            // Some hosts (e.g. GitHub's auto-generated source-archive zips) stream without a
-            // Content-Length, so there's no percentage to show — report live bytes instead so it's
-            // clear the download is progressing rather than stuck.
+            // Some hosts (e.g. GitHub source-archive zips) omit Content-Length; show bytes so the
+            // download doesn't look stuck.
             stringResource(R.string.mod_install_progress_bytes, Formatter.formatShortFileSize(LocalContext.current, it.bytesRead))
         }
     }

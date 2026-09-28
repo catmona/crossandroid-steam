@@ -98,9 +98,7 @@ open class ControlView(
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
 
-        // Update pointer list
         when (event.action) {
-            // New finger placed on screen
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_POINTER_DOWN,
             -> {
@@ -112,7 +110,6 @@ open class ControlView(
                 activePointers[pointerId] = pointer
             }
 
-            // Finger(s) moved
             MotionEvent.ACTION_MOVE -> {
                 for (index in 0 until event.pointerCount) {
                     val movedId = event.getPointerId(index)
@@ -129,7 +126,7 @@ open class ControlView(
                 }
             }
 
-            // Finger lifted (or another View has taken over control of the event)
+            // ACTION_CANCEL: another View has taken over the gesture
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP,
             MotionEvent.ACTION_CANCEL,
@@ -138,7 +135,7 @@ open class ControlView(
             }
         }
 
-        // Check if main pointer still exists, is inside the view, etc.
+        // The main pointer drives this control; once it leaves the view, hand off to another pointer inside it
         val currentMainId = mainPointerId
         val hadOldMainPointer = currentMainId != null
 
@@ -153,7 +150,6 @@ open class ControlView(
         if (!mainPointerStillValid) {
             mainPointerId = null
 
-            // Search for a new pointer within the view
             for (id in activePointers.keyIterator()) {
                 val pointer = activePointers[id]
 
@@ -163,22 +159,21 @@ open class ControlView(
                 }
             }
 
-            // A fresh pointer has been selected
+            // Fresh press
             if (mainPointerId != null && !hadOldMainPointer) {
                 onTouch()
 
                 onMove()
 
-                // A new pointer has been selected, but this is not an unpressed button - move
+                // Handed off to another pointer while already pressed: move, don't re-press
             } else if (mainPointerId != null && hadOldMainPointer) {
                 onMove()
 
-                // Last pointer moved out of the view, release
+                // No pointer left inside the view: release
             } else if (hadOldMainPointer) {
                 onRelease()
             }
 
-            // All is fine with our main pointer, update its position
         } else {
             onMove()
         }

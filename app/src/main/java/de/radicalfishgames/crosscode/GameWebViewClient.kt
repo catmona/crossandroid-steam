@@ -32,15 +32,10 @@ class GameWebViewClient(
         gameWrapper.onPageLoaded()
     }
 
-    // A request interceptor is used for two purposes. Firstly, ES6 imports refuse to work if the imported
-    // file is not returned with the appropriate MIME type (such as text/javascript), and files returned
-    // from file:// don't get content types at all, so we perform our own MIME type detection. Secondly, the
-    // game is "served" from a virtual domain with HTTPS, so the browser thinks that this is a real website
-    // and not some random page loaded from file://, and thus allows using APIs such as fetch() and enables
-    // the regular same-origin policy, while in reality no HTTP server is running and the requests to that
-    // domain are handled here by us. Additionally, the HTTPS scheme is used to enable installation of
-    // service workers. This technique (and where I found the domain name reserved for this purpose) is
-    // described in more detail here:
+    // Serving the game from a virtual HTTPS origin instead of file:// is what makes it work:
+    // - ES6 imports require a correct MIME type, which file:// responses lack, so we set our own.
+    // - A real-looking HTTPS origin enables fetch(), the normal same-origin policy and service workers.
+    // No server exists; every request to the virtual domain is answered here. See:
     // https://developer.android.com/guide/webapps/load-local-content
     // https://developer.android.com/reference/androidx/webkit/WebViewAssetLoader
     override fun shouldInterceptRequest(
@@ -72,12 +67,11 @@ class GameWebViewClient(
         val normalizedPath = if (isModsScheme) "mods/${urlPath.trimStart('/')}" else urlPath.trimStart('/')
         var fullPath = File(gameDir, normalizedPath).canonicalPath
 
-        // Check if this is a request for a file inside a .ccmod archive
         val initialCcmodPath = CcmodManager.parseCcmodPath(fullPath)
         if (initialCcmodPath != null) {
-            // Try alternative paths if the ccmod file doesn't exist at the resolved path:
-            // 1. CCLoader runs from ccloader/ but ccmod files are in assets/mods/ — try without prefix
-            // 2. Service worker may omit the assets/ prefix — try with it prepended
+            // If the .ccmod isn't at the resolved path, try:
+            // 1. Dropping "ccloader/": CCLoader resolves paths from ccloader/, but mods live in assets/mods/.
+            // 2. Prepending "assets/": the service worker may omit it.
             var resolved = initialCcmodPath
             if (!File(resolved.first).exists() && normalizedPath.startsWith("ccloader/")) {
                 val fallback = tryCcmodFallback(normalizedPath.removePrefix("ccloader/"))
@@ -101,9 +95,8 @@ class GameWebViewClient(
             return handleCcmodRequest(request, resolved.first, resolved.second, normalizedPath)
         }
 
-        // Check ccmod assets FIRST (allows mods to override existing game assets).
-        // removePrefix is a no-op when the prefix is absent, so this also handles service worker
-        // pass-through requests that arrive without the "assets/" prefix (e.g. /media/face/x.png).
+        // Check mod assets first so mods can override game assets. This also covers service worker
+        // pass-through requests that lack the "assets/" prefix (e.g. /media/face/x.png).
         val assetPath = normalizedPath.removePrefix("assets/")
         val ccmodStream = ccmodManager.getAssetStream(assetPath)
         if (ccmodStream != null) {
@@ -112,10 +105,8 @@ class GameWebViewClient(
             return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(extension), null, ccmodStream)
         }
 
-        // Fall back to regular file handling. If the file isn't found at the direct path and the
-        // path doesn't already have an "assets/" prefix, also try "assets/<path>". This handles
-        // CCLoader3's service worker passing through requests like "/data/changelog.json" whose
-        // files actually live under "assets/" in the CrossCode directory layout.
+        // CCLoader3's service worker passes through requests like "/data/changelog.json" whose files
+        // live under "assets/", so retry with that prefix when the direct path doesn't exist.
         val (requestedFile, effectiveNormalizedPath) =
             try {
                 val directFile = File(gameDir, normalizedPath).canonicalFile
@@ -155,12 +146,10 @@ class GameWebViewClient(
         }
 
         if (requestedFile.isDirectory) {
-            // Return an empty successful response for directories, CCLoader depends on that for
-            // checking whether they exist.
+            // CCLoader checks directory existence by expecting an empty 200 response.
             return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
         }
 
-        // Check if this is a JSON file with patches
         if (effectiveNormalizedPath.startsWith("assets/") && effectiveNormalizedPath.endsWith(".json")) {
             val assetPath = effectiveNormalizedPath.removePrefix("assets/")
             if (ccmodManager.hasPatches(assetPath)) {
@@ -172,9 +161,6 @@ class GameWebViewClient(
         return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(requestedFile.extension), null, stream)
     }
 
-    /**
-     * Serve a JSON file with patches applied.
-     */
     private fun servePatchedJson(
         originalFile: File,
         assetPath: String,
@@ -190,7 +176,7 @@ class GameWebViewClient(
             )
         } catch (e: Exception) {
             Log.e("CrossCode", "Failed to apply patches to $assetPath", e)
-            // Fall back to original file
+            // Serve the unpatched file rather than failing the request.
             WebResourceResponse(
                 "application/json",
                 "UTF-8",
@@ -199,12 +185,8 @@ class GameWebViewClient(
         }
 
     /**
-     * Handle requests for files inside .ccmod archives.
-     * CCLoader uses X-Cmd headers to query ccmod contents:
-     * - X-Cmd: getFiles - list files in a directory
-     * - X-Cmd: isDirectory - check if path is a directory
-     * - X-Cmd: isFile - check if path is a file
-     * - (no header) - get file content
+     * Serves paths inside .ccmod archives. CCLoader queries archive contents via the X-Cmd header:
+     * `getFiles`, `isDirectory` or `isFile`; with no header, the file content is returned.
      */
     private fun handleCcmodRequest(
         request: WebResourceRequest,
@@ -212,7 +194,6 @@ class GameWebViewClient(
         internalPath: String,
         urlPath: String,
     ): WebResourceResponse {
-        // Check if the .ccmod file itself exists
         val ccmodFile = File(ccmodFilePath)
         if (!ccmodFile.exists()) {
             Log.w("CrossCode", "Ccmod file not found: $ccmodFilePath")
@@ -254,15 +235,14 @@ class GameWebViewClient(
             }
 
             else -> {
-                // No X-Cmd header - serve the actual file content
                 if (internalPath.isEmpty()) {
-                    // Request for the ccmod root - treat as directory
+                    // Archive root: answer like a directory (empty 200).
                     return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
                 }
 
                 val stream = ccmodManager.getFileStream(ccmodFilePath, internalPath)
                 if (stream == null) {
-                    // Could be a directory inside the ccmod
+                    // May be a directory inside the archive.
                     if (ccmodManager.isDirectory(ccmodFilePath, internalPath)) {
                         return WebResourceResponse(null, null, ByteArrayInputStream(byteArrayOf()))
                     }
@@ -270,16 +250,13 @@ class GameWebViewClient(
                     return WebResourceResponse(null, null, null)
                 }
 
-                // Determine MIME type from the internal file extension
                 val extension = internalPath.substringAfterLast('.', "")
                 WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(extension), null, stream)
             }
         }
     }
 
-    /**
-     * Build the ccmod asset index. Should be called before loading the game.
-     */
+    /** Must be called before loading the game so mod asset overrides and patches are known. */
     fun buildCcmodAssetIndex() {
         val modsDir = gameDir?.let { File(it, "assets/mods") }
         if (modsDir != null && modsDir.exists()) {
@@ -287,10 +264,7 @@ class GameWebViewClient(
         }
     }
 
-    /**
-     * Try resolving a ccmod path from an alternative normalized path.
-     * Returns the (fullPath, ccmodPath) pair if the ccmod file exists, or null.
-     */
+    /** Returns (fullPath, parsed ccmod path) for [altNormalizedPath] if that .ccmod exists, else null. */
     private fun tryCcmodFallback(altNormalizedPath: String): Pair<String, Pair<String, String>>? {
         val altFullPath = File(gameDir!!, altNormalizedPath).canonicalPath
         val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
@@ -300,9 +274,7 @@ class GameWebViewClient(
         return null
     }
 
-    /**
-     * Close ccmod manager resources. Should be called when activity is destroyed.
-     */
+    /** Releases open .ccmod ZIP handles; call when the activity is destroyed. */
     fun closeCcmodManager() {
         ccmodManager.closeAll()
     }
@@ -345,7 +317,7 @@ object FallbackMimeTypeMap {
         add("text/markdown", "md")
 
         // Video
-        add("video/webm", "webm") // Must come before audio/webm
+        add("video/webm", "webm") // First mapping wins, so this takes precedence over audio/webm
         add("video/ogg", "ogv")
         add("video/mp4", "mp4")
 
@@ -388,9 +360,7 @@ object FallbackMimeTypeMap {
     fun getMimeTypeFromExtension(extension: String): String? =
         if (extension.isNotEmpty()) extensionsToMimeTypesMap[extension.lowercase(Locale.ROOT)] else null
 
-    /**
-     * Resolve MIME type using Android's built-in map first, falling back to our custom map.
-     */
+    /** Prefers Android's built-in MIME map, falling back to ours for types it lacks. */
     fun resolveMimeType(extension: String): String? =
         MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
             ?: getMimeTypeFromExtension(extension)

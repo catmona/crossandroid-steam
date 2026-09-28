@@ -6,8 +6,8 @@ import org.json.JSONObject
 import java.io.IOException
 
 /**
- * Fetches and parses CCModDB's mod database (the same data upstream CCModManager's online tab reads),
- * confirmed by reading `CCDirectLink/CCModManager`'s `src/moddb.ts`/`src/cache.ts`.
+ * Fetches and parses CCModDB's mod database, the same data upstream CCModManager's online tab reads
+ * (see `CCDirectLink/CCModManager`'s `src/moddb.ts`/`src/cache.ts`).
  */
 class ModDatabaseClient(
     private val httpClient: OkHttpClient,
@@ -96,10 +96,8 @@ class ModDatabaseClient(
         }
 
     /**
-     * Mod titles/descriptions sometimes embed CrossCode's own inline rich-text codes (e.g.
-     * `\i[class-tri]` for an icon, `\c[green]` for a color) meant for the game engine's text renderer.
-     * We only ever show this text in plain widgets, so strip codes we can't render rather than
-     * printing them literally.
+     * Strips CrossCode's inline rich-text codes (e.g. `\i[class-tri]`, `\c[green]`) that some mod
+     * texts embed, since plain widgets would print them literally.
      */
     private fun stripCrossCodeMarkup(text: String): String =
         text.replace(CROSSCODE_MARKUP_REGEX, "").replace(Regex(" {2,}"), " ").trim()

@@ -34,11 +34,10 @@ class ModInstallException(
 ) : Exception(message)
 
 /**
- * Ports `downloadAndInstallMod`/`installCCMod`/`installModZip` from upstream CCModManager's
- * `src/mod-installer.ts`. `.ccmod` installs are written as a raw file — CrossAndroid's own
- * `CcmodManager` serves its contents on demand without ever extracting it, identically for both
- * CCLoader2 and CCLoader3 (confirmed by reading both loaders' `filemanager.js`). `.zip` installs are
- * extracted, keeping only entries under the `source` prefix.
+ * Port of `downloadAndInstallMod`/`installCCMod`/`installModZip` from upstream CCModManager's
+ * `src/mod-installer.ts`. `.ccmod` files are saved unextracted, since `CcmodManager` serves them
+ * on demand for both CCLoader2 and CCLoader3. `.zip` files are extracted, keeping only entries under
+ * the `source` prefix.
  */
 class ModInstaller(
     private val gameFolderManager: GameFolderManager,
@@ -105,8 +104,8 @@ class ModInstaller(
         val buffer = ByteArray(DOWNLOAD_BUFFER_SIZE)
         val output = ByteArrayOutputStream()
         var read = 0L
-        // Reporting progress on every 8KB chunk means thousands of Compose recompositions over a
-        // large download, which visibly slows the download down. Throttle to a UI-friendly cadence.
+        // Reporting every 8KB chunk triggers thousands of Compose recompositions and visibly slows
+        // large downloads, so throttle.
         var lastReportAt = 0L
         input.use { stream ->
             while (true) {

@@ -7,7 +7,7 @@ data class ModDbEntry(
     val description: String,
     val version: String,
     val authors: List<String>,
-    /** dependency id -> semver range required */
+    /** Dependency id to required semver range. */
     val dependencies: Map<String, String>,
     val tags: List<String>,
     val repositoryUrl: String?,

@@ -87,7 +87,7 @@ class GameFolderImporter(
         return Result(copied, movedAside)
     }
 
-    /** Returns the folder an unreadable [target] was renamed to, or null if nothing was moved aside. */
+    /** Deletes a readable [target]; renames an unreadable one aside and returns its new location. */
     private fun moveExistingAside(target: File): File? {
         if (!target.exists()) return null
         if (target.canRead()) {

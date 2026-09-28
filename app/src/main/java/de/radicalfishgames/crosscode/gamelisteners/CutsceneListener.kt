@@ -57,7 +57,6 @@ class MessageRing(
 
     @JavascriptInterface
     fun reportRing() {
-        // Report a message ring
         eventManager.onDirectLinkRing()
     }
 }
@@ -78,7 +77,6 @@ class MessageEnd(
 
     @JavascriptInterface
     fun reportMessageEnd() {
-        // Report a message end
         eventManager.onDirectLinkEnd()
     }
 }

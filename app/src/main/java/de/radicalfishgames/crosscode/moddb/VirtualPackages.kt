@@ -8,11 +8,9 @@ import io.github.z4kn4fein.semver.toVersionOrNull
 import org.json.JSONObject
 
 /**
- * Computes versions for dependency ids that aren't real downloadable mods (the game itself, the
- * modloader, DLC extensions, and a handful of CCLoader3-bundled legacy mods) — mirroring
- * `virtualPackages` in CCLoader3's `packages/core/src/modloader.ts`. Entirely file-based: no running
- * game/WebView session is needed for any of this, confirmed against the CCLoader3 and CCLoader2
- * sources.
+ * Computes versions for dependency ids that aren't downloadable mods (the game, the modloader, DLC
+ * extensions, and a few CCLoader3-bundled legacy mods), mirroring `virtualPackages` in CCLoader3's
+ * `packages/core/src/modloader.ts`. Reads only files on disk, so no running game session is needed.
  */
 object VirtualPackages {
     // CCLoader3 hardcodes these regardless of platform (modloader.ts:57-64). `nw` is desktop-only.

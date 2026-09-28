@@ -9,23 +9,18 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 /**
- * Manages reading files from .ccmod archives (ZIP files) without extraction.
- * Caches ZipFile handles for performance.
- * Also maintains an asset index for fast lookup of mod assets.
+ * Reads files from .ccmod archives (ZIPs) without extracting them, and indexes mod assets and
+ * patches (from both packed and unpacked mods) so overrides can be looked up per request.
  */
 class CcmodManager {
     private val zipCache = ConcurrentHashMap<String, ZipFile>()
 
-    // Maps asset paths (e.g., "media/gui/CCModManager.png") to ccmod file paths
+    // Asset path (e.g. "media/gui/CCModManager.png") -> mod path (.ccmod file or unpacked folder)
     private val assetIndex = ConcurrentHashMap<String, String>()
 
-    // Maps JSON file paths (e.g., "data/lang/sc/gui.en_US.json") to list of patch locations
-    // Each patch location is a Pair of (ccmodPath, internalPath)
+    // Target JSON path (e.g. "data/lang/sc/gui.en_US.json") -> (modPath, internalPath) of each patch
     private val patchIndex = ConcurrentHashMap<String, MutableList<Pair<String, String>>>()
 
-    /**
-     * Get or open a ZipFile for the given ccmod path.
-     */
     private fun getZipFile(ccmodPath: String): ZipFile? {
         return zipCache.getOrPut(ccmodPath) {
             try {
@@ -38,10 +33,8 @@ class CcmodManager {
     }
 
     /**
-     * Get a file's InputStream from inside a ccmod archive.
-     * @param ccmodPath Absolute path to the .ccmod file
-     * @param internalPath Path inside the archive (e.g., "package.json" or "assets/data/foo.json")
-     * @return InputStream for the file, or null if not found
+     * Opens [internalPath] (e.g. "assets/data/foo.json") inside the archive at [ccmodPath].
+     * Returns null if it is missing or a directory.
      */
     fun getFileStream(
         ccmodPath: String,
@@ -69,9 +62,7 @@ class CcmodManager {
         }
     }
 
-    /**
-     * Check if a path exists inside a ccmod archive (file or directory).
-     */
+    /** True if [internalPath] is a file or directory in the archive. */
     fun exists(
         ccmodPath: String,
         internalPath: String,
@@ -79,26 +70,21 @@ class CcmodManager {
         val zipFile = getZipFile(ccmodPath) ?: return false
         val normalizedPath = internalPath.trimStart('/')
 
-        // Check exact entry
         if (zipFile.getEntry(normalizedPath) != null) {
             return true
         }
 
-        // Check as directory (some zips don't have explicit directory entries)
         val dirPath = if (normalizedPath.endsWith("/")) normalizedPath else "$normalizedPath/"
         if (zipFile.getEntry(dirPath) != null) {
             return true
         }
 
-        // Check if any entry starts with this path (implicit directory)
+        // Some zips omit directory entries, so fall back to a prefix scan.
         return zipFile.entries().asSequence().any { entry ->
             entry.name.startsWith(dirPath) || entry.name == normalizedPath
         }
     }
 
-    /**
-     * Check if a path is a directory inside a ccmod archive.
-     */
     fun isDirectory(
         ccmodPath: String,
         internalPath: String,
@@ -106,33 +92,28 @@ class CcmodManager {
         val zipFile = getZipFile(ccmodPath) ?: return false
         val normalizedPath = internalPath.trimStart('/')
 
-        // Empty path = root of archive = directory
+        // Empty path is the archive root.
         if (normalizedPath.isEmpty()) {
             return true
         }
 
-        // Check explicit directory entry
         val dirPath = if (normalizedPath.endsWith("/")) normalizedPath else "$normalizedPath/"
         val entry = zipFile.getEntry(dirPath)
         if (entry != null && entry.isDirectory) {
             return true
         }
 
-        // Check if it's a file
         val fileEntry = zipFile.getEntry(normalizedPath)
         if (fileEntry != null && !fileEntry.isDirectory) {
             return false
         }
 
-        // Check for implicit directory (entries that start with this path)
+        // Some zips omit directory entries, so fall back to a prefix scan.
         return zipFile.entries().asSequence().any { e ->
             e.name.startsWith(dirPath) && e.name != dirPath
         }
     }
 
-    /**
-     * Check if a path is a file inside a ccmod archive.
-     */
     fun isFile(
         ccmodPath: String,
         internalPath: String,
@@ -148,10 +129,7 @@ class CcmodManager {
         return !entry.isDirectory
     }
 
-    /**
-     * List files in a directory inside a ccmod archive.
-     * @return List of filenames (directories end with "/")
-     */
+    /** Lists the direct children of a directory in the archive; directory names end with "/". */
     fun listFiles(
         ccmodPath: String,
         internalPath: String,
@@ -167,17 +145,14 @@ class CcmodManager {
         for (entry in zipFile.entries()) {
             val entryName = entry.name
 
-            // Check if entry is inside the target directory
             if (!entryName.startsWith(normalizedPath) && normalizedPath.isNotEmpty()) {
                 continue
             }
 
-            // Skip the directory itself
             if (entryName == normalizedPath) {
                 continue
             }
 
-            // Get the relative path from the directory
             val relativePath =
                 if (normalizedPath.isEmpty()) {
                     entryName
@@ -189,7 +164,7 @@ class CcmodManager {
                 continue
             }
 
-            // Get only direct children (first component of relative path)
+            // Collapse deeper entries to their first path component so only direct children remain.
             val firstSlash = relativePath.indexOf('/')
             val childName =
                 if (firstSlash == -1) {
@@ -206,9 +181,7 @@ class CcmodManager {
         return results.toList().sorted()
     }
 
-    /**
-     * List files as JSON array (for X-Cmd: getFiles response).
-     */
+    /** Response body for CCLoader's `X-Cmd: getFiles` request. */
     fun listFilesAsJson(
         ccmodPath: String,
         internalPath: String,
@@ -217,9 +190,6 @@ class CcmodManager {
         return JSONArray(files).toString()
     }
 
-    /**
-     * Close all cached ZipFile handles.
-     */
     fun closeAll() {
         for ((path, zipFile) in zipCache) {
             try {
@@ -232,9 +202,6 @@ class CcmodManager {
         zipCache.clear()
     }
 
-    /**
-     * Close a specific ccmod file.
-     */
     fun close(ccmodPath: String) {
         zipCache.remove(ccmodPath)?.let { zipFile ->
             try {
@@ -247,10 +214,8 @@ class CcmodManager {
     }
 
     /**
-     * Build the asset and patch indices by scanning all mods in the mods directory.
-     * Supports both .ccmod files (zips) and unpacked mod folders.
-     * Assets inside the "assets/" folder are indexed by their relative path.
-     * Patches (.json.patch files) are indexed by the target JSON file they patch.
+     * Rebuilds the indices from every packed (.ccmod) and unpacked mod in [modsDir]. Files under a
+     * mod's "assets/" are keyed by their path relative to it; `foo.json.patch` is keyed as `foo.json`.
      */
     fun buildAssetIndex(modsDir: File) {
         assetIndex.clear()
@@ -263,11 +228,9 @@ class CcmodManager {
         for (entry in modEntries) {
             try {
                 if (entry.isFile && entry.name.endsWith(".ccmod")) {
-                    // Packed ccmod (zip file)
                     indexCcmodAssets(entry.absolutePath)
                     packedCount++
                 } else if (entry.isDirectory && isUnpackedMod(entry)) {
-                    // Unpacked mod folder
                     indexUnpackedModAssets(entry)
                     unpackedCount++
                 }
@@ -282,14 +245,8 @@ class CcmodManager {
         )
     }
 
-    /**
-     * Check if a directory is an unpacked mod (has package.json or ccmod.json).
-     */
     private fun isUnpackedMod(dir: File): Boolean = File(dir, "package.json").exists() || File(dir, "ccmod.json").exists()
 
-    /**
-     * Index assets and patches from an unpacked mod folder.
-     */
     private fun indexUnpackedModAssets(modDir: File) {
         val assetsDir = File(modDir, "assets")
         if (!assetsDir.exists() || !assetsDir.isDirectory) {
@@ -299,9 +256,6 @@ class CcmodManager {
         indexUnpackedDirectory(modDir.absolutePath, assetsDir, "")
     }
 
-    /**
-     * Recursively index files in an unpacked mod's assets directory.
-     */
     private fun indexUnpackedDirectory(
         modPath: String,
         dir: File,
@@ -316,7 +270,6 @@ class CcmodManager {
                 indexUnpackedDirectory(modPath, file, assetPath)
             } else {
                 if (assetPath.endsWith(".json.patch")) {
-                    // Map the target JSON file to this patch
                     val targetPath = assetPath.removeSuffix(".patch")
                     patchIndex
                         .getOrPut(targetPath) { mutableListOf() }
@@ -328,22 +281,15 @@ class CcmodManager {
         }
     }
 
-    /**
-     * Index all assets and patches from a single ccmod file.
-     */
     private fun indexCcmodAssets(ccmodPath: String) {
         val zipFile = getZipFile(ccmodPath) ?: return
 
         for (entry in zipFile.entries()) {
             val name = entry.name
-            // Only index files inside the "assets/" directory
             if (name.startsWith("assets/") && !entry.isDirectory) {
-                // Remove "assets/" prefix to get the relative asset path
                 val assetPath = name.removePrefix("assets/")
                 if (assetPath.isNotEmpty()) {
-                    // Check if this is a patch file
                     if (assetPath.endsWith(".json.patch")) {
-                        // Map the target JSON file to this patch
                         val targetPath = assetPath.removeSuffix(".patch")
                         patchIndex
                             .getOrPut(targetPath) { mutableListOf() }
@@ -356,36 +302,22 @@ class CcmodManager {
         }
     }
 
-    /**
-     * Look up an asset path in the index.
-     * @param assetPath The relative asset path (e.g., "media/gui/CCModManager.png")
-     * @return The ccmod file path containing this asset, or null if not found
-     */
+    /** Returns the mod (.ccmod file or unpacked folder) providing [assetPath], or null. */
     fun lookupAsset(assetPath: String): String? = assetIndex[assetPath]
 
-    /**
-     * Get a file stream for an indexed asset.
-     * @param assetPath The relative asset path (e.g., "media/gui/CCModManager.png")
-     * @return InputStream for the asset, or null if not found in any mod
-     */
+    /** Opens a mod-provided asset by its path relative to "assets/", or null if no mod has it. */
     fun getAssetStream(assetPath: String): InputStream? {
         val modPath = assetIndex[assetPath] ?: return null
         return getModFileStream(modPath, "assets/$assetPath")
     }
 
-    /**
-     * Get a file stream from a mod (packed or unpacked).
-     * @param modPath Path to the mod (ccmod file or unpacked folder)
-     * @param internalPath Path inside the mod
-     * @return InputStream for the file, or null if not found
-     */
+    /** Reads [internalPath] from [modPath], which may be a .ccmod file or an unpacked folder. */
     private fun getModFileStream(
         modPath: String,
         internalPath: String,
     ): InputStream? {
         val modFile = File(modPath)
         return if (modFile.isDirectory) {
-            // Unpacked mod - read directly from filesystem
             val file = File(modFile, internalPath)
             if (file.exists() && file.isFile) {
                 try {
@@ -398,24 +330,15 @@ class CcmodManager {
                 null
             }
         } else {
-            // Packed ccmod - read from zip
             getFileStream(modPath, internalPath)
         }
     }
 
-    /**
-     * Check if a JSON file has patches available.
-     * @param assetPath The relative asset path (e.g., "data/lang/sc/gui.en_US.json")
-     * @return true if there are patches for this file
-     */
     fun hasPatches(assetPath: String): Boolean = patchIndex.containsKey(assetPath)
 
     /**
-     * Apply all patches to a JSON file.
-     * @param assetPath The relative asset path (e.g., "data/lang/sc/gui.en_US.json")
-     * @param originalJson The original JSON content
-     * @param gameFileResolver Optional resolver for "game:" protocol paths
-     * @return The patched JSON content, or original if no patches or patching failed
+     * Applies every indexed patch for [assetPath] in turn; a patch that fails is skipped rather
+     * than aborting the rest. [gameFileResolver] resolves `game:` paths for IMPORT/INCLUDE.
      */
     fun applyPatches(
         assetPath: String,
@@ -446,12 +369,7 @@ class CcmodManager {
         return result
     }
 
-    /**
-     * Create a file resolver for IMPORT/INCLUDE operations.
-     * Supports protocols:
-     * - "mod:" - resolve relative to the mod's root
-     * - "game:" - resolve relative to game assets
-     */
+    /** Resolves IMPORT/INCLUDE paths: `mod:` relative to the mod root, `game:` via [gameFileResolver]. */
     private fun createFileResolver(
         modPath: String,
         gameFileResolver: ((String) -> String?)?,
@@ -475,8 +393,8 @@ class CcmodManager {
         }
 
     /**
-     * Parse protocol prefix from a path.
-     * @return Pair of (protocol or null, path without protocol)
+     * Splits "proto:path" into (proto, path). A colon only counts as a protocol separator if it
+     * comes before the first "/"; otherwise returns (null, path).
      */
     private fun parseProtocol(path: String): Pair<String?, String> {
         val colonIndex = path.indexOf(':')
@@ -487,9 +405,6 @@ class CcmodManager {
         }
     }
 
-    /**
-     * Read a file from a mod (for IMPORT/INCLUDE).
-     */
     private fun readModFile(
         modPath: String,
         relativePath: String,
@@ -507,13 +422,13 @@ class CcmodManager {
         private const val TAG = "CcmodManager"
 
         /**
-         * Check if a path refers to a location inside a .ccmod file.
-         * @return Pair of (ccmod file path, internal path) or null if not a ccmod path
+         * Splits a path into (.ccmod file path, path inside the archive), or returns null if the
+         * path doesn't point into a .ccmod.
          */
         fun parseCcmodPath(fullPath: String): Pair<String, String>? {
             val ccmodIndex = fullPath.indexOf(".ccmod/")
             if (ccmodIndex == -1) {
-                // Check if it ends with .ccmod (root of archive)
+                // A bare ".ccmod" path refers to the archive root.
                 if (fullPath.endsWith(".ccmod")) {
                     return Pair(fullPath, "")
                 }

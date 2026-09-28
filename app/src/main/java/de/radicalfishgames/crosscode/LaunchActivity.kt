@@ -151,7 +151,6 @@ class LaunchActivity : AppCompatActivity() {
         binding.mountingProgressBar.visibility = GONE
         binding.launchButton.isEnabled = true
 
-        // Hide guide if visible
         findViewById<ScrollView>(R.id.setup_container)?.visibility = GONE
         binding.launchContainer.visibility = VISIBLE
 

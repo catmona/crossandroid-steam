@@ -25,7 +25,6 @@ object SaveValidator {
             return SaveValidationResult.Invalid(R.string.error_save_invalid_header)
         }
 
-        // Use SaveParser for decryption to avoid code duplication
         return if (SaveParser.decrypt(trimmed) != null) {
             SaveValidationResult.Valid
         } else {

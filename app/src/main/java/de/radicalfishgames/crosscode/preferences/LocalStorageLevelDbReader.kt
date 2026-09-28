@@ -32,7 +32,7 @@ class LocalStorageLevelDbReader(
         private const val OP_DELETE = 0
         private const val OP_PUT = 1
 
-        // Log block size
+        // Log file framing
         private const val BLOCK_SIZE = 32768
         private const val HEADER_SIZE = 7 // CRC(4) + length(2) + type(1)
     }
@@ -100,24 +100,22 @@ class LocalStorageLevelDbReader(
             var currentRecord = ByteArray(0)
 
             while (position < fileSize) {
-                // Calculate position within block
                 val blockOffset = (position % BLOCK_SIZE).toInt()
                 val remainingInBlock = BLOCK_SIZE - blockOffset
 
                 if (remainingInBlock < HEADER_SIZE) {
-                    // Skip padding at end of block
+                    // Block trailers too short for a header are zero padding
                     position += remainingInBlock
                     continue
                 }
 
                 raf.seek(position)
 
-                // Read header
                 val header = ByteArray(HEADER_SIZE)
                 if (raf.read(header) != HEADER_SIZE) break
 
                 val buf = ByteBuffer.wrap(header).order(ByteOrder.LITTLE_ENDIAN)
-                buf.int // Skip CRC
+                buf.int // CRC, not verified
                 val length = buf.short.toInt() and 0xFFFF
                 val type = buf.get().toInt() and 0xFF
 
@@ -126,7 +124,6 @@ class LocalStorageLevelDbReader(
                     continue
                 }
 
-                // Read data
                 val data = ByteArray(length)
                 if (raf.read(data) != length) break
 
@@ -196,19 +193,17 @@ class LocalStorageLevelDbReader(
     }
 
     /**
-     * Reads from a LevelDB SSTable file (.ldb).
-     * Simplified: just scan for our key in the data blocks.
+     * Reads from a LevelDB SSTable (.ldb) by brute-force scanning for the key, ignoring block
+     * structure, so a key inside a compressed block won't be found.
      */
     private fun readFromLdbFile(file: File): String? {
         try {
             val bytes = file.readBytes()
             val keyPattern = targetKey
 
-            // Simple scan for key followed by value
             var i = 0
             while (i < bytes.size - keyPattern.size - 10) {
                 if (matchesAt(bytes, i, keyPattern)) {
-                    // Found key, try to extract value
                     val valueStart = i + keyPattern.size
                     val value = extractValueAfterKey(bytes, valueStart)
                     if (value != null) return value
@@ -233,21 +228,17 @@ class LocalStorageLevelDbReader(
         return true
     }
 
-    /**
-     * Tries to extract a localStorage value after finding the key.
-     * Chrome localStorage values are encoding-prefixed strings.
-     */
+    /** Chrome localStorage values are prefixed with an encoding byte; only Latin-1 JSON is handled here. */
     private fun extractValueAfterKey(
         data: ByteArray,
         start: Int,
     ): String? {
         if (start >= data.size) return null
 
-        // Look for JSON start within reasonable distance
+        // A few bytes of SSTable framing (value length etc.) sit between key and value
         for (offset in 0 until minOf(20, data.size - start)) {
             val pos = start + offset
             if (pos < data.size && data[pos] == ENCODING_LATIN1) {
-                // Found encoding prefix, look for JSON
                 val jsonStart = pos + 1
                 if (jsonStart < data.size && data[jsonStart] == '{'.code.toByte()) {
                     return extractJsonString(data, jsonStart)
@@ -270,9 +261,8 @@ class LocalStorageLevelDbReader(
 
             if (inString) {
                 when (c) {
-                    '\\' -> i++
+                    '\\' -> i++ // Skip escaped character
 
-                    // Skip escaped character
                     '"' -> inString = false
                 }
             } else {

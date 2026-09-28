@@ -6,7 +6,7 @@ import org.json.JSONObject
 class GamepadJsonBridge(
     private val onControlUpdate: () -> Unit = {},
 ) {
-    // Actual data representation in JSON
+    // Serialized as a W3C Gamepad object for the JS side
     private val jsonAxes = JSONArray()
     private val jsonButtons = JSONArray()
     private val jsonGamepad =
@@ -23,7 +23,7 @@ class GamepadJsonBridge(
     val asJsonString: String
         get() = jsonGamepad.toString()
 
-    // This is basically just a convenience interface for setting the JSON states
+    // Typed accessors over the JSON state; indices follow the standard mapping:
     // Mapping layout from https://w3c.github.io/gamepad/standard_gamepad.svg
     val leftStick = Stick(0, 1, 10)
     val rightStick = Stick(2, 3, 11)

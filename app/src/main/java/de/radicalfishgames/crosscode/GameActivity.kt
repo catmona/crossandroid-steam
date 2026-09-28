@@ -36,7 +36,7 @@ class GameActivity : AppCompatActivity() {
     lateinit var gameFolderManager: GameFolderManager
         private set
 
-    // This SharedPreferences files is the one the preference activity automatically generates
+    // Default file written by the settings screen's PreferenceManager
     val preferences: SharedPreferences
         get() = getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
 
@@ -57,7 +57,7 @@ class GameActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    // Disable going back with controller B button
+                    // Controller B sends BACK; don't let it close the game while a controller is connected
                     if (!isNativeControllerActive()) {
                         isEnabled = false
                         onBackPressedDispatcher.onBackPressed()
@@ -97,7 +97,7 @@ class GameActivity : AppCompatActivity() {
         gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager, hardwareAcceleration, pixelatedScaling)
         gameWrapper.initWebView()
 
-        // Order is important, since some of these depend on one another and this is also the initialization order
+        // Initialized in list order; some features depend on earlier ones
         gameWrapper.features.addAll(
             listOf(
                 ModListProvider(gameWrapper, this),
@@ -113,8 +113,7 @@ class GameActivity : AppCompatActivity() {
             ),
         )
 
-        // Only bridge physical controller input when the virtual overlay is off.
-        // If force_virtual is on, physical input is intentionally ignored.
+        // Physical input is only bridged when the virtual overlay is off; force_virtual deliberately ignores it
         val vcf = gameWrapper.getFeature<VirtualControllerFeature>()
         if (!vcf.enabled) {
             physicalControllerBridge = PhysicalControllerBridge(vcf.gamepadState)

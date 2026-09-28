@@ -34,8 +34,7 @@ class GameEventManager(
 
     private val onElementChange: MutableSet<(element: ElementMode) -> Unit> = HashSet()
 
-    // Post events to the original thread instead of staying in the JS one, so
-    // the event handlers can modify the View
+    // JS interface calls arrive on a background thread; post to the main thread so handlers can touch Views
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onPreGamePageLoad() {

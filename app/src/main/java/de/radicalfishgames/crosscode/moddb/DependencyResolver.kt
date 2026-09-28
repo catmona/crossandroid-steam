@@ -41,7 +41,7 @@ class DependencyResolver(
                 val ranges = requiredRanges[id].orEmpty()
                 val local = localMods[id]
                 when {
-                    local != null && rangesSatisfied(local.version, ranges) -> null // already satisfied
+                    local != null && rangesSatisfied(local.version, ranges) -> null
                     local != null -> ResolvedMod(mod, InstallReason.UPDATE)
                     else -> {
                         val dbVersion =
@@ -72,7 +72,7 @@ class DependencyResolver(
         depMods: MutableMap<String, ModDbEntry>,
         visiting: MutableSet<String>,
     ) {
-        if (!visiting.add(mod.id)) return // already visited this mod, avoid cycles
+        if (!visiting.add(mod.id)) return // Also breaks dependency cycles.
 
         for ((depId, range) in mod.dependencies) {
             val virtualVersion = virtualPackages[depId]

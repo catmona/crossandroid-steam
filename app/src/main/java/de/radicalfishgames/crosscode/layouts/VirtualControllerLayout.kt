@@ -21,8 +21,6 @@ abstract class VirtualControllerLayout {
         eventManager: GameEventManager,
     )
 
-    // Utility functions
-
     protected fun bindSimpleButton(
         view: ControlView,
         to: GamepadJsonBridge.Button,

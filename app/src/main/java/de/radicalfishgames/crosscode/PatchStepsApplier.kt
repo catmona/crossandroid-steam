@@ -4,18 +4,13 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 
-/**
- * Callback to resolve file paths for IMPORT and INCLUDE operations.
- * @param path The file path (may include protocol like "game:" or "mod:")
- * @return The file contents as a string, or null if not found
- */
+/** Returns the contents of an IMPORT/INCLUDE path (optionally "game:" or "mod:" prefixed), or null. */
 typealias FileResolver = (path: String) -> String?
 
 /**
- * Applies CCLoader Patch Steps to JSON data.
- * Implements the full specification including:
- * ENTER, EXIT, SET_KEY, INIT_KEY, ADD_ARRAY_ELEMENT, REMOVE_ARRAY_ELEMENT,
- * COPY, PASTE, IMPORT, INCLUDE, FOR_IN, DEBUG, COMMENT
+ * Native implementation of CCLoader Patch Steps: ENTER, EXIT, SET_KEY, INIT_KEY,
+ * ADD_ARRAY_ELEMENT, REMOVE_ARRAY_ELEMENT, COPY, PASTE, IMPORT, INCLUDE, FOR_IN, DEBUG, COMMENT.
+ * IF is only partially supported: its JS condition can't be evaluated, so thenSteps always run.
  *
  * @see https://github.com/CCDirectLink/CLS/blob/master/standards/patch-steps.md
  */
@@ -24,15 +19,8 @@ class PatchStepsApplier {
         private const val TAG = "PatchStepsApplier"
 
         /**
-         * Apply a patch to JSON data.
-         * Supports two formats:
-         * 1. Patch Steps format (JSONArray of operations)
-         * 2. Simple merge format (JSONObject to deep-merge)
-         *
-         * @param originalJson The original JSON string
-         * @param patchJson The patch JSON string (array for Patch Steps, object for merge)
-         * @param fileResolver Optional callback to resolve file paths for IMPORT/INCLUDE
-         * @return The patched JSON string, or null if patching failed
+         * Applies [patchJson] to [originalJson]: a JSON array is run as Patch Steps, an object is
+         * deep-merged. Returns null if patching fails.
          */
         fun apply(
             originalJson: String,
@@ -63,9 +51,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Internal state passed through patch step execution.
-         */
         private class PatchState(
             val memory: MutableMap<String, Any> = mutableMapOf(),
             val fileResolver: FileResolver? = null,
@@ -89,8 +74,8 @@ class PatchStepsApplier {
         }
 
         /**
-         * Strip trailing commas from JSON (common in hand-written JSON but invalid).
-         * Uses a state machine to avoid corrupting strings containing ",}" or ",]".
+         * Strips trailing commas, which hand-written mod JSON often has but org.json rejects.
+         * Tracks string state so ",}" or ",]" inside strings is left intact.
          */
         private fun stripTrailingCommas(json: String): String {
             val result = StringBuilder(json.length)
@@ -143,10 +128,7 @@ class PatchStepsApplier {
             return result.toString()
         }
 
-        /**
-         * Deep merge patch object into target object.
-         * Arrays are replaced, objects are recursively merged.
-         */
+        /** Objects are merged recursively; arrays and primitives are replaced. */
         private fun deepMerge(
             target: JSONObject,
             patch: JSONObject,
@@ -166,9 +148,7 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Merge source into target (works for both objects and arrays).
-         */
+        /** Objects are deep-merged; array elements are appended. */
         private fun mergeAny(
             target: Any,
             source: Any,
@@ -192,9 +172,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Deep copy a JSON value.
-         */
         private fun deepCopy(value: Any): Any =
             when (value) {
                 is JSONObject -> JSONObject(value.toString())
@@ -202,9 +179,6 @@ class PatchStepsApplier {
                 else -> value // Primitives are immutable
             }
 
-        /**
-         * Deep copy a nullable JSON value.
-         */
         private fun deepCopyNullable(value: Any?): Any? = if (value == null) null else deepCopy(value)
 
         private fun applySteps(
@@ -280,13 +254,13 @@ class PatchStepsApplier {
                             val copied = deepCopy(stored)
                             when (state.current) {
                                 is JSONArray -> {
-                                    // For arrays: ADD_ARRAY_ELEMENT behavior
+                                    // Arrays: behaves like ADD_ARRAY_ELEMENT
                                     val index = step.optInt("index", -1)
                                     addArrayElement(state.current, index, copied)
                                 }
 
                                 is JSONObject -> {
-                                    // For objects: SET_KEY behavior (index required)
+                                    // Objects: behaves like SET_KEY (index required)
                                     val index = step.get("index")
                                     setKey(state.current, index, copied)
                                 }
@@ -304,7 +278,7 @@ class PatchStepsApplier {
                             val resolver =
                                 state.fileResolver
                                     ?: throw IllegalStateException("IMPORT requires fileResolver")
-                            // Default to game: protocol if no protocol specified
+                            // IMPORT defaults to game: when no protocol is given.
                             val resolvedSrc = if (!src.contains(':')) "game:$src" else src
                             val content =
                                 resolver(resolvedSrc)
@@ -313,13 +287,12 @@ class PatchStepsApplier {
                             val cleaned = stripTrailingCommas(content)
                             var imported: Any = JSONObject(cleaned)
 
-                            // Navigate to path if specified
                             val path = step.optJSONArray("path")
                             if (path != null) {
                                 imported = navigate(imported, path)
                             }
 
-                            // Assign to index or merge
+                            // Without an index, the import is merged into the current value.
                             val index = step.opt("index")
                             if (index != null) {
                                 setKey(state.current, index, imported)
@@ -333,7 +306,7 @@ class PatchStepsApplier {
                             val resolver =
                                 state.fileResolver
                                     ?: throw IllegalStateException("INCLUDE requires fileResolver")
-                            // Default to mod: protocol if no protocol specified
+                            // INCLUDE defaults to mod: when no protocol is given.
                             val resolvedSrc = if (!src.contains(':')) "mod:$src" else src
                             val patchContent =
                                 resolver(resolvedSrc)
@@ -341,7 +314,7 @@ class PatchStepsApplier {
 
                             val cleaned = stripTrailingCommas(patchContent)
                             val includeSteps = JSONArray(cleaned)
-                            // Execute with fresh stack but same current position
+                            // Fresh stack but same current position and COPY memory.
                             applySteps(root, includeSteps, state.childState())
                         }
 
@@ -356,7 +329,7 @@ class PatchStepsApplier {
                                     else -> throw IllegalArgumentException("FOR_IN values must be array")
                                 }
 
-                            // Apply each iteration using the SAME state (stack persists)
+                            // Iterations share state, so ENTER/EXIT in the body carry over between them.
                             for (value in valuesList) {
                                 val substitutedBody = substituteKeyword(body, keyword, value)
                                 applySteps(root, substitutedBody, state)
@@ -375,7 +348,7 @@ class PatchStepsApplier {
                         }
 
                         "IF" -> {
-                            // IF callable - JavaScript condition evaluation not supported on Android
+                            // Conditions are JS expressions, which can't be evaluated natively.
                             val condition = step.opt("condition")
                             val thenSteps = step.optJSONArray("thenSteps")
                             val elseSteps = step.optJSONArray("elseSteps")
@@ -402,9 +375,8 @@ class PatchStepsApplier {
         }
 
         /**
-         * Substitute keyword occurrences in a patch body with a value.
-         * Handles both string keywords and object pattern matching.
-         * Uses regex replacement to match CCLoader behavior.
+         * Returns a copy of [body] with [keyword] replaced by [value]. Keywords are treated as
+         * regexes to match CCLoader; an object keyword maps each key's pattern to value[key].
          */
         private fun substituteKeyword(
             body: JSONArray,
@@ -418,7 +390,6 @@ class PatchStepsApplier {
                 }
 
                 is JSONObject -> {
-                    // Object pattern matching - replace each key's pattern with value's corresponding key
                     for (key in keyword.keys()) {
                         val pattern = keyword.getString(key)
                         val replacement =
@@ -434,10 +405,7 @@ class PatchStepsApplier {
             return clonedBody
         }
 
-        /**
-         * Recursively replace regex matches within string values of an object/array.
-         * Matches CCLoader's valueInsertion behavior.
-         */
+        /** Mirrors CCLoader's valueInsertion: regex-replaces within all nested string values. */
         private fun valueInsertion(
             obj: Any,
             pattern: Regex,
@@ -482,9 +450,6 @@ class PatchStepsApplier {
             }
         }
 
-        /**
-         * Convert a value to its JSON string representation.
-         */
         private fun valueToJsonString(value: Any): String =
             when (value) {
                 is String -> JSONObject.quote(value)
@@ -494,9 +459,6 @@ class PatchStepsApplier {
                 else -> JSONObject.quote(value.toString())
             }
 
-        /**
-         * Navigate into a nested structure.
-         */
         private fun navigate(
             current: Any,
             index: Any,

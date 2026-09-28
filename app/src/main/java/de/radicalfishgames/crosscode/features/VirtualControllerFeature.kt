@@ -50,9 +50,8 @@ class VirtualControllerFeature(
         }
 
     override fun onPostGamePageLoad() {
-        // Always inject the getGamepads hook — for virtual overlay AND physical controllers.
-        // WebView's built-in Gamepad API has broken button mapping on some devices,
-        // so we always route through our own GamepadJsonBridge.
+        // Hook getGamepads for physical controllers too: WebView's Gamepad API has broken
+        // button mapping on some devices, so all input goes through GamepadJsonBridge
         runJS(
             """
             var $JS_GAMEPADS_VAR = [];

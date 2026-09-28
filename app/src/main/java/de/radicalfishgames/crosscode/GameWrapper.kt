@@ -42,15 +42,13 @@ class GameWrapper(
     fun initWebView() {
         Log.d("CrossCode", "Initializing WebView")
 
-        // Enable WebView debugging for debug builds
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
         webView.setInitialScale(0)
         webView.isVerticalScrollBarEnabled = false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // Prevents screen turning bright from the focus effect when using a controller
-            // on some devices.
+            // On some devices the focus highlight brightens the screen when using a controller.
             webView.defaultFocusHighlightEnabled = false
         }
 
@@ -61,7 +59,7 @@ class GameWrapper(
             domStorageEnabled = true
             mediaPlaybackRequiresUserGesture = false
 
-            // Explicitly disable file access for security (suppress deprecation warnings)
+            // Everything is served through the virtual HTTPS origin, so local file access stays off.
             @Suppress("DEPRECATION")
             allowFileAccessFromFileURLs = false
             @Suppress("DEPRECATION")
@@ -72,6 +70,7 @@ class GameWrapper(
 
         webView.webViewClient = webViewClient
 
+        // Service worker fetches (used by CCLoader3) bypass the WebViewClient, so route them to it.
         ServiceWorkerControllerCompat.getInstance().setServiceWorkerClient(
             object : ServiceWorkerClientCompat() {
                 override fun shouldInterceptRequest(request: WebResourceRequest): WebResourceResponse? =
@@ -79,7 +78,7 @@ class GameWrapper(
             },
         )
 
-        // Log JavaScript console messages to logcat
+        // Forward the JS console to logcat under the "CCLoader" tag.
         webView.webChromeClient =
             object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
@@ -109,15 +108,13 @@ class GameWrapper(
     fun loadGame(gameEntryPoint: String) {
         exposeJSInterface(this, "CrossAndroid")
 
-        // Build ccmod asset index before loading the game
         webViewClient.buildCcmodAssetIndex()
 
         for (feature in features) {
             feature.onPreGamePageLoad()
         }
 
-        // Load the game files, and also set a flag for the modloader to recognize that
-        // it's being executed in CrossAndroid
+        // The crossandroid=true query lets the modloader detect it is running in CrossAndroid.
         webView.loadUrl(
             webViewClient
                 .buildVirtualUrl()
@@ -131,13 +128,10 @@ class GameWrapper(
     fun onPageLoaded() {
         Log.d("CrossCode", "Game page loaded.")
 
-        // Fix font rendering on Android WebView by forcing CPU-backed 2D canvases.
-        // GPU-backed canvases in Android WebView cause font issues: getImageData returns
-        // corrupted alpha values (breaking _loadMetrics character boundary detection), and
-        // drawImage with non-integer source coordinates triggers bilinear filtering even with
-        // imageSmoothingEnabled=false (breaking _drawChar font rendering).
-        // CPU canvases handle both correctly via exact pixel readback and nearest-neighbor
-        // sampling.
+        // Font fix, applied when the hardware acceleration setting is off: force CPU-backed 2D
+        // canvases via willReadFrequently. GPU canvases corrupt alpha in getImageData (breaking
+        // _loadMetrics glyph boundary detection) and bilinear-filter drawImage at non-integer
+        // source coords despite imageSmoothingEnabled=false (blurring _drawChar).
         if (!hardwareAcceleration) {
             runJS(
                 """(function(){
@@ -150,11 +144,10 @@ class GameWrapper(
             )
         }
 
-        // Smooth frame pacing: ig.Timer.step uses Date.now(), which in WebView jitters by several
-        // ms per frame, so objects move uneven distances each frame and scrolling stutters even at
-        // a steady 60 fps. Advance the game clock by the vsync-aligned animation frame time instead.
-        // document.timeline is used rather than a rAF hook because the game loop doesn't always run
-        // through window.requestAnimationFrame (e.g. during loading).
+        // Smooth frame pacing: ig.Timer.step uses Date.now(), which jitters by several ms per frame
+        // in WebView, so scrolling stutters even at a steady 60 fps. Drive the game clock from the
+        // vsync-aligned document.timeline instead; a rAF hook won't do because the game loop
+        // doesn't always run through requestAnimationFrame (e.g. during loading).
         runJS(
             """(function(){
                 var iv=setInterval(function(){
@@ -170,8 +163,7 @@ class GameWrapper(
             })();""",
         )
 
-        // Nearest-neighbor scaling: use pixelated rendering to avoid bilinear blur
-        // on the pixel art when the canvas is CSS-stretched to fill the screen.
+        // Avoid bilinear blur on the pixel art when the canvas is CSS-stretched to fill the screen.
         if (pixelatedScaling) {
             runJS(
                 """(function(){
@@ -195,6 +187,7 @@ class GameWrapper(
         }
     }
 
+    /** Called by the modloader from JS (or directly when unmodded) once the game has started; runs once. */
     @JavascriptInterface
     fun executePostGameLoad() {
         if (calledPostGameLoad) {

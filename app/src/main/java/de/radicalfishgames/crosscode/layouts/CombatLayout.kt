@@ -58,8 +58,8 @@ object CombatLayout : VirtualControllerLayout() {
 
             elementalButton.onSwipe { right, left, up, down ->
 
-                // Switch buttons, because with our method you go back to neutral by swiping in the
-                // opposite direction as before. Eg Neutral -> Heat: Swipe Down and then Heat -> Neutral: Swipe Up
+                // Directions are mirrored per element so swiping the opposite way returns to neutral
+                // (e.g. Neutral -> Heat: swipe down, Heat -> Neutral: swipe up)
                 when (currentElement) {
                     ElementMode.NEUTRAL -> {
                         when {
@@ -233,10 +233,8 @@ object CombatLayout : VirtualControllerLayout() {
                             gamepad.rightCross.bottom.pressed = true
                             gamepad.rightBumper.pressed = true
 
-                            // Check whether the player is interacting with a pushpullable box
-                            // Since this result might not be there in time before the combat
-                            // art gets triggered, the button is also reset manually if there is
-                            // a need.
+                            // Don't fire a combat art while grabbing a push/pull block; the async result
+                            // may arrive after the art triggered, so also release the trigger here
                             feature.runJS(
                                 """window.variable = ig.game.playerEntity.interactObject === null;""",
                                 ValueCallback { result ->
@@ -263,9 +261,7 @@ object CombatLayout : VirtualControllerLayout() {
                         gamepad.rightCross.bottom.pressed = false
                         gamepad.rightBumper.pressed = false
 
-                        // Increase the results we send to the game, because it has some degree
-                        // of "dead zones", which can lead to lost aim, failed combat arts and frustration
-                        // with this control scheme.
+                        // Amplify to compensate for the game's aim dead zones (lost aim, failed combat arts)
                         gamepad.rightStick.horizontal.state = min(xDir * 1.2, 1.0)
                         gamepad.rightStick.vertical.state = min(yDir * 1.2, 1.0)
 
@@ -321,14 +317,11 @@ object CombatLayout : VirtualControllerLayout() {
                 onRelease {
                     val timeDiff = (System.currentTimeMillis() - startedToPressAt)
 
-                    // Decide based on long- or short click whether to open the inventory or menu
+                    // Long press opens the menu, short press the inventory
                     val openMenu = timeDiff > (0.2 * 1000)
 
-                    // Open menu
                     if (openMenu) {
                         fakeClick(gamepad.startOrForward)
-
-                        // Open inventory
                     } else {
                         fakeClick(gamepad.selectOrBack)
                     }
