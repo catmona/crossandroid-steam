@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.text.format.Formatter
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,10 +44,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,168 +54,41 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import de.radicalfishgames.crosscode.GameFolderManager
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.appColorScheme
-import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersionOrNull
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.OkHttpClient
 
 class ModBrowserActivity : AppCompatActivity() {
+    private val viewModel: ModBrowserViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val gameFolderManager = GameFolderManager(this)
-        val httpClient = OkHttpClient()
-
         setContent {
             MaterialTheme(colorScheme = appColorScheme()) {
-                ModBrowserScreen(
-                    gameFolderManager = gameFolderManager,
-                    httpClient = httpClient,
-                    onBack = { finish() },
-                )
+                ModBrowserScreen(viewModel = viewModel, onBack = { finish() })
             }
         }
     }
-}
-
-private sealed class ScreenState {
-    object Loading : ScreenState()
-
-    object NoGameFolder : ScreenState()
-
-    data class Error(
-        val message: String,
-    ) : ScreenState()
-
-    data class Loaded(
-        val database: Map<String, ModDbEntry>,
-        val localMods: Map<String, LocalMod>,
-        val virtualPackages: Map<String, Version>,
-    ) : ScreenState()
 }
 
 private enum class BrowserTab { INSTALLED, BROWSE }
 
-private data class PendingInstall(
-    val target: ModDbEntry,
-    val resolved: List<ResolvedMod>,
-)
-
-private data class InstallRun(
-    val total: Int,
-    val currentIndex: Int,
-    val progress: InstallProgress,
-)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModBrowserScreen(
-    gameFolderManager: GameFolderManager,
-    httpClient: OkHttpClient,
+    viewModel: ModBrowserViewModel,
     onBack: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
-    val modInstaller = remember { ModInstaller(gameFolderManager, httpClient) }
-    val databaseClient = remember { ModDatabaseClient(httpClient) }
-    val localModScanner = remember { LocalModScanner(gameFolderManager) }
-
-    var state by remember { mutableStateOf<ScreenState>(ScreenState.Loading) }
-    var reloadTrigger by remember { mutableIntStateOf(0) }
-    var searchQuery by remember { mutableStateOf("") }
-    var searchVisible by remember { mutableStateOf(false) }
-    var selectedTab by remember { mutableStateOf(BrowserTab.INSTALLED) }
-    var pendingInstall by remember { mutableStateOf<PendingInstall?>(null) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchVisible by rememberSaveable { mutableStateOf(false) }
+    var selectedTab by rememberSaveable { mutableStateOf(BrowserTab.INSTALLED) }
     var pendingUninstall by remember { mutableStateOf<LocalMod?>(null) }
-    var installRun by remember { mutableStateOf<InstallRun?>(null) }
-    var installError by remember { mutableStateOf<String?>(null) }
 
-    fun notify(message: String) {
-        scope.launch { snackbarHostState.showSnackbar(message) }
-    }
-
-    /** Re-scans `assets/mods/` on disk and returns the fresh result, so callers can verify a write actually landed. */
-    suspend fun refreshLocalMods(): Map<String, LocalMod> {
-        val localMods = withContext(Dispatchers.IO) { localModScanner.scan().associateBy { it.id } }
-        (state as? ScreenState.Loaded)?.let { state = it.copy(localMods = localMods) }
-        return localMods
-    }
-
-    LaunchedEffect(reloadTrigger) {
-        state = ScreenState.Loading
-        val loader = ModLoaderDetector.detect(gameFolderManager)
-        if (loader == null) {
-            state = ScreenState.NoGameFolder
-            return@LaunchedEffect
-        }
-        try {
-            val loaded =
-                withContext(Dispatchers.IO) {
-                    val database = databaseClient.fetchDatabase()
-                    val localMods = localModScanner.scan().associateBy { it.id }
-                    val virtualPackages = VirtualPackages.compute(gameFolderManager, loader)
-                    ScreenState.Loaded(database, localMods, virtualPackages)
-                }
-            state = loaded
-        } catch (e: Exception) {
-            state = ScreenState.Error(e.message ?: e.toString())
-        }
-    }
-
-    fun runInstall(resolved: List<ResolvedMod>) {
-        val installedMods = (state as? ScreenState.Loaded)?.localMods ?: return
-        scope.launch {
-            var failure: String? = null
-            try {
-                withContext(Dispatchers.IO) {
-                    resolved.forEachIndexed { index, r ->
-                        modInstaller.install(r.entry, installedMods[r.entry.id]) { progress ->
-                            installRun = InstallRun(resolved.size, index, progress)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                failure = e.message ?: e.toString()
-            } finally {
-                installRun = null
-            }
-
-            val localMods = refreshLocalMods()
-            val unverified = resolved.firstOrNull { localMods[it.entry.id] == null }
-            when {
-                failure != null -> installError = failure
-                unverified != null ->
-                    installError = context.getString(R.string.mod_install_verify_failed, unverified.entry.name)
-                resolved.size == 1 -> notify(context.getString(R.string.mod_install_success, resolved.first().entry.name))
-                else -> notify(context.getString(R.string.mod_install_success_multiple, resolved.size))
-            }
-        }
-    }
-
-    fun requestInstall(mod: ModDbEntry) {
-        val loaded = state as? ScreenState.Loaded ?: return
-        scope.launch {
-            try {
-                val resolved =
-                    withContext(Dispatchers.IO) {
-                        DependencyResolver(loaded.database, loaded.localMods, loaded.virtualPackages).resolve(listOf(mod))
-                    }
-                if (resolved.size > 1) {
-                    pendingInstall = PendingInstall(mod, resolved)
-                } else {
-                    runInstall(resolved)
-                }
-            } catch (e: DependencyResolutionException) {
-                installError = e.message
-            }
-        }
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
     }
 
     Scaffold(
@@ -243,7 +116,7 @@ private fun ModBrowserScreen(
         },
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            when (val current = state) {
+            when (val current = viewModel.state) {
                 is ScreenState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.padding(32.dp))
                 }
@@ -259,7 +132,7 @@ private fun ModBrowserScreen(
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
                         Text(stringResource(R.string.mod_browser_load_error))
                         Text(current.message, style = MaterialTheme.typography.bodySmall)
-                        Button(onClick = { reloadTrigger++ }, modifier = Modifier.padding(top = 16.dp)) {
+                        Button(onClick = viewModel::load, modifier = Modifier.padding(top = 16.dp)) {
                             Text(stringResource(R.string.mod_browser_retry))
                         }
                     }
@@ -290,58 +163,16 @@ private fun ModBrowserScreen(
                         }
 
                         when (selectedTab) {
-                            BrowserTab.BROWSE -> {
-                                val filtered =
-                                    current.database.values
-                                        .filter { mod -> mod.id !in current.localMods }
-                                        .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
-                                        .sortedByDescending { it.stars }
-                                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                    items(filtered, key = { it.id }) { mod ->
-                                        ModRow(
-                                            displayName = mod.name,
-                                            description = mod.description,
-                                            authors = mod.authors,
-                                            installedVersion = null,
-                                            latestVersion = mod.version,
-                                            stars = mod.stars,
-                                            hasUpdate = false,
-                                            dbEntry = mod,
-                                            localMod = null,
-                                            onInstall = { requestInstall(mod) },
-                                            onUninstall = { local -> pendingUninstall = local },
-                                        )
-                                    }
-                                }
-                            }
+                            BrowserTab.BROWSE ->
+                                BrowseList(current, searchQuery, onInstall = viewModel::requestInstall)
 
-                            BrowserTab.INSTALLED -> {
-                                val installed =
-                                    current.localMods.values
-                                        .filter { local -> matchesSearch(searchQuery, local.id) }
-                                        .sortedWith(
-                                            compareByDescending<LocalMod> { hasUpdateAvailable(it, current.database[it.id]) }
-                                                .thenBy { (current.database[it.id]?.name ?: it.id).lowercase() },
-                                        )
-                                LazyColumn(modifier = Modifier.fillMaxSize()) {
-                                    items(installed, key = { it.id }) { local ->
-                                        val dbEntry = current.database[local.id]
-                                        ModRow(
-                                            displayName = dbEntry?.name ?: local.id,
-                                            description = dbEntry?.description ?: "",
-                                            authors = dbEntry?.authors ?: emptyList(),
-                                            installedVersion = local.version.toString(),
-                                            latestVersion = dbEntry?.version ?: local.version.toString(),
-                                            stars = dbEntry?.stars,
-                                            hasUpdate = hasUpdateAvailable(local, dbEntry),
-                                            dbEntry = dbEntry,
-                                            localMod = local,
-                                            onInstall = { dbEntry?.let { requestInstall(it) } },
-                                            onUninstall = { pendingUninstall = local },
-                                        )
-                                    }
-                                }
-                            }
+                            BrowserTab.INSTALLED ->
+                                InstalledList(
+                                    current,
+                                    searchQuery,
+                                    onInstall = viewModel::requestInstall,
+                                    onUninstall = { pendingUninstall = it },
+                                )
                         }
                     }
                 }
@@ -349,34 +180,12 @@ private fun ModBrowserScreen(
         }
     }
 
-    pendingInstall?.let { pending ->
-        AlertDialog(
-            onDismissRequest = { pendingInstall = null },
-            title = { Text(stringResource(R.string.mod_install_deps_title)) },
-            text = {
-                Column {
-                    Text(stringResource(R.string.mod_install_deps_message, pending.target.name))
-                    pending.resolved.filter { it.entry.id != pending.target.id }.forEach {
-                        val suffix = if (it.reason == InstallReason.UPDATE) " (${stringResource(R.string.mod_update)})" else ""
-                        Text("• ${it.entry.name}$suffix", style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    val resolved = pending.resolved
-                    pendingInstall = null
-                    runInstall(resolved)
-                }) { Text(stringResource(R.string.mod_install_deps_confirm)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingInstall = null }) { Text(stringResource(android.R.string.cancel)) }
-            },
-        )
+    viewModel.pendingInstall?.let { pending ->
+        PendingInstallDialog(pending, onConfirm = viewModel::confirmPendingInstall, onDismiss = viewModel::dismissPendingInstall)
     }
 
     pendingUninstall?.let { local ->
-        val displayName = (state as? ScreenState.Loaded)?.database?.get(local.id)?.name ?: local.id
+        val displayName = (viewModel.state as? ScreenState.Loaded)?.database?.get(local.id)?.name ?: local.id
         AlertDialog(
             onDismissRequest = { pendingUninstall = null },
             title = { Text(stringResource(R.string.mod_uninstall_confirm_title)) },
@@ -384,21 +193,7 @@ private fun ModBrowserScreen(
             confirmButton = {
                 TextButton(onClick = {
                     pendingUninstall = null
-                    scope.launch {
-                        var failure: String? = null
-                        try {
-                            withContext(Dispatchers.IO) { modInstaller.uninstall(local) }
-                        } catch (e: Exception) {
-                            failure = e.message ?: e.toString()
-                        }
-                        val localMods = refreshLocalMods()
-                        when {
-                            failure != null -> installError = failure
-                            localMods.containsKey(local.id) ->
-                                installError = context.getString(R.string.mod_uninstall_verify_failed, displayName)
-                            else -> notify(context.getString(R.string.mod_uninstall_success, displayName))
-                        }
-                    }
+                    viewModel.uninstall(local, displayName)
                 }) { Text(stringResource(R.string.mod_uninstall)) }
             },
             dismissButton = {
@@ -407,44 +202,123 @@ private fun ModBrowserScreen(
         )
     }
 
-    installRun?.let { run ->
-        AlertDialog(
-            onDismissRequest = {},
-            title = { Text(installProgressTitle(run.progress)) },
-            text = {
-                Column {
-                    if (run.total > 1) {
-                        Text(
-                            "${run.currentIndex + 1} / ${run.total}",
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
-                    }
-                    val progressFraction = installProgressFraction(run.progress)
-                    if (progressFraction != null) {
-                        LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.fillMaxWidth())
-                    } else {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                    }
-                    installProgressCaption(run.progress)?.let {
-                        Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
-                    }
-                }
-            },
-            confirmButton = {},
-        )
-    }
+    viewModel.installRun?.let { InstallProgressDialog(it) }
 
-    installError?.let { message ->
+    viewModel.installError?.let { message ->
         AlertDialog(
-            onDismissRequest = { installError = null },
+            onDismissRequest = viewModel::dismissInstallError,
             title = { Text(stringResource(R.string.mod_install_error_title)) },
             text = { Text(message) },
             confirmButton = {
-                TextButton(onClick = { installError = null }) { Text(stringResource(android.R.string.ok)) }
+                TextButton(onClick = viewModel::dismissInstallError) { Text(stringResource(android.R.string.ok)) }
             },
         )
     }
+}
+
+/** Mods from the database that aren't installed yet, most starred first. */
+@Composable
+private fun BrowseList(
+    loaded: ScreenState.Loaded,
+    searchQuery: String,
+    onInstall: (ModDbEntry) -> Unit,
+) {
+    val filtered =
+        loaded.database.values
+            .filter { mod -> mod.id !in loaded.localMods }
+            .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
+            .sortedByDescending { it.stars }
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(filtered, key = { it.id }) { mod ->
+            ModRow(dbEntry = mod, localMod = null, hasUpdate = false, onInstall = { onInstall(mod) }, onUninstall = {})
+        }
+    }
+}
+
+/** Installed mods, those with an update first. */
+@Composable
+private fun InstalledList(
+    loaded: ScreenState.Loaded,
+    searchQuery: String,
+    onInstall: (ModDbEntry) -> Unit,
+    onUninstall: (LocalMod) -> Unit,
+) {
+    val installed =
+        loaded.localMods.values
+            .filter { local -> matchesSearch(searchQuery, local.id) }
+            .map { local -> local to hasUpdateAvailable(local, loaded.database[local.id]) }
+            .sortedWith(
+                compareByDescending<Pair<LocalMod, Boolean>> { it.second }
+                    .thenBy { (local, _) -> (loaded.database[local.id]?.name ?: local.id).lowercase() },
+            )
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(installed, key = { it.first.id }) { (local, hasUpdate) ->
+            val dbEntry = loaded.database[local.id]
+            ModRow(
+                dbEntry = dbEntry,
+                localMod = local,
+                hasUpdate = hasUpdate,
+                onInstall = { dbEntry?.let(onInstall) },
+                onUninstall = { onUninstall(local) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PendingInstallDialog(
+    pending: PendingInstall,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.mod_install_deps_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.mod_install_deps_message, pending.target.name))
+                pending.resolved.filter { it.entry.id != pending.target.id }.forEach {
+                    val suffix = if (it.reason == InstallReason.UPDATE) " (${stringResource(R.string.mod_update)})" else ""
+                    Text("• ${it.entry.name}$suffix", style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.mod_install_deps_confirm)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun InstallProgressDialog(run: InstallRun) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text(installProgressTitle(run.progress)) },
+        text = {
+            Column {
+                if (run.total > 1) {
+                    Text(
+                        "${run.currentIndex + 1} / ${run.total}",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
+                val progressFraction = installProgressFraction(run.progress)
+                if (progressFraction != null) {
+                    LinearProgressIndicator(progress = { progressFraction }, modifier = Modifier.fillMaxWidth())
+                } else {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+                installProgressCaption(run.progress)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                }
+            }
+        },
+        confirmButton = {},
+    )
 }
 
 private fun matchesSearch(
@@ -469,20 +343,20 @@ private fun hasUpdateAvailable(
     return latest > localMod.version
 }
 
+/** A mod from the database ([dbEntry]), installed locally ([localMod]), or both. */
 @Composable
 private fun ModRow(
-    displayName: String,
-    description: String,
-    authors: List<String>,
-    installedVersion: String?,
-    latestVersion: String,
-    stars: Int?,
-    hasUpdate: Boolean,
     dbEntry: ModDbEntry?,
     localMod: LocalMod?,
+    hasUpdate: Boolean,
     onInstall: () -> Unit,
-    onUninstall: (LocalMod) -> Unit,
+    onUninstall: () -> Unit,
 ) {
+    val displayName = dbEntry?.name ?: localMod?.id.orEmpty()
+    val description = dbEntry?.description.orEmpty()
+    val authors = dbEntry?.authors.orEmpty()
+    val installedVersion = localMod?.version?.toString()
+    val latestVersion = dbEntry?.version ?: installedVersion
     val versionText =
         if (installedVersion != null && hasUpdate) {
             "v$installedVersion → v$latestVersion"
@@ -493,7 +367,7 @@ private fun ModRow(
         buildList {
             if (authors.isNotEmpty()) add(stringResource(R.string.mod_by_authors, authors.joinToString(", ")))
             add(versionText)
-            stars?.let { add("★$it") }
+            dbEntry?.stars?.let { add("★$it") }
         }
 
     Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp)) {
@@ -550,7 +424,7 @@ private fun ModRow(
             }
 
             if (localMod != null) {
-                IconButton(onClick = { onUninstall(localMod) }) {
+                IconButton(onClick = onUninstall) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.mod_uninstall))
                 }
             }
