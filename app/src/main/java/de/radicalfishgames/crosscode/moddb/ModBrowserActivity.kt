@@ -218,7 +218,7 @@ private fun ModBrowserScreen(
     }
 }
 
-/** Mods from the database that aren't installed yet, most starred first. */
+/** Mods from the database that aren't installed yet, alphabetically. */
 @Composable
 private fun BrowseList(
     loaded: ScreenState.Loaded,
@@ -229,7 +229,7 @@ private fun BrowseList(
         loaded.database.values
             .filter { mod -> mod.id !in loaded.localMods }
             .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
-            .sortedByDescending { it.stars }
+            .sortedBy { it.name.lowercase() }
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(filtered, key = { it.id }) { mod ->
             ModRow(dbEntry = mod, localMod = null, hasUpdate = false, onInstall = { onInstall(mod) }, onUninstall = {})
