@@ -187,7 +187,8 @@ class CcmodManager {
         assetIndex.clear()
         patchIndex.clear()
 
-        val modEntries = modsDir.listFiles() ?: return
+        // Sorted so the winning override and patch order are stable (last mod wins, patches in name order)
+        val modEntries = modsDir.listFiles()?.sortedBy { it.name } ?: return
         var packedCount = 0
         var unpackedCount = 0
 
