@@ -95,7 +95,7 @@ class ModBrowserViewModel(
                 try {
                     withContext(Dispatchers.IO) {
                         val database = databaseClient.fetchDatabase()
-                        val localMods = localModScanner.scan().associateBy { it.id }
+                        val localMods = localModScanner.scan()
                         val virtualPackages = VirtualPackages.compute(gameFolderManager, loader)
                         ScreenState.Loaded(database, localMods, virtualPackages)
                     }
@@ -200,7 +200,7 @@ class ModBrowserViewModel(
                     e.message ?: e.toString()
                 }
 
-            val localMods = withContext(Dispatchers.IO) { localModScanner.scan().associateBy { it.id } }
+            val localMods = withContext(Dispatchers.IO) { localModScanner.scan() }
             (state as? ScreenState.Loaded)?.let { state = it.copy(localMods = localMods) }
 
             val message = failure ?: verify(localMods)

@@ -11,9 +11,13 @@ import java.util.zip.ZipFile
 /** A mod already present in `assets/mods/`, read directly from its manifest on disk. */
 data class LocalMod(
     val id: String,
+    /** The highest version among [files]. */
     val version: Version,
-    /** The mod's directory, or its `.ccmod` file for packed mods. */
-    val file: File,
+    /**
+     * Every installed copy: the mod's directory, or its `.ccmod` file for packed mods. Usually one,
+     * but a mod can be installed twice under different names, and all copies must go on uninstall.
+     */
+    val files: List<File>,
 )
 
 /**
@@ -24,12 +28,22 @@ data class LocalMod(
 class LocalModScanner(
     private val gameFolderManager: GameFolderManager,
 ) {
-    fun scan(): List<LocalMod> {
-        val modsDirFiles = gameFolderManager.listFiles("assets/mods") ?: return emptyList()
-        return modsDirFiles.mapNotNull { entry -> readMod(entry) }
+    /** Installed mods by id. */
+    fun scan(): Map<String, LocalMod> {
+        val modsDirFiles = gameFolderManager.listFiles("assets/mods") ?: return emptyMap()
+        return modsDirFiles
+            .mapNotNull { entry -> readMod(entry) }
+            .groupBy { it.id }
+            .mapValues { (id, copies) -> LocalMod(id, copies.maxOf { it.version }, copies.map { it.file }) }
     }
 
-    private fun readMod(entry: File): LocalMod? =
+    private class ModCopy(
+        val id: String,
+        val version: Version,
+        val file: File,
+    )
+
+    private fun readMod(entry: File): ModCopy? =
         try {
             val manifest =
                 when {
@@ -40,7 +54,7 @@ class LocalModScanner(
             manifest?.let { (json, isLegacy) ->
                 val id = if (isLegacy) json.optString("name") else json.optString("id")
                 val version = json.optString("version").toVersionOrNull(strict = false)
-                if (id.isNullOrEmpty() || version == null) null else LocalMod(id, version, entry)
+                if (id.isNullOrEmpty() || version == null) null else ModCopy(id, version, entry)
             }
         } catch (e: Exception) {
             Log.w("CrossCode", "Failed to parse manifest for mod ${entry.name}: ${e.message}")

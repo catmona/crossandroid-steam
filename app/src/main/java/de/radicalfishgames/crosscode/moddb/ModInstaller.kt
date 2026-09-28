@@ -44,7 +44,7 @@ class ModInstaller(
     private val gameFolderManager: GameFolderManager,
     private val httpClient: OkHttpClient,
 ) {
-    /** Installs [mod], replacing [existing] (the currently installed copy, if any). */
+    /** Installs [mod], replacing [existing] (the currently installed copies, if any). */
     fun install(
         mod: ModDbEntry,
         existing: LocalMod?,
@@ -116,8 +116,9 @@ class ModInstaller(
     }
 
     fun uninstall(localMod: LocalMod) {
-        if (!localMod.file.deleteRecursively()) {
-            throw ModInstallException("Failed to delete '${localMod.file.name}'.")
+        val failed = localMod.files.filterNot { it.deleteRecursively() }
+        if (failed.isNotEmpty()) {
+            throw ModInstallException("Failed to delete ${failed.joinToString { "'${it.name}'" }}.")
         }
     }
 
