@@ -85,20 +85,29 @@ class ModDatabaseClient(
     /** `title`/`description` are either a plain string or a `{locale: text}` object (upstream `ig.LangLabel`). */
     private fun localizedText(value: Any?): String? =
         when (value) {
-            is String -> value
+            is String -> {
+                value
+            }
+
             is JSONObject -> {
                 value.optString("en_US").takeIf { it.isNotEmpty() }
-                    ?: value.keys().asSequence().firstOrNull()?.let { value.optString(it) }
+                    ?: value
+                        .keys()
+                        .asSequence()
+                        .firstOrNull()
+                        ?.let { value.optString(it) }
             }
-            else -> null
+
+            else -> {
+                null
+            }
         }
 
     /**
      * Strips CrossCode's inline rich-text codes (e.g. `\i[class-tri]`, `\c[green]`) that some mod
      * texts embed, since plain widgets would print them literally.
      */
-    private fun stripCrossCodeMarkup(text: String): String =
-        text.replace(CROSSCODE_MARKUP_REGEX, "").replace(Regex(" {2,}"), " ").trim()
+    private fun stripCrossCodeMarkup(text: String): String = text.replace(CROSSCODE_MARKUP_REGEX, "").replace(Regex(" {2,}"), " ").trim()
 
     private fun stringOrStringList(value: Any?): List<String> =
         when (value) {

@@ -41,15 +41,22 @@ class DependencyResolver(
                 val ranges = requiredRanges[id].orEmpty()
                 val local = localMods[id]
                 when {
-                    local != null && rangesSatisfied(local.version, ranges) -> null
-                    local != null -> ResolvedMod(mod, InstallReason.UPDATE)
+                    local != null && rangesSatisfied(local.version, ranges) -> {
+                        null
+                    }
+
+                    local != null -> {
+                        ResolvedMod(mod, InstallReason.UPDATE)
+                    }
+
                     else -> {
                         val dbVersion =
                             mod.version.toVersionOrNull(strict = false)
                                 ?: throw DependencyResolutionException("Mod '${mod.id}' has an invalid version '${mod.version}'")
                         if (!rangesSatisfied(dbVersion, ranges)) {
+                            val required = ranges.joinToString(", ")
                             throw DependencyResolutionException(
-                                "Dependency '${mod.name}' version ${mod.version} does not satisfy required range(s): ${ranges.joinToString(", ")}",
+                                "Dependency '${mod.name}' version ${mod.version} does not satisfy required range(s): $required",
                             )
                         }
                         ResolvedMod(mod, InstallReason.DEPENDENCY)

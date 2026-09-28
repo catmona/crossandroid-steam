@@ -261,7 +261,9 @@ class LocalStorageLevelDbReader(
 
             if (inString) {
                 when (c) {
-                    '\\' -> i++ // Skip escaped character
+                    '\\' -> i++
+
+                    // Skip escaped character
 
                     '"' -> inString = false
                 }

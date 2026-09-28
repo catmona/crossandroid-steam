@@ -14,10 +14,11 @@ import java.io.File
 object ExtensionScanner {
     /** Maps extensionName -> list of files from the manifest's "files" key. */
     fun scan(gameFolderManager: GameFolderManager): Map<String, List<String>> {
-        val extensionDirFiles = gameFolderManager.listFiles("assets/extension") ?: run {
-            Log.w("CrossCode", "No extension directory found!")
-            return emptyMap()
-        }
+        val extensionDirFiles =
+            gameFolderManager.listFiles("assets/extension") ?: run {
+                Log.w("CrossCode", "No extension directory found!")
+                return emptyMap()
+            }
 
         val discovered = mutableMapOf<String, List<String>>()
 

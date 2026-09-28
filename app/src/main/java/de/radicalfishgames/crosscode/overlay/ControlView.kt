@@ -176,7 +176,6 @@ open class ControlView(
             } else if (hadOldMainPointer) {
                 onRelease()
             }
-
         } else {
             onMove()
         }

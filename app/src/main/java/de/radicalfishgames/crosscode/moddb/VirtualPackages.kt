@@ -86,7 +86,8 @@ object VirtualPackages {
         val ccloaderJs = gameFolderManager.getFile("ccloader/js/ccloader.js")
         if (ccloaderJs == null || !ccloaderJs.exists()) return null
         return try {
-            CCLOADER2_VERSION_REGEX.find(ccloaderJs.readText())
+            CCLOADER2_VERSION_REGEX
+                .find(ccloaderJs.readText())
                 ?.groupValues
                 ?.get(1)
                 ?.toVersionOrNull(strict = false)

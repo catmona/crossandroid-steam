@@ -163,16 +163,18 @@ private fun ModBrowserScreen(
                         }
 
                         when (selectedTab) {
-                            BrowserTab.BROWSE ->
+                            BrowserTab.BROWSE -> {
                                 BrowseList(current, searchQuery, onInstall = viewModel::requestInstall)
+                            }
 
-                            BrowserTab.INSTALLED ->
+                            BrowserTab.INSTALLED -> {
                                 InstalledList(
                                     current,
                                     searchQuery,
                                     onInstall = viewModel::requestInstall,
                                     onUninstall = { pendingUninstall = it },
                                 )
+                            }
                         }
                     }
                 }
@@ -405,11 +407,13 @@ private fun ModRow(
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.mod_install))
                     }
                 }
+
                 hasUpdate -> {
                     IconButton(onClick = onInstall) {
                         Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.mod_update))
                     }
                 }
+
                 dbEntry != null -> {
                     // Matches IconButton's default 48dp touch target so it lines up with the other icon slots.
                     Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
