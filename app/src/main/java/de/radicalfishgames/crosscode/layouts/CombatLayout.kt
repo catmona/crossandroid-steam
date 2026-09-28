@@ -28,7 +28,6 @@ object CombatLayout : VirtualControllerLayout() {
     private const val DASHED = 3
 
     private var dashState = NONE
-    private var interactingWithSth = false
 
     override fun bindControls(
         gamepad: GamepadJsonBridge,
@@ -232,26 +231,19 @@ object CombatLayout : VirtualControllerLayout() {
                             gamepad.rightCross.bottom.pressed = true
                             gamepad.rightBumper.pressed = true
 
-                            // Don't fire a combat art while grabbing a push/pull block; the async result
-                            // may arrive after the art triggered, so also release the trigger here
-                            feature.runJS(
-                                """window.variable = ig.game.playerEntity.interactObject === null;""",
-                                ValueCallback { result ->
-                                    interactingWithSth = !result.toBoolean()
-                                    if (interactingWithSth) {
-                                        gamepad.rightTrigger.pressed = false
-                                    }
-                                },
-                            )
-
                             // Trigger combat arts for melee
                             if (!longPressPending) {
                                 longPressHandler.postDelayed({
-                                    if (interactingWithSth) {
-                                        return@postDelayed
-                                    }
-
-                                    gamepad.rightTrigger.pressed = true
+                                    // Pressing next to a push/pull block grabs it, so check right before
+                                    // firing; skip the art while grabbing or if the press already ended
+                                    feature.runJS(
+                                        "ig.game.playerEntity.interactObject === null",
+                                        ValueCallback { notGrabbing ->
+                                            if (notGrabbing.toBoolean() && longPressPending) {
+                                                gamepad.rightTrigger.pressed = true
+                                            }
+                                        },
+                                    )
                                 }, 300L)
                                 longPressPending = true
                             }
@@ -276,8 +268,6 @@ object CombatLayout : VirtualControllerLayout() {
                     longPressHandler.removeCallbacksAndMessages(null)
                     longPressPending = false
                     gamepad.rightTrigger.pressed = false
-
-                    interactingWithSth = false
 
                     if (lastInsideInnerCircle) {
                         gamepad.rightCross.bottom.pressed = false
