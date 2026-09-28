@@ -19,82 +19,21 @@ object MenuLayout : VirtualControllerLayout() {
         val binding = MenuLayoutBinding.bind(layoutView)
 
         binding.apply {
-            overlayToggle.onSwipe { right, left, up, down ->
-                // Do in handler to avoid a crash due to the potential layout changes
-                handler.post {
-                    if (right || left) {
-                        feature.switchToLayout(CombatLayout)
-                    } else if (up || down) {
-                        feature.enterDirect()
-                    }
-                }
-            }
+            bindOverlayToggle(overlayToggle, feature, CombatLayout)
 
             menuDirections.apply {
                 onDirectionUpdate { xDir, yDir ->
-
-                    val xActual =
-                        when {
-                            xDir > 0.15 -> 1.0
-                            xDir < -0.15 -> -1.0
-                            else -> 0.0
-                        }
-
-                    val yActual =
-                        when {
-                            yDir > 0.15 -> 1.0
-                            yDir < -0.15 -> -1.0
-                            else -> 0.0
-                        }
-
-                    gamepad.leftStick.horizontal.state = xActual
-                    gamepad.leftStick.vertical.state = yActual
+                    gamepad.leftStick.set(snapToDirection(xDir), snapToDirection(yDir))
                 }
 
                 onRelease {
-                    gamepad.leftStick.vertical.state = 0.0
-                    gamepad.leftStick.horizontal.state = 0.0
+                    gamepad.leftStick.reset()
                 }
             }
 
-            tabLeft.apply {
-                var startedToPressAt: Long = 0
-                onTouch {
-                    startedToPressAt = System.currentTimeMillis()
-                }
-
-                onRelease {
-                    val timeDiff = (System.currentTimeMillis() - startedToPressAt)
-
-                    // Decide based on long- or short click whether to press bumper or trigger
-                    val useTrigger = timeDiff > (0.2 * 1000)
-
-                    if (useTrigger) {
-                        fakeClick(gamepad.leftTrigger)
-                    } else {
-                        fakeClick(gamepad.leftBumper)
-                    }
-                }
-            }
-            tabRight.apply {
-                var startedToPressAt: Long = 0
-                onTouch {
-                    startedToPressAt = System.currentTimeMillis()
-                }
-
-                onRelease {
-                    val timeDiff = (System.currentTimeMillis() - startedToPressAt)
-
-                    // Decide based on long- or short click whether to press bumper or trigger
-                    val useTrigger = timeDiff > (0.2 * 1000)
-
-                    if (useTrigger) {
-                        fakeClick(gamepad.rightTrigger)
-                    } else {
-                        fakeClick(gamepad.rightBumper)
-                    }
-                }
-            }
+            // Short press switches tabs with the bumper, long press with the trigger
+            bindTapOrHold(tabLeft, onTap = { fakeClick(gamepad.leftBumper) }, onHold = { fakeClick(gamepad.leftTrigger) })
+            bindTapOrHold(tabRight, onTap = { fakeClick(gamepad.rightBumper) }, onHold = { fakeClick(gamepad.rightTrigger) })
 
             bindSimpleButton(rightcrossRight, gamepad.rightCross.right)
             bindSimpleButton(rightcrossLeft, gamepad.rightCross.left)
@@ -104,4 +43,12 @@ object MenuLayout : VirtualControllerLayout() {
             bindSimpleButton(helpButton, gamepad.startOrForward)
         }
     }
+
+    // Menus move in whole steps, so each axis is either fully pressed or released
+    private fun snapToDirection(value: Double) =
+        when {
+            value > FULL_DEFLECTION_THRESHOLD -> 1.0
+            value < -FULL_DEFLECTION_THRESHOLD -> -1.0
+            else -> 0.0
+        }
 }

@@ -64,6 +64,16 @@ class GamepadJsonBridge(
         // negative = up; positive = down
         val vertical: Axis = Axis(verticalJsonIndex)
         val button: Button = Button(buttonJsonIndex)
+
+        fun set(
+            x: Double,
+            y: Double,
+        ) {
+            horizontal.state = x
+            vertical.state = y
+        }
+
+        fun reset() = set(0.0, 0.0)
     }
 
     inner class Button(
@@ -94,13 +104,7 @@ class GamepadJsonBridge(
                 return jsonAxes[jsonIndex] as Double
             }
             set(value) {
-                val actualValue: Double =
-                    when {
-                        value > 1.0 -> 1.0
-                        value < -1.0 -> -1.0
-                        else -> value
-                    }
-
+                val actualValue = value.coerceIn(-1.0, 1.0)
                 if (jsonAxes.opt(jsonIndex) == actualValue) return
                 jsonAxes.put(jsonIndex, actualValue)
                 onControlUpdate()
