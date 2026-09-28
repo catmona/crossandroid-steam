@@ -98,7 +98,7 @@ open class ControlView(
         val pointerIndex = event.actionIndex
         val pointerId = event.getPointerId(pointerIndex)
 
-        when (event.action) {
+        when (event.actionMasked) {
             MotionEvent.ACTION_DOWN,
             MotionEvent.ACTION_POINTER_DOWN,
             -> {
@@ -126,12 +126,15 @@ open class ControlView(
                 }
             }
 
-            // ACTION_CANCEL: another View has taken over the gesture
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_POINTER_UP,
-            MotionEvent.ACTION_CANCEL,
             -> {
                 activePointers.remove(pointerId)
+            }
+
+            // Another View has taken over the gesture, so every pointer is gone
+            MotionEvent.ACTION_CANCEL -> {
+                activePointers.clear()
             }
         }
 
