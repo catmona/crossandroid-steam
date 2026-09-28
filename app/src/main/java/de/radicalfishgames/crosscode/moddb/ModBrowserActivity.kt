@@ -170,12 +170,13 @@ private fun ModBrowserScreen(
     }
 
     fun runInstall(resolved: List<ResolvedMod>) {
+        val installedMods = (state as? ScreenState.Loaded)?.localMods ?: return
         scope.launch {
             var failure: String? = null
             try {
                 withContext(Dispatchers.IO) {
                     resolved.forEachIndexed { index, r ->
-                        modInstaller.install(r.entry) { progress ->
+                        modInstaller.install(r.entry, installedMods[r.entry.id]) { progress ->
                             installRun = InstallRun(resolved.size, index, progress)
                         }
                     }

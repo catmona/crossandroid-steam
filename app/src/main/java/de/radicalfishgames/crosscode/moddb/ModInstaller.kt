@@ -44,8 +44,10 @@ class ModInstaller(
     private val gameFolderManager: GameFolderManager,
     private val httpClient: OkHttpClient,
 ) {
+    /** Installs [mod], replacing [existing] (the currently installed copy, if any). */
     fun install(
         mod: ModDbEntry,
+        existing: LocalMod?,
         onProgress: (InstallProgress) -> Unit,
     ) {
         onProgress(InstallProgress.Preparing(mod))
@@ -78,14 +80,36 @@ class ModInstaller(
 
         onProgress(InstallProgress.Installing(mod))
 
-        val modId = mod.id.replace(" ", "_")
-        if (installation.url.endsWith(".ccmod")) {
-            File(modsDir, "$modId.ccmod").writeBytes(data)
-        } else {
-            val source =
-                installation.source
-                    ?: throw ModInstallException("Mod '${mod.name}' is a .zip with no source field (database error).")
-            extractZip(data, File(modsDir, modId), source)
+        // Build the new copy next to assets/mods (same volume, so the final rename is atomic) but
+        // outside it, so a half-written copy is never loaded as a mod
+        val staging = File(modsDir.parentFile, STAGING_NAME).apply { deleteRecursively() }
+        try {
+            val modId = mod.id.replace(" ", "_")
+            val target =
+                if (installation.url.endsWith(".ccmod")) {
+                    staging.writeBytes(data)
+                    File(modsDir, "$modId.ccmod")
+                } else {
+                    val source =
+                        installation.source
+                            ?: throw ModInstallException("Mod '${mod.name}' is a .zip with no source field (database error).")
+                    extractZip(data, staging, source)
+                    if (!staging.exists()) {
+                        throw ModInstallException("Download for '${mod.name}' has no files under '$source'.")
+                    }
+                    File(modsDir, modId)
+                }
+
+            // Remove the old copy, which may differ in name or format, so none of its files survive
+            existing?.let { uninstall(it) }
+            if (target.exists() && !target.deleteRecursively()) {
+                throw ModInstallException("Failed to replace '${target.name}'.")
+            }
+            if (!staging.renameTo(target)) {
+                throw ModInstallException("Failed to move '${mod.name}' into place.")
+            }
+        } finally {
+            staging.deleteRecursively()
         }
 
         onProgress(InstallProgress.Done(mod))
@@ -173,6 +197,7 @@ class ModInstaller(
 
     companion object {
         private const val DOWNLOAD_BUFFER_SIZE = 8192
+        private const val STAGING_NAME = ".crossandroid-mod-install"
         private const val PROGRESS_REPORT_INTERVAL_MS = 150L
     }
 }
