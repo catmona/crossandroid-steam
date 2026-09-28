@@ -450,15 +450,6 @@ class PatchStepsApplier {
             }
         }
 
-        private fun valueToJsonString(value: Any): String =
-            when (value) {
-                is String -> JSONObject.quote(value)
-                is JSONObject, is JSONArray -> value.toString()
-                is Number, is Boolean -> value.toString()
-                JSONObject.NULL -> "null"
-                else -> JSONObject.quote(value.toString())
-            }
-
         private fun navigate(
             current: Any,
             index: Any,
