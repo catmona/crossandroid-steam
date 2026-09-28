@@ -11,8 +11,6 @@ object DirectLayout : VirtualControllerLayout() {
     override val layoutResId = R.layout.direct_layout
     override val allowWebViewInteraction = true
 
-    lateinit var layoutToEnable: VirtualControllerLayout
-
     override fun bindControls(
         gamepad: GamepadJsonBridge,
         layoutView: View,
@@ -24,7 +22,7 @@ object DirectLayout : VirtualControllerLayout() {
         binding.overlayToggle.onRelease {
             // Do in handler to avoid a crash due to the potential layout changes
             handler.post {
-                feature.switchToLayout(layoutToEnable)
+                feature.leaveDirect()
             }
         }
     }

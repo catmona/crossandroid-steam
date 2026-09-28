@@ -44,8 +44,7 @@ object CombatLayout : VirtualControllerLayout() {
                     if (right || left) {
                         feature.switchToLayout(MenuLayout)
                     } else if (up || down) {
-                        DirectLayout.layoutToEnable = CombatLayout
-                        feature.switchToLayout(DirectLayout)
+                        feature.enterDirect()
                     }
                 }
             }

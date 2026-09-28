@@ -29,6 +29,9 @@ class VirtualControllerFeature(
     lateinit var currentLayout: VirtualControllerLayout
         private set
 
+    // Where leaveDirect() returns to; never DirectLayout itself, or the overlay toggle couldn't leave it
+    private var layoutBeforeDirect: VirtualControllerLayout = MenuLayout
+
     private val isTelevision =
         hostActivity
             .getSystemService(UiModeManager::class.java)
@@ -77,7 +80,6 @@ class VirtualControllerFeature(
         initializeLayouts()
 
         currentLayout = DirectLayout
-        DirectLayout.layoutToEnable = MenuLayout
         gameWrapper.blockWebViewClicks = false
         layoutViews[DirectLayout]!!.visibility = View.VISIBLE
     }
@@ -109,6 +111,19 @@ class VirtualControllerFeature(
 
         gameWrapper.blockWebViewClicks = !currentLayout.allowWebViewInteraction
     }
+
+    /** Switches to [DirectLayout], remembering the current layout for [leaveDirect]. */
+    fun enterDirect() {
+        if (!enabled) {
+            return
+        }
+        if (currentLayout !== DirectLayout) {
+            layoutBeforeDirect = currentLayout
+        }
+        switchToLayout(DirectLayout)
+    }
+
+    fun leaveDirect() = switchToLayout(layoutBeforeDirect)
 
     private fun scheduleGamepadUpdate() {
         if (!gamepadUpdatePending) {
