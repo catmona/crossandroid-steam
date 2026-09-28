@@ -97,6 +97,8 @@ class PatchStepsApplier {
                     }
 
                     ch == '"' -> {
+                        // A string is a value, so a comma before it isn't trailing
+                        if (!inString) pendingComma = -1
                         inString = !inString
                         result.append(ch)
                     }
