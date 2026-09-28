@@ -2,7 +2,6 @@ package de.radicalfishgames.crosscode.overlay
 
 import android.content.Context
 import android.util.AttributeSet
-import kotlin.math.abs
 import kotlin.math.min
 
 open class CircleButton(
@@ -39,13 +38,13 @@ open class CircleButton(
         y: Float,
     ) = isInsideCircle(x, y)
 
-    protected open fun isInsideCircle(
+    private fun isInsideCircle(
         xTouch: Float,
         yTouch: Float,
     ): Boolean {
         val xDiff = xTouch - centerX
         val yDiff = yTouch - centerY
 
-        return abs(xDiff) <= radius && abs(yDiff) < radius
+        return xDiff * xDiff + yDiff * yDiff <= radius * radius
     }
 }
