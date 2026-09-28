@@ -35,7 +35,7 @@ class PatchStepsApplier {
                 if (trimmed.startsWith("[")) {
                     val steps = JSONArray(cleanedPatch)
                     val state = PatchState(fileResolver = fileResolver, current = root)
-                    applySteps(root, steps, state)
+                    applySteps(steps, state)
                 } else if (trimmed.startsWith("{")) {
                     val patch = JSONObject(cleanedPatch)
                     deepMerge(root, patch)
@@ -182,7 +182,6 @@ class PatchStepsApplier {
         private fun deepCopyNullable(value: Any?): Any? = if (value == null) null else deepCopy(value)
 
         private fun applySteps(
-            root: JSONObject,
             steps: JSONArray,
             state: PatchState,
         ) {
@@ -315,7 +314,7 @@ class PatchStepsApplier {
                             val cleaned = stripTrailingCommas(patchContent)
                             val includeSteps = JSONArray(cleaned)
                             // Fresh stack but same current position and COPY memory.
-                            applySteps(root, includeSteps, state.childState())
+                            applySteps(includeSteps, state.childState())
                         }
 
                         "FOR_IN" -> {
@@ -332,7 +331,7 @@ class PatchStepsApplier {
                             // Iterations share state, so ENTER/EXIT in the body carry over between them.
                             for (value in valuesList) {
                                 val substitutedBody = substituteKeyword(body, keyword, value)
-                                applySteps(root, substitutedBody, state)
+                                applySteps(substitutedBody, state)
                             }
                         }
 
@@ -358,7 +357,7 @@ class PatchStepsApplier {
                                     "Condition: $condition, elseSteps present: ${elseSteps != null}",
                             )
                             if (thenSteps != null) {
-                                applySteps(root, thenSteps, state)
+                                applySteps(thenSteps, state)
                             }
                         }
 

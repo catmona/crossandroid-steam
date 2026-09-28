@@ -26,7 +26,7 @@ object VirtualPackages {
 
     fun compute(
         gameFolderManager: GameFolderManager,
-        loader: DetectedModLoader,
+        loader: ModLoaderFlavor,
     ): Map<String, Version> {
         val result = mutableMapOf<String, Version>()
 
@@ -64,9 +64,9 @@ object VirtualPackages {
 
     private fun readCcloaderVersion(
         gameFolderManager: GameFolderManager,
-        loader: DetectedModLoader,
+        loader: ModLoaderFlavor,
     ): Version? =
-        when (loader.flavor) {
+        when (loader) {
             ModLoaderFlavor.CCLOADER3 -> readCcloader3Version(gameFolderManager)
             ModLoaderFlavor.CCLOADER2 -> readCcloader2Version(gameFolderManager)
         }

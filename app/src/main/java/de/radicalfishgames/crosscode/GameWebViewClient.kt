@@ -65,27 +65,17 @@ class GameWebViewClient(
         // For https://mods/<mod>.ccmod/... prepend "mods/" so the existing assets/ fallback
         // resolves it to assets/mods/<mod>.ccmod/... where the ZIP file actually lives.
         val normalizedPath = if (isModsScheme) "mods/${urlPath.trimStart('/')}" else urlPath.trimStart('/')
-        var fullPath = File(gameDir, normalizedPath).canonicalPath
-
-        val initialCcmodPath = CcmodManager.parseCcmodPath(fullPath)
+        val initialCcmodPath = CcmodManager.parseCcmodPath(File(gameDir, normalizedPath).canonicalPath)
         if (initialCcmodPath != null) {
             // If the .ccmod isn't at the resolved path, try:
             // 1. Dropping "ccloader/": CCLoader resolves paths from ccloader/, but mods live in assets/mods/.
             // 2. Prepending "assets/": the service worker may omit it.
-            var resolved = initialCcmodPath
+            var resolved: Pair<String, String> = initialCcmodPath
             if (!File(resolved.first).exists() && normalizedPath.startsWith("ccloader/")) {
-                val fallback = tryCcmodFallback(normalizedPath.removePrefix("ccloader/"))
-                if (fallback != null) {
-                    fullPath = fallback.first
-                    resolved = fallback.second
-                }
+                tryCcmodFallback(normalizedPath.removePrefix("ccloader/"))?.let { resolved = it }
             }
             if (!File(resolved.first).exists() && !normalizedPath.startsWith("assets/")) {
-                val fallback = tryCcmodFallback("assets/$normalizedPath")
-                if (fallback != null) {
-                    fullPath = fallback.first
-                    resolved = fallback.second
-                }
+                tryCcmodFallback("assets/$normalizedPath")?.let { resolved = it }
             }
             val canonicalCcmod = resolved.first
             if (canonicalGameDir == null || !canonicalCcmod.startsWith("$canonicalGameDir/")) {
@@ -272,14 +262,10 @@ class GameWebViewClient(
         }
     }
 
-    /** Returns (fullPath, parsed ccmod path) for [altNormalizedPath] if that .ccmod exists, else null. */
-    private fun tryCcmodFallback(altNormalizedPath: String): Pair<String, Pair<String, String>>? {
-        val altFullPath = File(gameDir!!, altNormalizedPath).canonicalPath
-        val altCcmodPath = CcmodManager.parseCcmodPath(altFullPath)
-        if (altCcmodPath != null && File(altCcmodPath.first).exists()) {
-            return Pair(altFullPath, altCcmodPath)
-        }
-        return null
+    /** Returns the parsed ccmod path for [altNormalizedPath] if that .ccmod exists, else null. */
+    private fun tryCcmodFallback(altNormalizedPath: String): Pair<String, String>? {
+        val altCcmodPath = CcmodManager.parseCcmodPath(File(gameDir!!, altNormalizedPath).canonicalPath)
+        return altCcmodPath?.takeIf { File(it.first).exists() }
     }
 
     /** Releases open .ccmod ZIP handles; call when the activity is destroyed. */
@@ -292,7 +278,6 @@ class GameWebViewClient(
             .Builder()
             .scheme(VIRTUAL_ORIGIN_SCHEME)
             .authority(VIRTUAL_ORIGIN_DOMAIN)
-            .appendQueryParameter("crossandroid", "true")
 
     companion object {
         const val VIRTUAL_ORIGIN_SCHEME = "https"

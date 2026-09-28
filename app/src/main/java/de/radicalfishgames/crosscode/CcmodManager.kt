@@ -62,29 +62,6 @@ class CcmodManager {
         }
     }
 
-    /** True if [internalPath] is a file or directory in the archive. */
-    fun exists(
-        ccmodPath: String,
-        internalPath: String,
-    ): Boolean {
-        val zipFile = getZipFile(ccmodPath) ?: return false
-        val normalizedPath = internalPath.trimStart('/')
-
-        if (zipFile.getEntry(normalizedPath) != null) {
-            return true
-        }
-
-        val dirPath = if (normalizedPath.endsWith("/")) normalizedPath else "$normalizedPath/"
-        if (zipFile.getEntry(dirPath) != null) {
-            return true
-        }
-
-        // Some zips omit directory entries, so fall back to a prefix scan.
-        return zipFile.entries().asSequence().any { entry ->
-            entry.name.startsWith(dirPath) || entry.name == normalizedPath
-        }
-    }
-
     fun isDirectory(
         ccmodPath: String,
         internalPath: String,
@@ -202,17 +179,6 @@ class CcmodManager {
         zipCache.clear()
     }
 
-    fun close(ccmodPath: String) {
-        zipCache.remove(ccmodPath)?.let { zipFile ->
-            try {
-                zipFile.close()
-                Log.d(TAG, "Closed ccmod: $ccmodPath")
-            } catch (e: Exception) {
-                Log.w(TAG, "Error closing ccmod: $ccmodPath", e)
-            }
-        }
-    }
-
     /**
      * Rebuilds the indices from every packed (.ccmod) and unpacked mod in [modsDir]. Files under a
      * mod's "assets/" are keyed by their path relative to it; `foo.json.patch` is keyed as `foo.json`.
@@ -301,9 +267,6 @@ class CcmodManager {
             }
         }
     }
-
-    /** Returns the mod (.ccmod file or unpacked folder) providing [assetPath], or null. */
-    fun lookupAsset(assetPath: String): String? = assetIndex[assetPath]
 
     /** Opens a mod-provided asset by its path relative to "assets/", or null if no mod has it. */
     fun getAssetStream(assetPath: String): InputStream? {

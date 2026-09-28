@@ -10,9 +10,7 @@ data class ModDbEntry(
     /** Dependency id to required semver range. */
     val dependencies: Map<String, String>,
     val tags: List<String>,
-    val repositoryUrl: String?,
     val stars: Int,
-    val lastUpdateTimestamp: Long,
     val installation: List<ModInstallation>,
 )
 

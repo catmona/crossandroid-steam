@@ -37,8 +37,6 @@ class SaveImportManager(
 
     fun getSaves(): List<String> = getSavesMutable()
 
-    fun getCount(): Int = getSaves().size
-
     fun consumeAll(): List<String> {
         val saves = getSaves()
         clear()

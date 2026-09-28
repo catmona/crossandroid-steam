@@ -77,9 +77,7 @@ class ModDatabaseClient(
             authors = stringOrStringList(metadata.opt("authors")),
             dependencies = dependencies,
             tags = tags,
-            repositoryUrl = if (metadata.has("repository")) metadata.optString("repository") else null,
             stars = raw.optInt("stars"),
-            lastUpdateTimestamp = raw.optLong("lastUpdateTimestamp"),
             installation = installations,
         )
     }

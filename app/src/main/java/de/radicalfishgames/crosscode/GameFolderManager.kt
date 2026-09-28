@@ -111,11 +111,6 @@ class GameFolderManager(
         return file.exists()
     }
 
-    fun isDirectory(relativePath: String): Boolean {
-        val file = getFile(relativePath) ?: return false
-        return file.isDirectory
-    }
-
     fun listFiles(relativePath: String): List<File>? {
         val file = getFile(relativePath) ?: return null
         if (!file.isDirectory) return null
