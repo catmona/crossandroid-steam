@@ -93,7 +93,7 @@ class GameWebViewClient(
                 ?: initialCcmodPath
 
         val canonicalCcmod = resolved.first
-        if (canonicalGameDir == null || !canonicalCcmod.startsWith("$canonicalGameDir/")) {
+        if (canonicalGameDir == null || !isPathInside(canonicalCcmod, canonicalGameDir)) {
             Log.w("CrossCode", "Path traversal rejected: $canonicalCcmod")
             return notFound()
         }
@@ -143,7 +143,7 @@ class GameWebViewClient(
                 return notFound()
             }
 
-        if (canonicalGameDir == null || !requestedFile.canonicalPath.startsWith("$canonicalGameDir/")) {
+        if (canonicalGameDir == null || !isPathInside(requestedFile.path, canonicalGameDir)) {
             Log.w("CrossCode", "Path traversal rejected: ${requestedFile.absolutePath}")
             return notFound()
         }
@@ -198,7 +198,7 @@ class GameWebViewClient(
     private fun readGameAsset(path: String): String? {
         val assetsDir = File(gameDir ?: return null, "assets").canonicalFile
         val file = File(assetsDir, path).canonicalFile
-        if (!file.path.startsWith(assetsDir.path + File.separator) || !file.isFile) return null
+        if (!isPathInside(file.path, assetsDir.path) || !file.isFile) return null
         return file.readText(Charsets.UTF_8)
     }
 

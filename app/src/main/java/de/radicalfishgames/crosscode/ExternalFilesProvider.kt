@@ -148,7 +148,7 @@ class ExternalFilesProvider : DocumentsProvider() {
         return try {
             val parent = resolveDocumentFile(parentDocumentId ?: ROOT_DOC_ID).canonicalPath
             val child = resolveDocumentFile(documentId ?: return false).canonicalPath
-            child == parent || child.startsWith(parent + File.separator)
+            child == parent || isPathInside(child, parent)
         } catch (_: FileNotFoundException) {
             false
         }
@@ -161,9 +161,7 @@ class ExternalFilesProvider : DocumentsProvider() {
         val file = File(baseDir, documentId)
         val canonicalBase = baseDir.canonicalPath
         val canonicalFile = file.canonicalPath
-        if (canonicalFile != canonicalBase &&
-            !canonicalFile.startsWith(canonicalBase + File.separator)
-        ) {
+        if (canonicalFile != canonicalBase && !isPathInside(canonicalFile, canonicalBase)) {
             throw FileNotFoundException("Document ID resolves outside base directory: $documentId")
         }
         return file

@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.moddb
 
 import de.radicalfishgames.crosscode.GameFolderManager
+import de.radicalfishgames.crosscode.isPathInside
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.ByteArrayOutputStream
@@ -147,7 +148,7 @@ class ModInstaller(
                     val relative = relativeToSource(entry.name, normalizedSource)
                     if (relative != null && relative.isNotEmpty()) {
                         val outFile = File(destDir, relative)
-                        if (!outFile.canonicalPath.startsWith(destDir.canonicalPath + File.separator)) {
+                        if (!isPathInside(outFile.canonicalPath, destDir.canonicalPath)) {
                             throw ModInstallException("Zip entry escapes destination: ${entry.name}")
                         }
                         outFile.parentFile?.mkdirs()
