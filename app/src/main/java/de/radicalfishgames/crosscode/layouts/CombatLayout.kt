@@ -11,7 +11,6 @@ import de.radicalfishgames.crosscode.databinding.CombatLayoutBinding
 import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.ElementMode
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
-import kotlin.math.min
 import kotlin.math.pow
 
 object CombatLayout : VirtualControllerLayout() {
@@ -125,14 +124,14 @@ object CombatLayout : VirtualControllerLayout() {
                         when {
                             alwaysSprint && xDir > 0.15 -> 1.0
                             alwaysSprint && xDir < -0.15 -> -1.0
-                            else -> min(xDir * 1.3, 1.0)
+                            else -> (xDir * 1.3).coerceIn(-1.0, 1.0)
                         }
 
                     val yActual =
                         when {
                             alwaysSprint && yDir > 0.15 -> 1.0
                             alwaysSprint && yDir < -0.15 -> -1.0
-                            else -> min(yDir * 1.3, 1.0)
+                            else -> (yDir * 1.3).coerceIn(-1.0, 1.0)
                         }
 
                     gamepad.leftStick.horizontal.state = xActual
@@ -262,8 +261,8 @@ object CombatLayout : VirtualControllerLayout() {
                         gamepad.rightBumper.pressed = false
 
                         // Amplify to compensate for the game's aim dead zones (lost aim, failed combat arts)
-                        gamepad.rightStick.horizontal.state = min(xDir * 1.2, 1.0)
-                        gamepad.rightStick.vertical.state = min(yDir * 1.2, 1.0)
+                        gamepad.rightStick.horizontal.state = (xDir * 1.2).coerceIn(-1.0, 1.0)
+                        gamepad.rightStick.vertical.state = (yDir * 1.2).coerceIn(-1.0, 1.0)
 
                         longPressHandler.removeCallbacksAndMessages(null)
                         longPressPending = false
