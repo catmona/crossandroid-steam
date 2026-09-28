@@ -10,7 +10,9 @@ import android.webkit.WebViewClient
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileNotFoundException
 import java.io.IOException
+import java.io.InputStream
 import java.util.Locale
 
 class GameWebViewClient(
@@ -90,6 +92,11 @@ class GameWebViewClient(
         val assetPath = normalizedPath.removePrefix("assets/")
         val ccmodStream = ccmodManager.getAssetStream(assetPath)
         if (ccmodStream != null) {
+            // Overridden JSON still gets every mod's patches applied on top
+            if (assetPath.endsWith(".json") && ccmodManager.hasPatches(assetPath)) {
+                ccmodStream.close()
+                return servePatchedJson(assetPath) { ccmodManager.getAssetStream(assetPath) }
+            }
             Log.d("CrossCode", "Serving asset from ccmod: $assetPath")
             val extension = assetPath.substringAfterLast('.', "")
             return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(extension), null, ccmodStream)
@@ -143,7 +150,7 @@ class GameWebViewClient(
         if (effectiveNormalizedPath.startsWith("assets/") && effectiveNormalizedPath.endsWith(".json")) {
             val assetPath = effectiveNormalizedPath.removePrefix("assets/")
             if (ccmodManager.hasPatches(assetPath)) {
-                return servePatchedJson(requestedFile, assetPath)
+                return servePatchedJson(assetPath) { FileInputStream(requestedFile) }
             }
         }
 
@@ -151,12 +158,15 @@ class GameWebViewClient(
         return WebResourceResponse(FallbackMimeTypeMap.resolveMimeType(requestedFile.extension), null, stream)
     }
 
+    /** Serves [assetPath] with its patches applied; [openOriginal] opens the unpatched JSON. */
     private fun servePatchedJson(
-        originalFile: File,
         assetPath: String,
+        openOriginal: () -> InputStream?,
     ): WebResourceResponse =
         try {
-            val originalJson = originalFile.readText(Charsets.UTF_8)
+            val originalJson =
+                openOriginal()?.bufferedReader(Charsets.UTF_8)?.use { it.readText() }
+                    ?: throw FileNotFoundException(assetPath)
             val patchedJson = ccmodManager.applyPatches(assetPath, originalJson, ::readGameAsset)
             Log.d("CrossCode", "Serving patched JSON: $assetPath")
             WebResourceResponse(
@@ -170,7 +180,7 @@ class GameWebViewClient(
             WebResourceResponse(
                 "application/json",
                 "UTF-8",
-                FileInputStream(originalFile),
+                openOriginal(),
             )
         }
 
