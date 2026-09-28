@@ -91,9 +91,10 @@ class LocalStorageLevelDbReader(
 
     /**
      * Reads from a LevelDB log file (.log).
-     * Log format: sequence of records in 32KB blocks.
+     * Log format: sequence of records in 32KB blocks. The log is append-only, so the last write wins.
      */
     private fun readFromLogFile(file: File): String? {
+        var latest: String? = null
         RandomAccessFile(file, "r").use { raf ->
             val fileSize = raf.length()
             var position = 0L
@@ -131,8 +132,7 @@ class LocalStorageLevelDbReader(
 
                 when (type) {
                     RECORD_FULL -> {
-                        val value = parseLogBatch(data)
-                        if (value != null) return value
+                        parseLogBatch(data)?.let { latest = it }
                     }
 
                     RECORD_FIRST -> {
@@ -145,14 +145,13 @@ class LocalStorageLevelDbReader(
 
                     RECORD_LAST -> {
                         currentRecord += data
-                        val value = parseLogBatch(currentRecord)
-                        if (value != null) return value
+                        parseLogBatch(currentRecord)?.let { latest = it }
                         currentRecord = ByteArray(0)
                     }
                 }
             }
         }
-        return null
+        return latest
     }
 
     /**
@@ -161,6 +160,7 @@ class LocalStorageLevelDbReader(
      */
     private fun parseLogBatch(data: ByteArray): String? {
         if (data.size < 12) return null
+        var latest: String? = null
 
         val buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN)
         buf.long // sequence
@@ -182,14 +182,14 @@ class LocalStorageLevelDbReader(
                     buf.get(value)
 
                     if (key.contentEquals(targetKey)) {
-                        return parseEncodingPrefixedString(value)
+                        latest = parseEncodingPrefixedString(value)
                     }
                 }
             } catch (e: Exception) {
                 break
             }
         }
-        return null
+        return latest
     }
 
     /**
