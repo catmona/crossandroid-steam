@@ -54,7 +54,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import de.radicalfishgames.crosscode.CcmodManager
 import de.radicalfishgames.crosscode.GameFolderManager
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.appColorScheme
@@ -71,14 +70,12 @@ class ModBrowserActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         val gameFolderManager = GameFolderManager(this)
-        val ccmodManager = CcmodManager()
         val httpClient = OkHttpClient()
 
         setContent {
             MaterialTheme(colorScheme = appColorScheme()) {
                 ModBrowserScreen(
                     gameFolderManager = gameFolderManager,
-                    ccmodManager = ccmodManager,
                     httpClient = httpClient,
                     onBack = { finish() },
                 )
@@ -120,7 +117,6 @@ private data class InstallRun(
 @Composable
 private fun ModBrowserScreen(
     gameFolderManager: GameFolderManager,
-    ccmodManager: CcmodManager,
     httpClient: OkHttpClient,
     onBack: () -> Unit,
 ) {
@@ -129,7 +125,7 @@ private fun ModBrowserScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val modInstaller = remember { ModInstaller(gameFolderManager, httpClient) }
     val databaseClient = remember { ModDatabaseClient(httpClient) }
-    val localModScanner = remember { LocalModScanner(gameFolderManager, ccmodManager) }
+    val localModScanner = remember { LocalModScanner(gameFolderManager) }
 
     var state by remember { mutableStateOf<ScreenState>(ScreenState.Loading) }
     var reloadTrigger by remember { mutableIntStateOf(0) }
