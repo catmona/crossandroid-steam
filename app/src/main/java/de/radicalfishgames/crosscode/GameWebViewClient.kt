@@ -167,7 +167,7 @@ class GameWebViewClient(
     ): WebResourceResponse =
         try {
             val originalJson = originalFile.readText(Charsets.UTF_8)
-            val patchedJson = ccmodManager.applyPatches(assetPath, originalJson)
+            val patchedJson = ccmodManager.applyPatches(assetPath, originalJson, ::readGameAsset)
             Log.d("CrossCode", "Serving patched JSON: $assetPath")
             WebResourceResponse(
                 "application/json",
@@ -183,6 +183,14 @@ class GameWebViewClient(
                 FileInputStream(originalFile),
             )
         }
+
+    /** Reads a `game:` patch path, which like CCLoader is relative to (and jailed in) `assets/`. */
+    private fun readGameAsset(path: String): String? {
+        val assetsDir = File(gameDir ?: return null, "assets").canonicalFile
+        val file = File(assetsDir, path).canonicalFile
+        if (!file.path.startsWith(assetsDir.path + File.separator) || !file.isFile) return null
+        return file.readText(Charsets.UTF_8)
+    }
 
     /**
      * Serves paths inside .ccmod archives. CCLoader queries archive contents via the X-Cmd header:
