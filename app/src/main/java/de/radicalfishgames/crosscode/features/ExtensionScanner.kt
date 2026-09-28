@@ -58,6 +58,6 @@ object ExtensionScanner {
             }
         } catch (e: Exception) {
             Log.w("CrossCode", "Failed to parse manifest for extension $extensionName: ${e.message}")
-            emptyList()
+            null
         }
 }
