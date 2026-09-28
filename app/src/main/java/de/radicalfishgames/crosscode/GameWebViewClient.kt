@@ -141,6 +141,10 @@ class GameWebViewClient(
         }
 
         if (!requestedFile.exists()) {
+            // CCLoader2 fetches mods.json but doesn't need it on Android; avoid a parse error.
+            if (normalizedPath == "mods.json") {
+                return WebResourceResponse("application/json", "UTF-8", ByteArrayInputStream("[]".toByteArray()))
+            }
             Log.w("CrossCode", "Path $urlPath not found! (resolved to ${requestedFile.absolutePath})")
             return WebResourceResponse(null, null, null)
         }
