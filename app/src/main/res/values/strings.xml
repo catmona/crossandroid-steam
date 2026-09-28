@@ -77,7 +77,7 @@
     <!-- AboutLibraries config -->
     <string name="aboutLibraries_description_showIcon">true</string>
     <string name="aboutLibraries_description_showVersion">true</string>
-    <string name="aboutLibraries_description_text"><![CDATA[A port/wrapper app to run CrossCode on Android devices developed by Namnodorel.<br/><br/><b>Contributors:</b><br/>• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart<br/>• Dmytro Meleshko - Enhanced modloader support<br/>• Alyxia &amp; Xinto - CCLoader3 support<br/>• krypek - Changed CrossCode instance format loading from .obb files to a regular directory<br/><br/><a href="https://gitlab.com/Namnodorel/crossandroid/">Project Page</a>]]></string>
+    <string name="aboutLibraries_description_text"><![CDATA[A port/wrapper app to run CrossCode on Android devices developed by Namnodorel and rumpnisse.<br/><br/><b>Contributors:</b><br/>• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart<br/>• Dmytro Meleshko - Enhanced modloader support<br/>• Alyxia &amp; Xinto - CCLoader3 support<br/>• krypek - Changed CrossCode instance format loading from .obb files to a regular directory<br/><br/><a href="https://gitlab.com/Namnodorel/crossandroid/">Project Page</a>]]></string>
     <string name="overlay_size_title">Overlay Size</string>
     <string name="overlay_size_summary">Scale the overlay size</string>
     <string name="always_sprint_title">Always Sprint</string>
@@ -134,5 +134,5 @@
 
     <!-- AboutActivity -->
     <string name="back">Back</string>
-    <string name="about_credits">A port/wrapper app to run CrossCode on Android devices developed by Namnodorel.\n\nContributors:\n• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart\n• Dmytro Meleshko - Enhanced modloader support\n• Alyxia &amp; Xinto - CCLoader3 support\n• krypek - Changed CrossCode instance format loading from .obb files to a regular directory</string>
+    <string name="about_credits">A port/wrapper app to run CrossCode on Android devices developed by Namnodorel and rumpnisse.\n\nContributors:\n• Ichiki Hayaite aka TheSparkstarScope - Contributed the awesome pixelart\n• Dmytro Meleshko - Enhanced modloader support\n• Alyxia &amp; Xinto - CCLoader3 support\n• krypek - Changed CrossCode instance format loading from .obb files to a regular directory</string>
 </resources>
