@@ -206,13 +206,13 @@ private fun ModBrowserScreen(
 
     viewModel.installRun?.let { InstallProgressDialog(it) }
 
-    viewModel.installError?.let { message ->
+    viewModel.error?.let { error ->
         AlertDialog(
-            onDismissRequest = viewModel::dismissInstallError,
-            title = { Text(stringResource(R.string.mod_install_error_title)) },
-            text = { Text(message) },
+            onDismissRequest = viewModel::dismissError,
+            title = { Text(stringResource(error.titleId)) },
+            text = { Text(error.message) },
             confirmButton = {
-                TextButton(onClick = viewModel::dismissInstallError) { Text(stringResource(android.R.string.ok)) }
+                TextButton(onClick = viewModel::dismissError) { Text(stringResource(android.R.string.ok)) }
             },
         )
     }

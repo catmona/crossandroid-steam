@@ -60,6 +60,7 @@
     <string name="mod_install_deps_message">Installing \'%1$s\' also requires the following mods:</string>
     <string name="mod_install_deps_confirm">Install All</string>
     <string name="mod_install_error_title">Install failed</string>
+    <string name="mod_uninstall_error_title">Uninstall failed</string>
     <string name="mod_install_progress_preparing">Preparing %1$s…</string>
     <string name="mod_install_progress_downloading">Downloading %1$s…</string>
     <string name="mod_install_progress_percent">%1$d%%</string>

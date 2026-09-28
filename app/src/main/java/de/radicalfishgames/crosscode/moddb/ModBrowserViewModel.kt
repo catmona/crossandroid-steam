@@ -39,6 +39,11 @@ data class PendingInstall(
     val resolved: List<ResolvedMod>,
 )
 
+data class ErrorMessage(
+    @param:StringRes val titleId: Int,
+    val message: String,
+)
+
 data class InstallRun(
     val total: Int,
     val currentIndex: Int,
@@ -66,7 +71,7 @@ class ModBrowserViewModel(
         private set
     var installRun by mutableStateOf<InstallRun?>(null)
         private set
-    var installError by mutableStateOf<String?>(null)
+    var error by mutableStateOf<ErrorMessage?>(null)
         private set
 
     private val messageChannel = Channel<String>(Channel.BUFFERED)
@@ -115,7 +120,7 @@ class ModBrowserViewModel(
                     runInstall(resolved)
                 }
             } catch (e: DependencyResolutionException) {
-                installError = e.message
+                error = ErrorMessage(R.string.mod_install_error_title, e.message.orEmpty())
             }
         }
     }
@@ -130,14 +135,15 @@ class ModBrowserViewModel(
         pendingInstall = null
     }
 
-    fun dismissInstallError() {
-        installError = null
+    fun dismissError() {
+        error = null
     }
 
     fun uninstall(
         local: LocalMod,
         displayName: String,
     ) = runVerified(
+        errorTitleId = R.string.mod_uninstall_error_title,
         action = { modInstaller.uninstall(local) },
         verify = { localMods ->
             if (local.id in localMods) string(R.string.mod_uninstall_verify_failed, displayName) else null
@@ -148,6 +154,7 @@ class ModBrowserViewModel(
     private fun runInstall(resolved: List<ResolvedMod>) {
         val installedMods = (state as? ScreenState.Loaded)?.localMods ?: return
         runVerified(
+            errorTitleId = R.string.mod_install_error_title,
             action = {
                 try {
                     resolved.forEachIndexed { index, r ->
@@ -175,9 +182,11 @@ class ModBrowserViewModel(
 
     /**
      * Runs [action] off the main thread, then rescans the mods on disk and checks with [verify] that
-     * the change actually landed. [verify] returns an error message, or null on success.
+     * the change actually landed. [verify] returns an error message, or null on success. Errors are
+     * shown under [errorTitleId].
      */
     private fun runVerified(
+        @StringRes errorTitleId: Int,
         action: () -> Unit,
         verify: (Map<String, LocalMod>) -> String?,
         successMessage: String,
@@ -194,9 +203,9 @@ class ModBrowserViewModel(
             val localMods = withContext(Dispatchers.IO) { localModScanner.scan().associateBy { it.id } }
             (state as? ScreenState.Loaded)?.let { state = it.copy(localMods = localMods) }
 
-            val error = failure ?: verify(localMods)
-            if (error != null) {
-                installError = error
+            val message = failure ?: verify(localMods)
+            if (message != null) {
+                error = ErrorMessage(errorTitleId, message)
             } else {
                 messageChannel.send(successMessage)
             }
