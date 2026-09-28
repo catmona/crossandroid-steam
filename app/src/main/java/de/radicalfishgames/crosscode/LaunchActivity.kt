@@ -26,6 +26,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import de.radicalfishgames.crosscode.databinding.ActivityLaunchBinding
 import de.radicalfishgames.crosscode.databinding.GuideLayoutBinding
+import de.radicalfishgames.crosscode.moddb.ModBrowserActivity
 import de.radicalfishgames.crosscode.preferences.PreferencesActivity
 import de.radicalfishgames.crosscode.preferences.SaveExportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportActivity
@@ -86,6 +87,10 @@ class LaunchActivity : AppCompatActivity() {
 
         binding.aboutButton.setOnClickListener {
             launchAboutActivity()
+        }
+
+        binding.browseModsButton.setOnClickListener {
+            launchModBrowserActivity()
         }
     }
 
@@ -347,6 +352,11 @@ class LaunchActivity : AppCompatActivity() {
 
     private fun launchAboutActivity() {
         val intent = Intent(this, AboutActivity::class.java)
+        startActivity(intent)
+    }
+
+    private fun launchModBrowserActivity() {
+        val intent = Intent(this, ModBrowserActivity::class.java)
         startActivity(intent)
     }
 

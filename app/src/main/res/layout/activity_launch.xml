@@ -17,7 +17,7 @@
             android:layout_height="wrap_content"
             android:enabled="false"
             android:text="@string/launch_game"
-            app:layout_constraintBottom_toTopOf="@+id/preferences_button"
+            app:layout_constraintBottom_toTopOf="@+id/browse_mods_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -37,16 +37,27 @@
             app:layout_constraintTop_toTopOf="@+id/launch_button" />
 
         <Button
-            android:id="@+id/preferences_button"
+            android:id="@+id/browse_mods_button"
             style="@style/Widget.Material3.Button.TonalButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:text="@string/browse_mods_button"
+            app:layout_constraintBottom_toTopOf="@+id/preferences_button"
+            app:layout_constraintEnd_toEndOf="@+id/launch_button"
+            app:layout_constraintStart_toStartOf="@+id/launch_button"
+            app:layout_constraintTop_toBottomOf="@+id/launch_button" />
+
+        <Button
+            android:id="@+id/preferences_button"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:text="@string/preferences"
             app:layout_constraintBottom_toTopOf="@+id/import_saves_button"
             app:layout_constraintEnd_toEndOf="@+id/launch_button"
             app:layout_constraintStart_toStartOf="@+id/launch_button"
-            app:layout_constraintTop_toBottomOf="@+id/launch_button" />
+            app:layout_constraintTop_toBottomOf="@+id/browse_mods_button" />
 
         <Button
             android:id="@+id/import_saves_button"
