@@ -71,18 +71,29 @@ object VirtualPackages {
             ModLoaderFlavor.CCLOADER2 -> readCcloader2Version(gameFolderManager)
         }
 
-    private fun readCcloader3Version(gameFolderManager: GameFolderManager): Version? {
-        val metadataFile = gameFolderManager.getFile("ccloader3/metadata.json")
-        if (metadataFile == null || !metadataFile.exists()) return null
+    private fun readCcloader3Version(gameFolderManager: GameFolderManager): Version? =
+        readManifestVersion(gameFolderManager, "ccloader3/metadata.json")
+
+    // Current CCLoader2 releases declare their version in ccloader/ccmod.json; older ones only set
+    // CCLOADER_VERSION in ccloader.js
+    private fun readCcloader2Version(gameFolderManager: GameFolderManager): Version? =
+        readManifestVersion(gameFolderManager, "ccloader/ccmod.json") ?: readLegacyCcloader2Version(gameFolderManager)
+
+    private fun readManifestVersion(
+        gameFolderManager: GameFolderManager,
+        path: String,
+    ): Version? {
+        val file = gameFolderManager.getFile(path)
+        if (file == null || !file.exists()) return null
         return try {
-            JSONObject(metadataFile.readText()).optString("version").toVersionOrNull(strict = false)
+            JSONObject(file.readText()).optString("version").toVersionOrNull(strict = false)
         } catch (e: Exception) {
-            Log.w("CrossCode", "Failed to read ccloader3/metadata.json: ${e.message}")
+            Log.w("CrossCode", "Failed to read $path: ${e.message}")
             null
         }
     }
 
-    private fun readCcloader2Version(gameFolderManager: GameFolderManager): Version? {
+    private fun readLegacyCcloader2Version(gameFolderManager: GameFolderManager): Version? {
         val ccloaderJs = gameFolderManager.getFile("ccloader/js/ccloader.js")
         if (ccloaderJs == null || !ccloaderJs.exists()) return null
         return try {
