@@ -41,7 +41,7 @@ class SaveImportActivity : AppCompatActivity() {
 
         manager = SaveImportManager(this)
         adapter =
-            SavesAdapter(manager.getSaves().toMutableList()) { index ->
+            SavesAdapter(manager.getSaves()) { index ->
                 manager.removeSave(index)
                 refreshList()
             }
@@ -143,7 +143,7 @@ class SaveImportActivity : AppCompatActivity() {
     }
 
     private class SavesAdapter(
-        private var saves: MutableList<String>,
+        private var saves: List<String>,
         private val onDelete: (Int) -> Unit,
     ) : RecyclerView.Adapter<SavesAdapter.ViewHolder>() {
         class ViewHolder(
@@ -173,14 +173,9 @@ class SaveImportActivity : AppCompatActivity() {
             val save = saves[position]
             holder.indexText.text = "${position + 1}."
 
-            val info = SaveParser.parse(save)
-            if (info != null) {
-                holder.saveStats.text = info.formatStats()
-                holder.saveLocation.text = info.formatLocation()
-            } else {
-                holder.saveStats.text = save.take(50) + if (save.length > 50) "…" else ""
-                holder.saveLocation.text = ""
-            }
+            val (stats, location) = SaveParser.summary(save)
+            holder.saveStats.text = stats
+            holder.saveLocation.text = location
 
             holder.deleteButton.setOnClickListener {
                 onDelete(holder.bindingAdapterPosition)
@@ -190,7 +185,7 @@ class SaveImportActivity : AppCompatActivity() {
         override fun getItemCount(): Int = saves.size
 
         fun updateData(newSaves: List<String>) {
-            saves = newSaves.toMutableList()
+            saves = newSaves
             notifyDataSetChanged()
         }
     }

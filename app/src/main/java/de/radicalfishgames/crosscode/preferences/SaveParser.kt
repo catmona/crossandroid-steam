@@ -35,8 +35,18 @@ data class SaveInfo(
 }
 
 object SaveParser {
-    private const val PREFIX = "[-!_0_!-]"
+    const val PREFIX = "[-!_0_!-]"
     private const val PASSWORD = ":_.NaN0"
+
+    private const val RAW_PREVIEW_LENGTH = 50
+
+    /**
+     * The (stats, location) lines shown for a save in a list. Falls back to the start of the raw
+     * text when the save can't be parsed.
+     */
+    fun summary(saveString: String): Pair<String, String> =
+        parse(saveString)?.let { it.formatStats() to it.formatLocation() }
+            ?: (saveString.take(RAW_PREVIEW_LENGTH) + if (saveString.length > RAW_PREVIEW_LENGTH) "…" else "") to ""
 
     /** Extracts display info for the save picker; null if the save can't be decrypted or parsed. */
     fun parse(saveString: String): SaveInfo? {

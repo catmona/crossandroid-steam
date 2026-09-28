@@ -12,8 +12,6 @@ sealed class SaveValidationResult {
 }
 
 object SaveValidator {
-    private const val PREFIX = "[-!_0_!-]"
-
     fun validate(content: String): SaveValidationResult {
         val trimmed = content.trim()
 
@@ -21,7 +19,7 @@ object SaveValidator {
             return SaveValidationResult.Invalid(R.string.error_save_empty)
         }
 
-        if (!trimmed.startsWith(PREFIX)) {
+        if (!trimmed.startsWith(SaveParser.PREFIX)) {
             return SaveValidationResult.Invalid(R.string.error_save_invalid_header)
         }
 

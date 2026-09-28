@@ -164,14 +164,9 @@ class SaveExportActivity : AppCompatActivity() {
             val save = saves[position]
             holder.slotNumber.text = "${position + 1}."
 
-            val info = SaveParser.parse(save)
-            if (info != null) {
-                holder.saveStats.text = info.formatStats()
-                holder.saveLocation.text = info.formatLocation()
-            } else {
-                holder.saveStats.text = save.take(50) + if (save.length > 50) "…" else ""
-                holder.saveLocation.text = ""
-            }
+            val (stats, location) = SaveParser.summary(save)
+            holder.saveStats.text = stats
+            holder.saveLocation.text = location
 
             holder.exportButton.setOnClickListener {
                 onExport(holder.bindingAdapterPosition)
