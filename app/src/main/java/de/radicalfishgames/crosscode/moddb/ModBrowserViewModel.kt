@@ -86,7 +86,7 @@ class ModBrowserViewModel(
     fun load() {
         viewModelScope.launch {
             state = ScreenState.Loading
-            val loader = ModLoaderDetector.detect(gameFolderManager)
+            val loader = gameFolderManager.findModLoader()
             if (loader == null) {
                 state = ScreenState.NoGameFolder
                 return@launch

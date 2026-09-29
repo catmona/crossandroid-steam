@@ -28,6 +28,7 @@ class ModDatabaseClient(
         val root = JSONObject(json)
         val result = mutableMapOf<String, ModDbEntry>()
         for (id in root.keys()) {
+            if (id in VirtualPackages.NOT_DOWNLOADABLE) continue
             val raw = root.opt(id) as? JSONObject ?: continue
             val entry = parseEntry(id, raw) ?: continue
             result[id] = entry

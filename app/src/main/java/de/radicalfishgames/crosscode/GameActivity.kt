@@ -82,7 +82,7 @@ class GameActivity : AppCompatActivity() {
         }
 
         var gameEntryPoint = "assets/node-webkit.html"
-        val modLoaderEntry = gameFolderManager.findModLoaderEntry()
+        val modLoaderEntry = gameFolderManager.findModLoader()?.entry
         var modLoaderPresent = false
         if (modLoaderEntry != null) {
             Log.d("CrossCode", "Modloader found!")

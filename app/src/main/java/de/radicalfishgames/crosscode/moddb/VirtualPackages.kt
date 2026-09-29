@@ -2,6 +2,8 @@ package de.radicalfishgames.crosscode.moddb
 
 import android.util.Log
 import de.radicalfishgames.crosscode.GameFolderManager
+import de.radicalfishgames.crosscode.ModLoader
+import de.radicalfishgames.crosscode.ModLoaderFlavor
 import de.radicalfishgames.crosscode.features.ExtensionScanner
 import io.github.z4kn4fein.semver.Version
 import io.github.z4kn4fein.semver.toVersionOrNull
@@ -22,11 +24,14 @@ object VirtualPackages {
             "nax-module-cache" to "1.0.2",
         )
 
+    /** Ids provided by the game install itself; CCModDB lists `ccloader`, but it isn't a mod. */
+    val NOT_DOWNLOADABLE = setOf("crosscode", "ccloader")
+
     private val CCLOADER2_VERSION_REGEX = Regex("""CCLOADER_VERSION\s*=\s*['"]([\d.]+)['"]""")
 
     fun compute(
         gameFolderManager: GameFolderManager,
-        loader: ModLoaderFlavor,
+        loader: ModLoader,
     ): Map<String, Version> {
         val result = mutableMapOf<String, Version>()
 
@@ -64,20 +69,16 @@ object VirtualPackages {
 
     private fun readCcloaderVersion(
         gameFolderManager: GameFolderManager,
-        loader: ModLoaderFlavor,
+        loader: ModLoader,
     ): Version? =
-        when (loader) {
-            ModLoaderFlavor.CCLOADER3 -> readCcloader3Version(gameFolderManager)
-            ModLoaderFlavor.CCLOADER2 -> readCcloader2Version(gameFolderManager)
+        when (loader.flavor) {
+            ModLoaderFlavor.CCLOADER3 -> readManifestVersion(gameFolderManager, "${loader.dir}/metadata.json")
+            // Current CCLoader2 releases declare their version in ccmod.json; older ones only set
+            // CCLOADER_VERSION in ccloader.js
+            ModLoaderFlavor.CCLOADER2 ->
+                readManifestVersion(gameFolderManager, "${loader.dir}/ccmod.json")
+                    ?: readLegacyCcloader2Version(gameFolderManager, loader.dir)
         }
-
-    private fun readCcloader3Version(gameFolderManager: GameFolderManager): Version? =
-        readManifestVersion(gameFolderManager, "ccloader3/metadata.json")
-
-    // Current CCLoader2 releases declare their version in ccloader/ccmod.json; older ones only set
-    // CCLOADER_VERSION in ccloader.js
-    private fun readCcloader2Version(gameFolderManager: GameFolderManager): Version? =
-        readManifestVersion(gameFolderManager, "ccloader/ccmod.json") ?: readLegacyCcloader2Version(gameFolderManager)
 
     private fun readManifestVersion(
         gameFolderManager: GameFolderManager,
@@ -93,8 +94,11 @@ object VirtualPackages {
         }
     }
 
-    private fun readLegacyCcloader2Version(gameFolderManager: GameFolderManager): Version? {
-        val ccloaderJs = gameFolderManager.getFile("ccloader/js/ccloader.js")
+    private fun readLegacyCcloader2Version(
+        gameFolderManager: GameFolderManager,
+        dir: String,
+    ): Version? {
+        val ccloaderJs = gameFolderManager.getFile("$dir/js/ccloader.js")
         if (ccloaderJs == null || !ccloaderJs.exists()) return null
         return try {
             CCLOADER2_VERSION_REGEX
@@ -103,7 +107,7 @@ object VirtualPackages {
                 ?.get(1)
                 ?.toVersionOrNull(strict = false)
         } catch (e: Exception) {
-            Log.w("CrossCode", "Failed to read ccloader/js/ccloader.js: ${e.message}")
+            Log.w("CrossCode", "Failed to read $dir/js/ccloader.js: ${e.message}")
             null
         }
     }

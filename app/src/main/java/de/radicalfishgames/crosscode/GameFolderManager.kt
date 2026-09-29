@@ -78,26 +78,16 @@ class GameFolderManager(
         return assetsDir.exists() && assetsDir.isDirectory
     }
 
-    /** Returns the modloader's entry page relative to the game folder (CCLoader3 preferred), or null. */
-    fun findModLoaderEntry(): String? {
+    /**
+     * Returns the installed modloader, or null. CCLoader3 is identified by main.html and CCLoader2 by
+     * index.html, whichever folder they're in: CCLoader3 releases are extracted into ccloader/ too.
+     */
+    fun findModLoader(): ModLoader? {
         val gameDir = getGameDir() ?: return null
-
-        val ccloader3Main = File(gameDir, "ccloader3/main.html")
-        if (ccloader3Main.exists()) {
-            return "ccloader3/main.html"
+        for (dir in listOf("ccloader3", "ccloader")) {
+            if (File(gameDir, "$dir/main.html").exists()) return ModLoader(ModLoaderFlavor.CCLOADER3, dir, "$dir/main.html")
+            if (File(gameDir, "$dir/index.html").exists()) return ModLoader(ModLoaderFlavor.CCLOADER2, dir, "$dir/index.html")
         }
-
-        // Legacy CCLoader
-        val ccloaderMain = File(gameDir, "ccloader/main.html")
-        if (ccloaderMain.exists()) {
-            return "ccloader/main.html"
-        }
-
-        val ccloaderIndex = File(gameDir, "ccloader/index.html")
-        if (ccloaderIndex.exists()) {
-            return "ccloader/index.html"
-        }
-
         return null
     }
 
