@@ -139,7 +139,7 @@ class LaunchActivity : AppCompatActivity() {
         val hasModLoader = gameFolderManager.findModLoader() != null
 
         if (!gameFolderManager.exists("assets/node-webkit.html") && !hasModLoader) {
-            instanceNotFound(showDialogOnFailure, getString(R.string.error_ccloader_not_found))
+            instanceNotFound(showDialogOnFailure, getString(R.string.error_game_files_incomplete))
         } else {
             gameFilesIntact()
         }

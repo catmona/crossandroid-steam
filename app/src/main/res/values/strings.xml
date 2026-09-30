@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">CrossAndroid</string>
     <string name="welcome">Welcome to CrossAndroid!</string>
-    <string name="game_files_explanation">This app does not come bundled with the CrossCode game files. You need to copy your own CrossCode installation (with CCLoader) to this device, then import it below.</string>
+    <string name="game_files_explanation">This app does not come bundled with the CrossCode game files. You need to copy your own CrossCode installation to this device, then import it below.</string>
     <string name="setup_guide_link">Full setup guide:\nhttps://gitlab.com/rumpnisse/crossandroid/-/blob/master/SETUP.md</string>
     <string name="game_folder_path">Game folder location (for adb push):\n%1$s</string>
 
@@ -106,7 +106,7 @@
     <string name="error_external_storage_unavailable">External storage not available</string>
     <string name="error_game_folder_not_found">Game folder not found at:\n%1$s</string>
     <string name="error_assets_folder_not_found">The \'assets\' folder was not found in the game folder.</string>
-    <string name="error_ccloader_not_found">CCLoader not found. Make sure you installed CCLoader before copying the game files.</string>
+    <string name="error_game_files_incomplete">The game files are incomplete: assets/node-webkit.html is missing. Copy your full CrossCode installation again.</string>
     <string name="error_game_files_not_found_title">Game files not found</string>
     <string name="error_game_folder_unreadable">A game folder exists but the app is not allowed to read it:\n%1$s\n\nThis happens when the folder was moved there with adb shell commands (mv/cp) or a file manager (e.g. via Shizuku): the files then belong to a different user and the app cannot repair this. A plain adb push works fine.\n\nInstead, use the \"Import game folder\" button to copy the files safely.</string>
 
