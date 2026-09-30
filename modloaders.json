@@ -1,0 +1,4 @@
+{
+  "ccloader2": { "type": "github", "repo": "CCDirectLink/CCLoader" },
+  "ccloader3": { "type": "github", "repo": "CCDirectLink/CCLoader3", "asset": "quick-install\\.zip$" }
+}

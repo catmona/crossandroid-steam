@@ -128,6 +128,28 @@ private fun ModBrowserScreen(
                     )
                 }
 
+                is ScreenState.NoModLoader -> {
+                    Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
+                        Text(stringResource(R.string.modloader_missing))
+                        for ((flavor, release) in current.releases) {
+                            if (release != null) {
+                                Button(
+                                    onClick = { viewModel.installModLoader(flavor) },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+                                ) {
+                                    Text(stringResource(R.string.modloader_install, flavor.displayName, release.version))
+                                }
+                            } else {
+                                Text(
+                                    stringResource(R.string.modloader_unsupported, flavor.displayName),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(top = 16.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+
                 is ScreenState.Error -> {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
                         Text(stringResource(R.string.mod_browser_load_error))
@@ -439,10 +461,10 @@ private fun ModRow(
 @Composable
 private fun installProgressTitle(progress: InstallProgress): String =
     when (progress) {
-        is InstallProgress.Preparing -> stringResource(R.string.mod_install_progress_preparing, progress.mod.name)
-        is InstallProgress.Downloading -> stringResource(R.string.mod_install_progress_downloading, progress.mod.name)
-        is InstallProgress.Installing -> stringResource(R.string.mod_install_progress_installing, progress.mod.name)
-        is InstallProgress.Done -> progress.mod.name
+        is InstallProgress.Preparing -> stringResource(R.string.mod_install_progress_preparing, progress.name)
+        is InstallProgress.Downloading -> stringResource(R.string.mod_install_progress_downloading, progress.name)
+        is InstallProgress.Installing -> stringResource(R.string.mod_install_progress_installing, progress.name)
+        is InstallProgress.Done -> progress.name
     }
 
 /** A short caption under the progress bar: a percentage when the size is known, bytes-so-far otherwise. */

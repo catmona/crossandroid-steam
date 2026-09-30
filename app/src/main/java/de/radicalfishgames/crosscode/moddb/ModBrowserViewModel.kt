@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.radicalfishgames.crosscode.GameFolderManager
+import de.radicalfishgames.crosscode.ModLoaderFlavor
 import de.radicalfishgames.crosscode.R
 import io.github.z4kn4fein.semver.Version
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +23,11 @@ sealed class ScreenState {
     object Loading : ScreenState()
 
     object NoGameFolder : ScreenState()
+
+    /** No modloader installed; offers [releases] to install (null: this app can't resolve that entry). */
+    data class NoModLoader(
+        val releases: Map<ModLoaderFlavor, LoaderRelease?>,
+    ) : ScreenState()
 
     data class Error(
         val message: String,
@@ -62,6 +68,7 @@ class ModBrowserViewModel(
     private val modInstaller = ModInstaller(gameFolderManager, httpClient)
     private val databaseClient = ModDatabaseClient(httpClient)
     private val localModScanner = LocalModScanner(gameFolderManager)
+    private val modLoaderReleases = ModLoaderReleases(httpClient)
 
     var state by mutableStateOf<ScreenState>(ScreenState.Loading)
         private set
@@ -86,14 +93,15 @@ class ModBrowserViewModel(
     fun load() {
         viewModelScope.launch {
             state = ScreenState.Loading
-            val loader = gameFolderManager.findModLoader()
-            if (loader == null) {
+            if (!gameFolderManager.hasValidGameFolder()) {
                 state = ScreenState.NoGameFolder
                 return@launch
             }
+            val loader = gameFolderManager.findModLoader()
             state =
                 try {
                     withContext(Dispatchers.IO) {
+                        if (loader == null) return@withContext ScreenState.NoModLoader(modLoaderReleases.fetch())
                         val database = databaseClient.fetchDatabase()
                         val localMods = localModScanner.scan()
                         val virtualPackages = VirtualPackages.compute(gameFolderManager, loader)
@@ -102,6 +110,27 @@ class ModBrowserViewModel(
                 } catch (e: Exception) {
                     ScreenState.Error(e.message ?: e.toString())
                 }
+        }
+    }
+
+    fun installModLoader(flavor: ModLoaderFlavor) {
+        val release = (state as? ScreenState.NoModLoader)?.releases?.get(flavor) ?: return
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    modInstaller.installModLoader(flavor.displayName, release) { installRun = InstallRun(1, 0, it) }
+                }
+                if (gameFolderManager.findModLoader()?.flavor == flavor) {
+                    messageChannel.send(string(R.string.mod_install_success, flavor.displayName))
+                } else {
+                    error = ErrorMessage(R.string.mod_install_error_title, string(R.string.modloader_install_verify_failed, flavor.displayName))
+                }
+            } catch (e: Exception) {
+                error = ErrorMessage(R.string.mod_install_error_title, e.message ?: e.toString())
+            } finally {
+                installRun = null
+            }
+            load()
         }
     }
 

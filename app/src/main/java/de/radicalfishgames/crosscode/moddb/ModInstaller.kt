@@ -12,21 +12,21 @@ import java.util.zip.ZipInputStream
 
 sealed class InstallProgress {
     data class Preparing(
-        val mod: ModDbEntry,
+        val name: String,
     ) : InstallProgress()
 
     data class Downloading(
-        val mod: ModDbEntry,
+        val name: String,
         val bytesRead: Long,
         val totalBytes: Long,
     ) : InstallProgress()
 
     data class Installing(
-        val mod: ModDbEntry,
+        val name: String,
     ) : InstallProgress()
 
     data class Done(
-        val mod: ModDbEntry,
+        val name: String,
     ) : InstallProgress()
 }
 
@@ -50,7 +50,7 @@ class ModInstaller(
         existing: LocalMod?,
         onProgress: (InstallProgress) -> Unit,
     ) {
-        onProgress(InstallProgress.Preparing(mod))
+        onProgress(InstallProgress.Preparing(mod.name))
 
         val installation =
             mod.installation.firstOrNull { it.type == "zip" }
@@ -61,24 +61,9 @@ class ModInstaller(
                 ?: throw ModInstallException("No game folder available.")
         modsDir.mkdirs()
 
-        val request = Request.Builder().url(installation.url).build()
-        val data =
-            httpClient.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    throw ModInstallException("Failed to download '${mod.name}': HTTP ${response.code}")
-                }
-                val body = response.body ?: throw ModInstallException("Empty response downloading '${mod.name}'")
-                val total = body.contentLength()
-                downloadWithProgress(body.byteStream(), total) { read ->
-                    onProgress(InstallProgress.Downloading(mod, read, total))
-                }
-            }
+        val data = download(mod.name, installation.url, installation.sha256, onProgress)
 
-        if (!verifySha256(data, installation.sha256)) {
-            throw ModInstallException("Downloaded file for '${mod.name}' failed checksum verification.")
-        }
-
-        onProgress(InstallProgress.Installing(mod))
+        onProgress(InstallProgress.Installing(mod.name))
 
         // Build the new copy next to assets/mods (same volume, so the final rename is atomic) but
         // outside it, so a half-written copy is never loaded as a mod
@@ -112,13 +97,100 @@ class ModInstaller(
             staging.deleteRecursively()
         }
 
-        onProgress(InstallProgress.Done(mod))
+        onProgress(InstallProgress.Done(mod.name))
+    }
+
+    /**
+     * Extracts [release] over the game folder, merging into existing directories such as
+     * `assets/mods/`. A single top-level folder wrapping the whole archive (GitHub source zips) is
+     * stripped.
+     */
+    fun installModLoader(
+        name: String,
+        release: LoaderRelease,
+        onProgress: (InstallProgress) -> Unit,
+    ) {
+        onProgress(InstallProgress.Preparing(name))
+        val gameDir = gameFolderManager.getGameDir() ?: throw ModInstallException("No game folder available.")
+        val data = download(name, release.url, release.sha256, onProgress)
+
+        onProgress(InstallProgress.Installing(name))
+        // Extract fully before touching the game folder, so a bad archive leaves it unchanged
+        val staging = File(gameDir.parentFile, STAGING_NAME).apply { deleteRecursively() }
+        try {
+            extractZip(data, staging, singleTopLevelDir(data).orEmpty())
+            val entries = staging.listFiles()
+            if (entries.isNullOrEmpty()) throw ModInstallException("Download for '$name' is empty.")
+            entries.forEach { moveMerging(it, File(gameDir, it.name)) }
+        } finally {
+            staging.deleteRecursively()
+        }
+
+        onProgress(InstallProgress.Done(name))
     }
 
     fun uninstall(localMod: LocalMod) {
         val failed = localMod.files.filterNot { it.deleteRecursively() }
         if (failed.isNotEmpty()) {
             throw ModInstallException("Failed to delete ${failed.joinToString { "'${it.name}'" }}.")
+        }
+    }
+
+    /** Downloads [url], verifying it against [sha256] unless that's null. */
+    private fun download(
+        name: String,
+        url: String,
+        sha256: String?,
+        onProgress: (InstallProgress) -> Unit,
+    ): ByteArray {
+        val request = Request.Builder().url(url).build()
+        val data =
+            httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    throw ModInstallException("Failed to download '$name': HTTP ${response.code}")
+                }
+                val body = response.body ?: throw ModInstallException("Empty response downloading '$name'")
+                val total = body.contentLength()
+                downloadWithProgress(body.byteStream(), total) { read ->
+                    onProgress(InstallProgress.Downloading(name, read, total))
+                }
+            }
+        if (sha256 != null && !verifySha256(data, sha256)) {
+            throw ModInstallException("Downloaded file for '$name' failed checksum verification.")
+        }
+        return data
+    }
+
+    /** The folder every entry of the zip [data] lives in, or null if there's more than one top-level entry. */
+    private fun singleTopLevelDir(data: ByteArray): String? {
+        var top: String? = null
+        ZipInputStream(data.inputStream()).use { zip ->
+            var entry = zip.nextEntry
+            while (entry != null) {
+                if (!entry.name.contains('/')) return null
+                val first = entry.name.substringBefore('/')
+                if (top != null && top != first) return null
+                top = first
+                entry = zip.nextEntry
+            }
+        }
+        return top
+    }
+
+    /** Moves [source] to [target], merging directories into existing ones and replacing files. */
+    private fun moveMerging(
+        source: File,
+        target: File,
+    ) {
+        if (source.isDirectory && target.isDirectory) {
+            source.listFiles()?.forEach { moveMerging(it, File(target, it.name)) }
+            return
+        }
+        if (target.exists() && !target.deleteRecursively()) {
+            throw ModInstallException("Failed to replace '${target.name}'.")
+        }
+        if (!source.renameTo(target)) {
+            throw ModInstallException("Failed to move '${source.name}' into place.")
         }
     }
 

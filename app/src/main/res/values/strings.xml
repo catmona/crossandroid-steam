@@ -48,9 +48,13 @@
     <string name="mod_browser_tab_browse">Browse</string>
     <string name="mod_browser_tab_installed">Installed (%1$d)</string>
     <string name="mod_browser_loading">Loading mod database…</string>
-    <string name="mod_browser_load_error">Failed to load the mod database. Check your internet connection.</string>
+    <string name="mod_browser_load_error">Failed to load mod information. Check your internet connection.</string>
     <string name="mod_browser_retry">Retry</string>
-    <string name="mod_browser_empty">No game folder with a supported modloader found. Import your game folder first.</string>
+    <string name="mod_browser_empty">No game folder found. Import your game folder first.</string>
+    <string name="modloader_missing">Mods need a modloader, and none is installed. Pick one to install:</string>
+    <string name="modloader_install">Install %1$s (%2$s)</string>
+    <string name="modloader_unsupported">%1$s can\'t be installed by this version of the app. Update the app.</string>
+    <string name="modloader_install_verify_failed">Install reported success but %1$s isn\'t detected in the game folder afterward.</string>
     <string name="mod_install">Install</string>
     <string name="mod_update">Update</string>
     <string name="mod_uninstall">Uninstall</string>
