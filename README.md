@@ -2,6 +2,8 @@
 
 [![Discord](https://img.shields.io/discord/382339402338402315?label=Discord&logo=discord)](https://discord.gg/3Xw69VjXfW)
 
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://gitlab.com/rumpnisse/CrossAndroid)
+
 Welcome to CrossAndroid! This is an app that allows you to play
 CrossCode on your Android device.
 
