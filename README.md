@@ -21,7 +21,7 @@ Help improve the app by reporting bugs or making
 suggestions for improvements.
 
 ## Credits
-Pixelart by Ichiki Hayaite aka TheSparkstarScope
+Main parts of CrossAndroid made by Namnodorel, Pixelart by Ichiki Hayaite aka TheSparkstarScope
 
 ## Getting the app
 Install the latest APK, then follow the [setup guide](SETUP.md) to copy the game files to your device.
