@@ -24,14 +24,6 @@
             app:iconSpaceReserved="false"
             app:widgetLayout="@layout/pref_widget_material_switch"
             android:defaultValue="true"
-            android:key="hardware_acceleration"
-            android:summary="@string/hardware_acceleration_summary"
-            android:title="@string/hardware_acceleration_title" />
-
-        <SwitchPreferenceCompat
-            app:iconSpaceReserved="false"
-            app:widgetLayout="@layout/pref_widget_material_switch"
-            android:defaultValue="true"
             android:key="pixelated_scaling"
             android:summary="@string/pixelated_scaling_summary"
             android:title="@string/pixelated_scaling_title" />

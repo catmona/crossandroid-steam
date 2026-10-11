@@ -17,6 +17,8 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.webkit.ServiceWorkerClientCompat
 import androidx.webkit.ServiceWorkerControllerCompat
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import de.radicalfishgames.crosscode.BuildConfig
 import de.radicalfishgames.crosscode.features.Feature
 import java.util.LinkedList
@@ -25,7 +27,6 @@ class GameWrapper(
     private val webView: WebView,
     val modLoaderPresent: Boolean,
     val gameFolderManager: GameFolderManager,
-    private val hardwareAcceleration: Boolean = true,
     private val pixelatedScaling: Boolean = false,
 ) {
     val features = LinkedList<Feature>()
@@ -69,6 +70,39 @@ class GameWrapper(
         }
 
         webView.webViewClient = webViewClient
+
+        // Font fix: ig.Font._loadMetrics finds glyph boundaries by reading alpha=0 separator pixels
+        // with getImageData. On some WebViews (e.g. Chrome 109 on Adreno) drawing an image into a
+        // GPU-backed canvas shifts alpha by 1-2 (0 becomes 1), so boundaries are missed and the
+        // wrong glyphs are drawn. Make only the canvases created during _loadMetrics CPU-backed.
+        // Injected at document start, before the game defines ig.Font.
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+            WebViewCompat.addDocumentStartJavaScript(
+                webView,
+                """(function(){
+                    function patch(Font){
+                        var loadMetrics=Font.prototype._loadMetrics;
+                        Font.prototype._loadMetrics=function(){
+                            var proto=HTMLCanvasElement.prototype,getContext=proto.getContext;
+                            proto.getContext=function(type,attrs){
+                                if(type==='2d') attrs=Object.assign({willReadFrequently:true},attrs);
+                                return getContext.call(this,type,attrs);
+                            };
+                            try{return loadMetrics.apply(this,arguments);}finally{proto.getContext=getContext;}
+                        };
+                    }
+                    // Run onSet the first time obj[key] is assigned, then make it a plain property again
+                    function onAssign(obj,key,onSet){
+                        Object.defineProperty(obj,key,{configurable:true,set:function(v){
+                            Object.defineProperty(obj,key,{value:v,writable:true,enumerable:true,configurable:true});
+                            onSet(v);
+                        }});
+                    }
+                    onAssign(window,'ig',function(ig){onAssign(ig,'Font',patch);});
+                })();""",
+                setOf("*"),
+            )
+        }
 
         // Service worker fetches (used by CCLoader3) bypass the WebViewClient, so route them to it.
         ServiceWorkerControllerCompat.getInstance().setServiceWorkerClient(
@@ -127,22 +161,6 @@ class GameWrapper(
 
     fun onPageLoaded() {
         Log.d("CrossCode", "Game page loaded.")
-
-        // Font fix, applied when the hardware acceleration setting is off: force CPU-backed 2D
-        // canvases via willReadFrequently. GPU canvases corrupt alpha in getImageData (breaking
-        // _loadMetrics glyph boundary detection) and bilinear-filter drawImage at non-integer
-        // source coords despite imageSmoothingEnabled=false (blurring _drawChar).
-        if (!hardwareAcceleration) {
-            runJS(
-                """(function(){
-                    var orig=HTMLCanvasElement.prototype.getContext;
-                    HTMLCanvasElement.prototype.getContext=function(type,attrs){
-                        if(type==='2d') attrs=Object.assign({willReadFrequently:true},attrs||{});
-                        return orig.call(this,type,attrs);
-                    };
-                })();""",
-            )
-        }
 
         // Smooth frame pacing: ig.Timer.step uses Date.now(), which jitters by several ms per frame
         // in WebView, so scrolling stutters even at a steady 60 fps. Drive the game clock from the

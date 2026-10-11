@@ -92,9 +92,8 @@ class GameActivity : AppCompatActivity() {
 
         Log.d("CrossCode", "Game entry point: $gameEntryPoint Attempting to load.")
 
-        val hardwareAcceleration = preferences.getBoolean("hardware_acceleration", true)
         val pixelatedScaling = preferences.getBoolean("pixelated_scaling", false)
-        gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager, hardwareAcceleration, pixelatedScaling)
+        gameWrapper = GameWrapper(binding.gameView, modLoaderPresent, gameFolderManager, pixelatedScaling)
         gameWrapper.initWebView()
 
         // Initialized in list order; some features depend on earlier ones

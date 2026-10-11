@@ -97,8 +97,6 @@
     <string name="pref_category_general">General</string>
     <string name="pref_category_graphics">Graphics</string>
     <string name="pref_category_overlay_controls">Overlay</string>
-    <string name="hardware_acceleration_title">Enable hardware acceleration</string>
-    <string name="hardware_acceleration_summary">Use GPU rendering for the game canvas.</string>
     <string name="pixelated_scaling_title">Sharp pixel scaling</string>
     <string name="pixelated_scaling_summary">Use nearest-neighbor scaling for sharp pixel art edges.</string>
 
