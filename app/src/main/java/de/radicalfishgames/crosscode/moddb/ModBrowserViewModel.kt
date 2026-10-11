@@ -178,7 +178,7 @@ class ModBrowserViewModel(
                         val verified =
                             installed != null &&
                                 (expectedVersion == null || VirtualPackages.readCcloaderVersion(gameFolderManager, installed) == expectedVersion)
-                        if (verified && previous?.flavor == flavor && previous.dir != installed?.dir) {
+                        if (verified && previous?.flavor == flavor && previous.dir != installed.dir) {
                             if (gameFolderManager.getFile(previous.dir)?.deleteRecursively() != true) {
                                 Log.w("CrossCode", "Failed to fully delete old modloader folder ${previous.dir}")
                             }
