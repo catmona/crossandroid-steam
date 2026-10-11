@@ -20,14 +20,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -70,6 +62,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -188,7 +181,7 @@ private fun ModBrowserScreen(
                 title = { Text(stringResource(R.string.mod_browser_title)) },
                 navigationIcon = {
                     IconButton(modifier = Modifier.focusRing(), onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
@@ -197,7 +190,7 @@ private fun ModBrowserScreen(
                         searchVisible = !searchVisible
                     }) {
                         Icon(
-                            if (searchVisible) Icons.Filled.Close else Icons.Filled.Search,
+                            painterResource(if (searchVisible) R.drawable.ic_close else R.drawable.ic_search),
                             contentDescription = stringResource(R.string.mod_browser_search_hint),
                         )
                     }
@@ -576,13 +569,13 @@ private fun ModRow(
             when {
                 localMod == null -> {
                     IconButton(modifier = Modifier.focusRing(), onClick = onInstall) {
-                        Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.mod_install))
+                        Icon(painterResource(R.drawable.ic_add), contentDescription = stringResource(R.string.mod_install))
                     }
                 }
 
                 hasUpdate -> {
                     IconButton(modifier = Modifier.focusRing(), onClick = onInstall) {
-                        Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.mod_update))
+                        Icon(painterResource(R.drawable.ic_refresh), contentDescription = stringResource(R.string.mod_update))
                     }
                 }
 
@@ -590,7 +583,7 @@ private fun ModRow(
                     // Matches IconButton's default 48dp touch target so it lines up with the other icon slots.
                     Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Filled.CheckCircle,
+                            painterResource(R.drawable.ic_check_circle),
                             contentDescription = stringResource(R.string.mod_installed),
                             tint = MaterialTheme.colorScheme.primary,
                         )
@@ -601,7 +594,7 @@ private fun ModRow(
 
             if (localMod != null) {
                 IconButton(modifier = Modifier.focusRing(), onClick = onUninstall) {
-                    Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.mod_uninstall))
+                    Icon(painterResource(R.drawable.ic_delete), contentDescription = stringResource(R.string.mod_uninstall))
                 }
             }
         }
