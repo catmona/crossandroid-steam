@@ -40,28 +40,18 @@ class DependencyResolver(
             depMods.entries.filter { it.key !in selectedIds }.mapNotNull { (id, mod) ->
                 val ranges = requiredRanges[id].orEmpty()
                 val local = localMods[id]
-                when {
-                    local != null && rangesSatisfied(local.version, ranges) -> {
-                        null
-                    }
+                if (local != null && rangesSatisfied(local.version, ranges)) return@mapNotNull null
 
-                    local != null -> {
-                        ResolvedMod(mod, InstallReason.UPDATE)
-                    }
-
-                    else -> {
-                        val dbVersion =
-                            mod.version.toVersionOrNull(strict = false)
-                                ?: throw DependencyResolutionException("Mod '${mod.id}' has an invalid version '${mod.version}'")
-                        if (!rangesSatisfied(dbVersion, ranges)) {
-                            val required = ranges.joinToString(", ")
-                            throw DependencyResolutionException(
-                                "Dependency '${mod.name}' version ${mod.version} does not satisfy required range(s): $required",
-                            )
-                        }
-                        ResolvedMod(mod, InstallReason.DEPENDENCY)
-                    }
+                val dbVersion =
+                    mod.version.toVersionOrNull(strict = false)
+                        ?: throw DependencyResolutionException("Mod '${mod.id}' has an invalid version '${mod.version}'")
+                if (!rangesSatisfied(dbVersion, ranges)) {
+                    val required = ranges.joinToString(", ")
+                    throw DependencyResolutionException(
+                        "Dependency '${mod.name}' version ${mod.version} does not satisfy required range(s): $required",
+                    )
                 }
+                ResolvedMod(mod, if (local != null) InstallReason.UPDATE else InstallReason.DEPENDENCY)
             }
 
         val resolvedSelected =
@@ -87,6 +77,18 @@ class DependencyResolver(
                 if (!versionSatisfies(virtualVersion, range)) {
                     throw DependencyResolutionException(
                         "'${mod.name}' requires $depId $range, but the installed version is $virtualVersion",
+                    )
+                }
+                continue
+            }
+
+            // Installed by hand or dropped from the database: usable as-is if it's new enough
+            val local = localMods[depId]
+            if (database[depId] == null && local != null) {
+                if (!versionSatisfies(local.version, range)) {
+                    throw DependencyResolutionException(
+                        "'${mod.name}' requires $depId $range, but the installed version is ${local.version} " +
+                            "and no update is in the mod database",
                     )
                 }
                 continue

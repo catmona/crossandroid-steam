@@ -45,7 +45,7 @@ class ModDatabaseClient(
         val dependencies = mutableMapOf<String, String>()
         metadata.optJSONObject("dependencies")?.let { deps ->
             for (depId in deps.keys()) {
-                dependencies[depId] = deps.getString(depId)
+                deps.optString(depId).takeIf { it.isNotEmpty() }?.let { dependencies[depId] = it }
             }
         }
 
@@ -58,7 +58,7 @@ class ModDatabaseClient(
         raw.optJSONArray("installation")?.let { arr ->
             for (i in 0 until arr.length()) {
                 val inst = arr.optJSONObject(i) ?: continue
-                val sha256 = inst.optJSONObject("hash")?.optString("sha256") ?: continue
+                val sha256 = inst.optJSONObject("hash")?.optString("sha256")?.takeIf { it.isNotEmpty() } ?: continue
                 installations.add(
                     ModInstallation(
                         type = inst.optString("type"),

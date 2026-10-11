@@ -47,8 +47,11 @@ object VirtualPackages {
             }
         }
 
-        for ((id, version) in FIXED_VERSIONS) {
-            version.toVersionOrNull(strict = false)?.let { result[id] = it }
+        // CCLoader2 bundles none of these as virtual packages; there they're ordinary mods
+        if (loader.flavor == ModLoaderFlavor.CCLOADER3) {
+            for ((id, version) in FIXED_VERSIONS) {
+                version.toVersionOrNull(strict = false)?.let { result[id] = it }
+            }
         }
 
         return result

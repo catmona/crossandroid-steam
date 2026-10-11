@@ -265,7 +265,7 @@ private fun BrowseList(
 ) {
     val filtered =
         loaded.database.values
-            .filter { mod -> mod.id !in loaded.localMods }
+            .filter { mod -> mod.id !in loaded.localMods && mod.id !in loaded.virtualPackages }
             .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
             .sortedBy { it.name.lowercase() }
     LazyColumn(modifier = Modifier.fillMaxSize()) {
@@ -285,7 +285,7 @@ private fun InstalledList(
 ) {
     val installed =
         loaded.localMods.values
-            .filter { local -> matchesSearch(searchQuery, local.id) }
+            .filter { local -> matchesSearch(searchQuery, local.id, loaded.database[local.id]?.name.orEmpty()) }
             .map { local -> local to hasUpdateAvailable(local, loaded.database[local.id]) }
             .sortedWith(
                 compareByDescending<Pair<LocalMod, Boolean>> { it.second }
