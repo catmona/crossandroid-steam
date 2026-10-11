@@ -12,6 +12,7 @@ import android.os.Handler
 import android.os.Looper
 import android.text.format.Formatter
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -90,7 +91,7 @@ class LaunchActivity : AppCompatActivity() {
         }
 
         binding.browseModsButton.setOnClickListener {
-            launchModBrowserActivity()
+            launchModBrowserActivity(fromController = !it.isInTouchMode)
         }
     }
 
@@ -100,6 +101,17 @@ class LaunchActivity : AppCompatActivity() {
         handler.post {
             tryToAccessInstance()
         }
+    }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_BUTTON_START && binding.launchButton.isEnabled) {
+            launchGameActivity()
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
     }
 
     private fun tryToAccessInstance(showDialogOnFailure: Boolean = false) {
@@ -354,8 +366,8 @@ class LaunchActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-    private fun launchModBrowserActivity() {
-        val intent = Intent(this, ModBrowserActivity::class.java)
+    private fun launchModBrowserActivity(fromController: Boolean) {
+        val intent = Intent(this, ModBrowserActivity::class.java).putExtra(ModBrowserActivity.EXTRA_FROM_CONTROLLER, fromController)
         startActivity(intent)
     }
 

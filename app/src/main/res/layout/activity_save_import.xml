@@ -39,7 +39,7 @@
 
         <Button
             android:id="@+id/import_string_button"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/Widget.App.Button.TonalButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
@@ -52,7 +52,7 @@
 
         <Button
             android:id="@+id/import_files_button"
-            style="@style/Widget.Material3.Button.TonalButton"
+            style="@style/Widget.App.Button.TonalButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

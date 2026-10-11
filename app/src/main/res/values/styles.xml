@@ -23,10 +23,32 @@
         <item name="android:colorBackground">@color/colorSurface</item>
         <item name="android:statusBarColor">@color/colorSurface</item>
         <item name="android:navigationBarColor">@color/colorSurface</item>
+        <item name="materialButtonStyle">@style/Widget.App.Button</item>
+    </style>
+
+    <!-- Buttons with a visible focus outline for controller/D-pad users -->
+    <style name="Widget.App.Button" parent="Widget.Material3.Button">
+        <item name="strokeColor">@color/button_focus_stroke</item>
+        <item name="strokeWidth">3dp</item>
+    </style>
+
+    <style name="Widget.App.Button.TonalButton" parent="Widget.Material3.Button.TonalButton">
+        <item name="strokeColor">@color/button_focus_stroke</item>
+        <item name="strokeWidth">3dp</item>
+    </style>
+
+    <style name="Widget.App.Button.TextButton" parent="Widget.Material3.Button.TextButton">
+        <item name="strokeColor">@color/button_focus_stroke</item>
+        <item name="strokeWidth">3dp</item>
+    </style>
+
+    <style name="Widget.App.Button.IconButton" parent="Widget.Material3.Button.IconButton">
+        <item name="strokeColor">@color/button_focus_stroke</item>
+        <item name="strokeWidth">3dp</item>
     </style>
 
     <!-- Dialog whose positive button is a filled button instead of a text button -->
     <style name="ThemeOverlay.App.Dialog.FilledPositive" parent="ThemeOverlay.Material3.MaterialAlertDialog">
-        <item name="buttonBarPositiveButtonStyle">@style/Widget.Material3.Button</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.App.Button</item>
     </style>
 </resources>

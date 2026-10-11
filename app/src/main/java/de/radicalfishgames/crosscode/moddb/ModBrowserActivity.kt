@@ -2,10 +2,12 @@ package de.radicalfishgames.crosscode.moddb
 
 import android.os.Bundle
 import android.text.format.Formatter
+import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +16,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -48,18 +53,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.InputMode
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.appColorScheme
 import io.github.z4kn4fein.semver.toVersionOrNull
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 class ModBrowserActivity : AppCompatActivity() {
     private val viewModel: ModBrowserViewModel by viewModels()
+
+    // Shoulder buttons are caught here rather than in Compose so they work even when nothing has focus.
+    private val shoulderButtons = MutableSharedFlow<Int>(extraBufferCapacity = 1)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,11 +91,31 @@ class ModBrowserActivity : AppCompatActivity() {
 
         setContent {
             MaterialTheme(colorScheme = appColorScheme()) {
-                ModBrowserScreen(viewModel = viewModel, onBack = { finish() })
+                ModBrowserScreen(
+                    viewModel = viewModel,
+                    shoulderButtons = shoulderButtons,
+                    fromController = intent.getBooleanExtra(EXTRA_FROM_CONTROLLER, false),
+                    onBack = { finish() },
+                )
             }
         }
     }
+
+    override fun onKeyDown(
+        keyCode: Int,
+        event: KeyEvent,
+    ): Boolean {
+        if (keyCode in SHOULDER_BUTTONS && shoulderButtons.tryEmit(keyCode)) return true
+        return super.onKeyDown(keyCode, event)
+    }
+
+    companion object {
+        const val EXTRA_FROM_CONTROLLER = "from_controller"
+    }
 }
+
+private val SHOULDER_BUTTONS =
+    setOf(KeyEvent.KEYCODE_BUTTON_L1, KeyEvent.KEYCODE_BUTTON_R1, KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2)
 
 private enum class BrowserTab { INSTALLED, BROWSE }
 
@@ -79,6 +123,8 @@ private enum class BrowserTab { INSTALLED, BROWSE }
 @Composable
 private fun ModBrowserScreen(
     viewModel: ModBrowserViewModel,
+    shoulderButtons: Flow<Int>,
+    fromController: Boolean,
     onBack: () -> Unit,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -86,9 +132,53 @@ private fun ModBrowserScreen(
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var selectedTab by rememberSaveable { mutableStateOf(BrowserTab.INSTALLED) }
     var pendingUninstall by remember { mutableStateOf<LocalMod?>(null) }
+    val installedListState = rememberLazyListState()
+    val browseListState = rememberLazyListState()
+    val listFocus = remember { FocusRequester() }
+    var listHasFocus by remember { mutableStateOf(false) }
+    val listModifier = Modifier.focusRequester(listFocus).onFocusChanged { listHasFocus = it.hasFocus }
+    val focusManager = LocalFocusManager.current
+    val inputModeManager = LocalInputModeManager.current
+
+    // List buttons can't take focus in touch mode, which new windows start in even when opened with a controller.
+    suspend fun focusFirstRow() {
+        inputModeManager.requestInputMode(InputMode.Keyboard)
+        withFrameNanos {} // let the list lay out its rows first
+        listFocus.requestFocus()
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    LaunchedEffect(shoulderButtons) {
+        shoulderButtons.collect { keyCode ->
+            if (viewModel.state !is ScreenState.Loaded) return@collect
+            // Shoulder buttons don't leave touch mode by themselves, unlike the D-pad.
+            inputModeManager.requestInputMode(InputMode.Keyboard)
+            when (keyCode) {
+                KeyEvent.KEYCODE_BUTTON_L1 -> {
+                    selectedTab = BrowserTab.entries[(selectedTab.ordinal - 1).coerceAtLeast(0)]
+                }
+
+                KeyEvent.KEYCODE_BUTTON_R1 -> {
+                    selectedTab = BrowserTab.entries[(selectedTab.ordinal + 1).coerceAtMost(BrowserTab.entries.lastIndex)]
+                }
+
+                else -> {
+                    val listState = if (selectedTab == BrowserTab.INSTALLED) installedListState else browseListState
+                    val pageUp = keyCode == KeyEvent.KEYCODE_BUTTON_L2
+                    if (if (pageUp) !listState.canScrollBackward else !listState.canScrollForward) return@collect
+                    // The last visible row is usually cut off, so it starts the next page.
+                    val pageSize = (listState.layoutInfo.visibleItemsInfo.size - 1).coerceAtLeast(1)
+                    val first = listState.firstVisibleItemIndex
+                    // Clearing first unpins the focused row, so the list's first child is the first visible row again.
+                    focusManager.clearFocus()
+                    listState.scrollToItem(if (pageUp) (first - pageSize).coerceAtLeast(0) else first + pageSize)
+                    focusFirstRow()
+                }
+            }
+        }
     }
 
     Scaffold(
@@ -97,12 +187,12 @@ private fun ModBrowserScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.mod_browser_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(modifier = Modifier.focusRing(), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
+                    IconButton(modifier = Modifier.focusRing(), onClick = {
                         if (searchVisible) searchQuery = ""
                         searchVisible = !searchVisible
                     }) {
@@ -161,14 +251,38 @@ private fun ModBrowserScreen(
                 }
 
                 is ScreenState.Loaded -> {
+                    // Gives controller users a starting point.
+                    LaunchedEffect(Unit) { if (fromController) focusFirstRow() }
+                    // Switching tabs or (un)installing removes the focused row, and Compose then moves focus to the
+                    // back arrow. Bring it back to the list instead.
+                    LaunchedEffect(selectedTab, current.localMods) {
+                        if (inputModeManager.inputMode == InputMode.Keyboard && !listHasFocus) focusFirstRow()
+                    }
                     Column(modifier = Modifier.fillMaxSize()) {
                         if (searchVisible) {
+                            // Focus the field right away; D-pad focus search skips it otherwise.
+                            val searchFocus = remember { FocusRequester() }
+                            LaunchedEffect(Unit) { searchFocus.requestFocus() }
                             OutlinedTextField(
                                 value = searchQuery,
                                 onValueChange = { searchQuery = it },
                                 label = { Text(stringResource(R.string.mod_browser_search_hint)) },
                                 singleLine = true,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        .focusRequester(searchFocus)
+                                        // A single-line field has no use for up/down but would otherwise keep D-pad focus.
+                                        .onPreviewKeyEvent {
+                                            val direction =
+                                                when (it.key) {
+                                                    Key.DirectionDown -> FocusDirection.Down
+                                                    Key.DirectionUp -> FocusDirection.Up
+                                                    else -> null
+                                                }
+                                            direction != null && it.type == KeyEventType.KeyDown && focusManager.moveFocus(direction)
+                                        },
                             )
                         }
                         SecondaryTabRow(selectedTabIndex = selectedTab.ordinal) {
@@ -186,13 +300,21 @@ private fun ModBrowserScreen(
 
                         when (selectedTab) {
                             BrowserTab.BROWSE -> {
-                                BrowseList(current, searchQuery, onInstall = viewModel::requestInstall)
+                                BrowseList(
+                                    current,
+                                    searchQuery,
+                                    browseListState,
+                                    listModifier,
+                                    onInstall = viewModel::requestInstall,
+                                )
                             }
 
                             BrowserTab.INSTALLED -> {
                                 InstalledList(
                                     current,
                                     searchQuery,
+                                    installedListState,
+                                    listModifier,
                                     onInstall = viewModel::requestInstall,
                                     onUninstall = { pendingUninstall = it },
                                 )
@@ -261,6 +383,8 @@ private fun ModBrowserScreen(
 private fun BrowseList(
     loaded: ScreenState.Loaded,
     searchQuery: String,
+    listState: LazyListState,
+    modifier: Modifier,
     onInstall: (ModDbEntry) -> Unit,
 ) {
     val filtered =
@@ -268,7 +392,7 @@ private fun BrowseList(
             .filter { mod -> mod.id !in loaded.localMods && mod.id !in loaded.virtualPackages }
             .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
             .sortedBy { it.name.lowercase() }
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         items(filtered, key = { it.id }) { mod ->
             ModRow(dbEntry = mod, localMod = null, hasUpdate = false, onInstall = { onInstall(mod) }, onUninstall = {})
         }
@@ -280,6 +404,8 @@ private fun BrowseList(
 private fun InstalledList(
     loaded: ScreenState.Loaded,
     searchQuery: String,
+    listState: LazyListState,
+    modifier: Modifier,
     onInstall: (ModDbEntry) -> Unit,
     onUninstall: (LocalMod) -> Unit,
 ) {
@@ -291,7 +417,7 @@ private fun InstalledList(
                 compareByDescending<Pair<LocalMod, Boolean>> { it.second }
                     .thenBy { (local, _) -> (loaded.database[local.id]?.name ?: local.id).lowercase() },
             )
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         items(installed, key = { it.first.id }) { (local, hasUpdate) ->
             val dbEntry = loaded.database[local.id]
             ModRow(
@@ -359,6 +485,14 @@ private fun InstallProgressDialog(run: InstallRun) {
         },
         confirmButton = {},
     )
+}
+
+/** The default focus tint is too faint to spot on a TV or handheld, so outline focused buttons too. */
+@Composable
+private fun Modifier.focusRing(): Modifier {
+    var focused by remember { mutableStateOf(false) }
+    val color = if (focused) MaterialTheme.colorScheme.onSurface else Color.Transparent
+    return onFocusChanged { focused = it.isFocused }.border(2.dp, color, CircleShape)
 }
 
 private fun matchesSearch(
@@ -441,13 +575,13 @@ private fun ModRow(
 
             when {
                 localMod == null -> {
-                    IconButton(onClick = onInstall) {
+                    IconButton(modifier = Modifier.focusRing(), onClick = onInstall) {
                         Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.mod_install))
                     }
                 }
 
                 hasUpdate -> {
-                    IconButton(onClick = onInstall) {
+                    IconButton(modifier = Modifier.focusRing(), onClick = onInstall) {
                         Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.mod_update))
                     }
                 }
@@ -466,7 +600,7 @@ private fun ModRow(
             }
 
             if (localMod != null) {
-                IconButton(onClick = onUninstall) {
+                IconButton(modifier = Modifier.focusRing(), onClick = onUninstall) {
                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.mod_uninstall))
                 }
             }
