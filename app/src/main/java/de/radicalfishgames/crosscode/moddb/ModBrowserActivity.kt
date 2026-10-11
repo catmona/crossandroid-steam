@@ -6,6 +6,7 @@ import android.view.KeyEvent
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -112,6 +115,14 @@ private val SHOULDER_BUTTONS =
 
 private enum class BrowserTab { INSTALLED, BROWSE }
 
+private enum class ModSort(
+    @param:StringRes val labelId: Int,
+) {
+    NAME(R.string.mod_browser_sort_name),
+    STARS(R.string.mod_browser_sort_stars),
+    UPDATED(R.string.mod_browser_sort_updated),
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ModBrowserScreen(
@@ -124,6 +135,8 @@ private fun ModBrowserScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
     var selectedTab by rememberSaveable { mutableStateOf(BrowserTab.INSTALLED) }
+    var sort by rememberSaveable { mutableStateOf(ModSort.NAME) }
+    var sortMenuOpen by remember { mutableStateOf(false) }
     var pendingUninstall by remember { mutableStateOf<LocalMod?>(null) }
     val installedListState = rememberLazyListState()
     val browseListState = rememberLazyListState()
@@ -193,6 +206,28 @@ private fun ModBrowserScreen(
                             painterResource(if (searchVisible) R.drawable.ic_close else R.drawable.ic_search),
                             contentDescription = stringResource(R.string.mod_browser_search_hint),
                         )
+                    }
+                    Box {
+                        IconButton(modifier = Modifier.focusRing(), onClick = { sortMenuOpen = true }) {
+                            Icon(painterResource(R.drawable.ic_sort), contentDescription = stringResource(R.string.mod_browser_sort))
+                        }
+                        DropdownMenu(expanded = sortMenuOpen, onDismissRequest = { sortMenuOpen = false }) {
+                            for (option in ModSort.entries) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(option.labelId)) },
+                                    onClick = {
+                                        sort = option
+                                        sortMenuOpen = false
+                                        // Keyed lists otherwise stay on the previously first visible mod, now somewhere mid-list.
+                                        installedListState.requestScrollToItem(0)
+                                        browseListState.requestScrollToItem(0)
+                                    },
+                                    trailingIcon = {
+                                        if (option == sort) Icon(painterResource(R.drawable.ic_check), contentDescription = null)
+                                    },
+                                )
+                            }
+                        }
                     }
                 },
             )
@@ -296,6 +331,7 @@ private fun ModBrowserScreen(
                                 BrowseList(
                                     current,
                                     searchQuery,
+                                    sort,
                                     browseListState,
                                     listModifier,
                                     onInstall = viewModel::requestInstall,
@@ -306,6 +342,7 @@ private fun ModBrowserScreen(
                                 InstalledList(
                                     current,
                                     searchQuery,
+                                    sort,
                                     installedListState,
                                     listModifier,
                                     onInstall = viewModel::requestInstall,
@@ -371,11 +408,12 @@ private fun ModBrowserScreen(
     }
 }
 
-/** Mods from the database that aren't installed yet, alphabetically. */
+/** Mods from the database that aren't installed yet, in [sort] order. */
 @Composable
 private fun BrowseList(
     loaded: ScreenState.Loaded,
     searchQuery: String,
+    sort: ModSort,
     listState: LazyListState,
     modifier: Modifier,
     onInstall: (ModDbEntry) -> Unit,
@@ -384,7 +422,7 @@ private fun BrowseList(
         loaded.database.values
             .filter { mod -> mod.id !in loaded.localMods && mod.id !in loaded.virtualPackages }
             .filter { mod -> matchesSearch(searchQuery, mod.name, mod.description, mod.tags) }
-            .sortedBy { it.name.lowercase() }
+            .sortedWith(modComparator(sort, name = { it.name }, dbEntry = { it }))
     LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         items(filtered, key = { it.id }) { mod ->
             ModRow(dbEntry = mod, localMod = null, hasUpdate = false, onInstall = { onInstall(mod) }, onUninstall = {})
@@ -392,11 +430,12 @@ private fun BrowseList(
     }
 }
 
-/** Installed mods, those with an update first. */
+/** Installed mods, those with an update first, then in [sort] order. */
 @Composable
 private fun InstalledList(
     loaded: ScreenState.Loaded,
     searchQuery: String,
+    sort: ModSort,
     listState: LazyListState,
     modifier: Modifier,
     onInstall: (ModDbEntry) -> Unit,
@@ -408,7 +447,13 @@ private fun InstalledList(
             .map { local -> local to hasUpdateAvailable(local, loaded.database[local.id]) }
             .sortedWith(
                 compareByDescending<Pair<LocalMod, Boolean>> { it.second }
-                    .thenBy { (local, _) -> (loaded.database[local.id]?.name ?: local.id).lowercase() },
+                    .then(
+                        modComparator(
+                            sort,
+                            name = { (local, _) -> loaded.database[local.id]?.name ?: local.id },
+                            dbEntry = { (local, _) -> loaded.database[local.id] },
+                        ),
+                    ),
             )
     LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         items(installed, key = { it.first.id }) { (local, hasUpdate) ->
@@ -486,6 +531,20 @@ private fun Modifier.focusRing(): Modifier {
     var focused by remember { mutableStateOf(false) }
     val color = if (focused) MaterialTheme.colorScheme.onSurface else Color.Transparent
     return onFocusChanged { focused = it.isFocused }.border(2.dp, color, CircleShape)
+}
+
+/** Orders by [sort], then by name. Mods missing from the database ([dbEntry] null) go last for stars and update time. */
+private fun <T> modComparator(
+    sort: ModSort,
+    name: (T) -> String,
+    dbEntry: (T) -> ModDbEntry?,
+): Comparator<T> {
+    val byName = compareBy<T> { name(it).lowercase() }
+    return when (sort) {
+        ModSort.NAME -> byName
+        ModSort.STARS -> compareByDescending<T> { dbEntry(it)?.stars ?: -1 }.then(byName)
+        ModSort.UPDATED -> compareByDescending<T> { dbEntry(it)?.lastUpdateTimestamp ?: -1L }.then(byName)
+    }
 }
 
 private fun matchesSearch(

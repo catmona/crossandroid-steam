@@ -11,6 +11,8 @@ data class ModDbEntry(
     val dependencies: Map<String, String>,
     val tags: List<String>,
     val stars: Int,
+    /** Epoch millis of the latest release. */
+    val lastUpdateTimestamp: Long,
     val installation: List<ModInstallation>,
 )
 

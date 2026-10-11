@@ -79,6 +79,7 @@ class ModDatabaseClient(
             dependencies = dependencies,
             tags = tags,
             stars = raw.optInt("stars"),
+            lastUpdateTimestamp = raw.optLong("lastUpdateTimestamp"),
             installation = installations,
         )
     }

@@ -45,6 +45,10 @@
     <!-- ModBrowserActivity -->
     <string name="mod_browser_title">Mods</string>
     <string name="mod_browser_search_hint">Search mods</string>
+    <string name="mod_browser_sort">Sort mods</string>
+    <string name="mod_browser_sort_name">Name</string>
+    <string name="mod_browser_sort_stars">Most stars</string>
+    <string name="mod_browser_sort_updated">Recently updated</string>
     <string name="mod_browser_tab_browse">Browse</string>
     <string name="mod_browser_tab_installed">Installed (%1$d)</string>
     <string name="mod_browser_loading">Loading mod database…</string>
