@@ -1,7 +1,6 @@
 package de.radicalfishgames.crosscode
 
 import android.content.Context
-import android.os.Build
 import android.os.storage.StorageManager
 import java.io.File
 
@@ -37,14 +36,12 @@ class GameFolderManager(
 
     /** Human-readable name of the volume [dir] lives on, e.g. "Internal shared storage" or "SD card". */
     fun getVolumeLabel(dir: File): String {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            val label =
-                context
-                    .getSystemService(StorageManager::class.java)
-                    ?.getStorageVolume(dir)
-                    ?.getDescription(context)
-            if (!label.isNullOrBlank()) return label
-        }
+        val label =
+            context
+                .getSystemService(StorageManager::class.java)
+                ?.getStorageVolume(dir)
+                ?.getDescription(context)
+        if (!label.isNullOrBlank()) return label
         return if (dir.absolutePath.startsWith("/storage/emulated/")) "Internal storage" else "SD card"
     }
 
