@@ -69,7 +69,7 @@ class ModLoaderReleases(
     private fun get(url: String): String {
         httpClient.newCall(Request.Builder().url(url).build()).execute().use { response ->
             if (!response.isSuccessful) throw IOException("Failed to fetch $url: HTTP ${response.code}")
-            return response.body?.string() ?: throw IOException("Empty response from $url")
+            return response.body.string()
         }
     }
 

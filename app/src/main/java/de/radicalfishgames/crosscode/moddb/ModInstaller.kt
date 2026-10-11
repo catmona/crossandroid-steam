@@ -149,7 +149,7 @@ class ModInstaller(
                 if (!response.isSuccessful) {
                     throw ModInstallException("Failed to download '$name': HTTP ${response.code}")
                 }
-                val body = response.body ?: throw ModInstallException("Empty response downloading '$name'")
+                val body = response.body
                 val total = body.contentLength()
                 downloadWithProgress(body.byteStream(), total) { read ->
                     onProgress(InstallProgress.Downloading(name, read, total))

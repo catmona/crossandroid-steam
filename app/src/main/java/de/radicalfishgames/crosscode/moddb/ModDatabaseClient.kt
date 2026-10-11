@@ -19,7 +19,7 @@ class ModDatabaseClient(
             if (!response.isSuccessful) {
                 throw IOException("Failed to fetch mod database: HTTP ${response.code}")
             }
-            val body = response.body?.string() ?: throw IOException("Empty mod database response")
+            val body = response.body.string()
             return parseDatabase(body)
         }
     }
