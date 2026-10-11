@@ -226,6 +226,22 @@ private fun ModBrowserScreen(
         )
     }
 
+    viewModel.loaderUpdate?.let { update ->
+        AlertDialog(
+            onDismissRequest = viewModel::dismissLoaderUpdate,
+            title = { Text(stringResource(R.string.modloader_update_title)) },
+            text = {
+                Text(stringResource(R.string.modloader_update_message, update.flavor.displayName, update.release.version, update.installed))
+            },
+            confirmButton = {
+                TextButton(onClick = viewModel::confirmLoaderUpdate) { Text(stringResource(R.string.modloader_update_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissLoaderUpdate) { Text(stringResource(R.string.modloader_update_later)) }
+            },
+        )
+    }
+
     viewModel.installRun?.let { InstallProgressDialog(it) }
 
     viewModel.error?.let { error ->

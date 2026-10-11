@@ -67,7 +67,7 @@ object VirtualPackages {
         }
     }
 
-    private fun readCcloaderVersion(
+    fun readCcloaderVersion(
         gameFolderManager: GameFolderManager,
         loader: ModLoader,
     ): Version? =

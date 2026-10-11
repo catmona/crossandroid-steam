@@ -55,6 +55,10 @@
     <string name="modloader_install">Install %1$s (%2$s)</string>
     <string name="modloader_unsupported">%1$s can\'t be installed by this version of the app. Update the app.</string>
     <string name="modloader_install_verify_failed">Install reported success but %1$s isn\'t detected in the game folder afterward.</string>
+    <string name="modloader_update_title">Modloader update</string>
+    <string name="modloader_update_message">%1$s %2$s is available (installed: %3$s). Update now?</string>
+    <string name="modloader_update_confirm">Update</string>
+    <string name="modloader_update_later">Later</string>
     <string name="mod_install">Install</string>
     <string name="mod_update">Update</string>
     <string name="mod_uninstall">Uninstall</string>

@@ -1,6 +1,7 @@
 package de.radicalfishgames.crosscode.moddb
 
 import android.app.Application
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,6 +12,7 @@ import de.radicalfishgames.crosscode.GameFolderManager
 import de.radicalfishgames.crosscode.ModLoaderFlavor
 import de.radicalfishgames.crosscode.R
 import io.github.z4kn4fein.semver.Version
+import io.github.z4kn4fein.semver.toVersionOrNull
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +45,12 @@ sealed class ScreenState {
 data class PendingInstall(
     val target: ModDbEntry,
     val resolved: List<ResolvedMod>,
+)
+
+data class LoaderUpdate(
+    val flavor: ModLoaderFlavor,
+    val installed: Version,
+    val release: LoaderRelease,
 )
 
 data class ErrorMessage(
@@ -81,6 +89,10 @@ class ModBrowserViewModel(
     var error by mutableStateOf<ErrorMessage?>(null)
         private set
 
+    /** Set when a newer release of the installed modloader is available, so the user can choose to update. */
+    var loaderUpdate by mutableStateOf<LoaderUpdate?>(null)
+        private set
+
     private val messageChannel = Channel<String>(Channel.BUFFERED)
 
     /** One-off success messages for a snackbar. */
@@ -110,17 +122,70 @@ class ModBrowserViewModel(
                 } catch (e: Exception) {
                     ScreenState.Error(e.message ?: e.toString())
                 }
+            val installedVersion = (state as? ScreenState.Loaded)?.virtualPackages?.get("ccloader")
+            if (loader != null && installedVersion != null) launch { checkLoaderUpdate(loader.flavor, installedVersion) }
         }
+    }
+
+    /** Offers [flavor]'s latest release if it's newer than [installed]. Best effort: failures are only logged. */
+    private suspend fun checkLoaderUpdate(
+        flavor: ModLoaderFlavor,
+        installed: Version,
+    ) {
+        val release =
+            try {
+                withContext(Dispatchers.IO) { modLoaderReleases.fetch(listOf(flavor))[flavor] }
+            } catch (e: Exception) {
+                Log.w("CrossCode", "Modloader update check failed: ${e.message}")
+                null
+            } ?: return
+        val latest = release.version.toVersionOrNull(strict = false) ?: return
+        if (latest > installed) loaderUpdate = LoaderUpdate(flavor, installed, release)
+    }
+
+    fun confirmLoaderUpdate() {
+        val update = loaderUpdate ?: return
+        loaderUpdate = null
+        runModLoaderInstall(update.flavor, update.release)
+    }
+
+    fun dismissLoaderUpdate() {
+        loaderUpdate = null
     }
 
     fun installModLoader(flavor: ModLoaderFlavor) {
         val release = (state as? ScreenState.NoModLoader)?.releases?.get(flavor) ?: return
+        runModLoaderInstall(flavor, release)
+    }
+
+    /**
+     * Installs or updates to [release], then checks the loader on disk is [flavor] at that version.
+     * An update that lands in a different folder (CCLoader3 in `ccloader/` → `ccloader3/`) deletes
+     * the old one, which would otherwise linger unused.
+     */
+    private fun runModLoaderInstall(
+        flavor: ModLoaderFlavor,
+        release: LoaderRelease,
+    ) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.IO) {
-                    modInstaller.installModLoader(flavor.displayName, release) { installRun = InstallRun(1, 0, it) }
-                }
-                if (gameFolderManager.findModLoader()?.flavor == flavor) {
+                val verified =
+                    withContext(Dispatchers.IO) {
+                        val previous = gameFolderManager.findModLoader()
+                        modInstaller.installModLoader(flavor.displayName, release) { installRun = InstallRun(1, 0, it) }
+                        val installed = gameFolderManager.findModLoader()?.takeIf { it.flavor == flavor }
+                        val expectedVersion = release.version.toVersionOrNull(strict = false)
+                        val verified =
+                            installed != null &&
+                                (expectedVersion == null || VirtualPackages.readCcloaderVersion(gameFolderManager, installed) == expectedVersion)
+                        if (verified && previous?.flavor == flavor && previous.dir != installed?.dir) {
+                            if (gameFolderManager.getFile(previous.dir)?.deleteRecursively() != true) {
+                                Log.w("CrossCode", "Failed to fully delete old modloader folder ${previous.dir}")
+                            }
+                        }
+                        verified
+                    }
+                if (verified) {
                     messageChannel.send(string(R.string.mod_install_success, flavor.displayName))
                 } else {
                     error = ErrorMessage(R.string.mod_install_error_title, string(R.string.modloader_install_verify_failed, flavor.displayName))

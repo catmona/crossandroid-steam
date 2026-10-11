@@ -24,13 +24,13 @@ class ModLoaderReleases(
     private val httpClient: OkHttpClient,
 ) {
     /**
-     * Returns the loaders the manifest lists, in [ModLoaderFlavor] order. A null value means the
-     * entry's type is unknown to this app version. Throws [IOException] on network failure.
+     * Returns those of [flavors] the manifest lists, in [ModLoaderFlavor] order. A null value means
+     * the entry's type is unknown to this app version. Throws [IOException] on network failure.
      */
-    fun fetch(): Map<ModLoaderFlavor, LoaderRelease?> {
+    fun fetch(flavors: Collection<ModLoaderFlavor> = ModLoaderFlavor.entries): Map<ModLoaderFlavor, LoaderRelease?> {
         val manifest = JSONObject(get(MANIFEST_URL))
         return ModLoaderFlavor.entries
-            .filter { manifest.has(it.name.lowercase()) }
+            .filter { it in flavors && manifest.has(it.name.lowercase()) }
             .associateWith { resolve(manifest.getJSONObject(it.name.lowercase())) }
     }
 
