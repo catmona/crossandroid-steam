@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.text.format.Formatter
 import android.view.KeyEvent
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
@@ -23,11 +22,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -71,6 +70,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.appColorScheme
+import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
 import io.github.z4kn4fein.semver.toVersionOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -83,7 +83,7 @@ class ModBrowserActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableDarkEdgeToEdge()
 
         setContent {
             MaterialTheme(colorScheme = appColorScheme()) {
@@ -596,9 +596,9 @@ private fun ModRow(
             dbEntry?.stars?.let { add("★$it") }
         }
 
-    Card(modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 3.dp)) {
+    Column {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -657,6 +657,7 @@ private fun ModRow(
                 }
             }
         }
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
     }
 }
 

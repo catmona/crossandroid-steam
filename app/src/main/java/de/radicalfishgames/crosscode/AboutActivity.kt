@@ -2,7 +2,6 @@ package de.radicalfishgames.crosscode
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
@@ -29,12 +28,13 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import de.radicalfishgames.crosscode.ui.appColorScheme
+import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
 
 class AboutActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableDarkEdgeToEdge()
         setContent {
             val libraries by produceLibraries()
             MaterialTheme(colorScheme = appColorScheme()) {

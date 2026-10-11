@@ -1,11 +1,9 @@
 package de.radicalfishgames.crosscode
 
-import android.app.UiModeManager
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -18,10 +16,8 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.ScrollView
 import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -33,6 +29,7 @@ import de.radicalfishgames.crosscode.preferences.SaveExportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportActivity
 import de.radicalfishgames.crosscode.preferences.SaveImportManager
 import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
+import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -51,13 +48,8 @@ class LaunchActivity : AppCompatActivity() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        val uiModeManager = getSystemService(UiModeManager::class.java)
-        if (uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        }
-
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableDarkEdgeToEdge()
 
         binding = ActivityLaunchBinding.inflate(layoutInflater)
         setContentView(binding.root)

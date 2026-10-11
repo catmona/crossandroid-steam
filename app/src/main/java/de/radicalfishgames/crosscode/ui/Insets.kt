@@ -1,6 +1,10 @@
 package de.radicalfishgames.crosscode.ui
 
+import android.graphics.Color
 import android.view.View
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
@@ -25,3 +29,7 @@ fun View.applySystemBarInsetsAsPadding(
         windowInsets
     }
 }
+
+/** Edge-to-edge with light system bar icons, since the app is always dark regardless of the system theme. */
+fun ComponentActivity.enableDarkEdgeToEdge() =
+    enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))

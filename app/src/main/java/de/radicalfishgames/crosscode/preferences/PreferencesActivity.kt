@@ -4,18 +4,18 @@ import android.app.UiModeManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.View
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.appbar.MaterialToolbar
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.applySystemBarInsetsAsPadding
+import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
 
 class PreferencesActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        enableDarkEdgeToEdge()
 
         setContentView(R.layout.actvitity_preferences)
         findViewById<MaterialToolbar>(R.id.toolbar).setNavigationOnClickListener { finish() }

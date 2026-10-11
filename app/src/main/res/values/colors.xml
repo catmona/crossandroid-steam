@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- CrossCode-inspired Material 3 palette (light scheme) -->
-    <color name="colorPrimary">#226AC1</color>
-    <color name="colorOnPrimary">#FFFFFF</color>
-    <color name="colorPrimaryContainer">#DEE2ED</color>
-    <color name="colorOnPrimaryContainer">#0D2A55</color>
-    <color name="colorSecondary">#5E606F</color>
-    <color name="colorOnSecondary">#FFFFFF</color>
-    <color name="colorSecondaryContainer">#EDEFF3</color>
-    <color name="colorOnSecondaryContainer">#1B1C24</color>
-    <color name="colorSurface">#FAFBFD</color>
-    <color name="colorOnSurface">#1A1C22</color>
-    <color name="colorSurfaceVariant">#EDEFF3</color>
-    <color name="colorOnSurfaceVariant">#5E606F</color>
-    <color name="colorSurfaceContainerLowest">#FFFFFF</color>
-    <color name="colorSurfaceContainerLow">#F5F6FA</color>
-    <color name="colorSurfaceContainer">#F1F3F7</color>
-    <color name="colorSurfaceContainerHigh">#EDEFF3</color>
-    <color name="colorSurfaceContainerHighest">#E6E8EE</color>
-    <color name="colorOutline">#74777F</color>
-    <color name="colorOutlineVariant">#C4C6D0</color>
+    <!-- CrossCode-inspired Material 3 palette (dark only) -->
+    <color name="colorPrimary">#88CFFF</color>
+    <color name="colorOnPrimary">#00344F</color>
+    <color name="colorPrimaryContainer">#1A222B</color>
+    <color name="colorOnPrimaryContainer">#64A5FF</color>
+    <color name="colorSecondary">#B8C4D6</color>
+    <color name="colorOnSecondary">#23303F</color>
+    <color name="colorSecondaryContainer">#1D262C</color>
+    <color name="colorOnSecondaryContainer">#E1E2E8</color>
+    <color name="colorSurface">#121820</color>
+    <color name="colorOnSurface">#E1E2E8</color>
+    <color name="colorSurfaceVariant">#1D262C</color>
+    <color name="colorOnSurfaceVariant">#A8B0C0</color>
+    <color name="colorSurfaceContainerLowest">#0D1218</color>
+    <color name="colorSurfaceContainerLow">#171E27</color>
+    <color name="colorSurfaceContainer">#1A222B</color>
+    <color name="colorSurfaceContainerHigh">#1D262C</color>
+    <color name="colorSurfaceContainerHighest">#263039</color>
+    <color name="colorOutline">#7D8697</color>
+    <color name="colorOutlineVariant">#363F4A</color>
 </resources>
