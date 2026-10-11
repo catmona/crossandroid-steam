@@ -82,7 +82,7 @@ dependencies {
 
     // Mod browser: online mod database access
     implementation 'com.squareup.okhttp3:okhttp:5.5.0'
-    implementation 'io.github.z4kn4fein:semver:2.0.0'
+    implementation 'io.github.z4kn4fein:semver:3.1.0'
 
     // Material Design
     implementation 'com.google.android.material:material:1.14.0'
