@@ -48,7 +48,7 @@ Check that the files are in place:
 adb shell ls /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/
 ```
 
-You should see `assets`, `ccloader`, `package.json`, and other game files.
+You should see `assets`, `package.json`, and other game files.
 
 ## Fixing "not allowed to read" errors
 
