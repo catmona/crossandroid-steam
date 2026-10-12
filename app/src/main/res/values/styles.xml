@@ -24,6 +24,7 @@
         <item name="android:statusBarColor">@color/colorSurface</item>
         <item name="android:navigationBarColor">@color/colorSurface</item>
         <item name="materialButtonStyle">@style/Widget.App.Button</item>
+        <item name="toolbarNavigationButtonStyle">@style/Widget.App.Toolbar.Button.Navigation</item>
     </style>
 
     <!-- Buttons with a visible focus outline for controller/D-pad users -->
@@ -45,6 +46,10 @@
     <style name="Widget.App.Button.IconButton" parent="Widget.Material3.Button.IconButton">
         <item name="strokeColor">@color/button_focus_stroke</item>
         <item name="strokeWidth">3dp</item>
+    </style>
+
+    <style name="Widget.App.Toolbar.Button.Navigation" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="android:background">@drawable/toolbar_nav_background</item>
     </style>
 
     <!-- Dialog whose positive button is a filled button instead of a text button -->

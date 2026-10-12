@@ -29,6 +29,7 @@ import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import de.radicalfishgames.crosscode.ui.appColorScheme
 import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
+import de.radicalfishgames.crosscode.ui.focusRing
 
 class AboutActivity : AppCompatActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,7 @@ class AboutActivity : AppCompatActivity() {
                         TopAppBar(
                             title = { Text(stringResource(R.string.about_app)) },
                             navigationIcon = {
-                                IconButton(onClick = { finish() }) {
+                                IconButton(modifier = Modifier.focusRing(), onClick = { finish() }) {
                                     Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
                                 }
                             },

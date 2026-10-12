@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -54,7 +52,6 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -71,6 +68,7 @@ import androidx.compose.ui.unit.dp
 import de.radicalfishgames.crosscode.R
 import de.radicalfishgames.crosscode.ui.appColorScheme
 import de.radicalfishgames.crosscode.ui.enableDarkEdgeToEdge
+import de.radicalfishgames.crosscode.ui.focusRing
 import io.github.z4kn4fein.semver.toVersionOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -523,14 +521,6 @@ private fun InstallProgressDialog(run: InstallRun) {
         },
         confirmButton = {},
     )
-}
-
-/** The default focus tint is too faint to spot on a TV or handheld, so outline focused buttons too. */
-@Composable
-private fun Modifier.focusRing(): Modifier {
-    var focused by remember { mutableStateOf(false) }
-    val color = if (focused) MaterialTheme.colorScheme.onSurface else Color.Transparent
-    return onFocusChanged { focused = it.isFocused }.border(2.dp, color, CircleShape)
 }
 
 /** Orders by [sort], then by name. Mods missing from the database ([dbEntry] null) go last for stars and update time. */
