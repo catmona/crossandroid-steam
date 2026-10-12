@@ -13,7 +13,7 @@ If you used Steam, the location should be:
 - Linux: `~/.steam/steam/steamapps/common/CrossCode`
 - Mac: `~/Library/Application Support/Steam/steamapps/common/CrossCode/CrossCode.app/Contents/Resources/app.nw`
 
-If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), search on the internet where games for that are usually saved.
+If you used a different method ([GOG](https://www.gog.com/), [itch.io](https://itch.io/), etc.), search on the internet where games for that are usually saved.
 
 ## 3. Copy the folder to your phone
 
