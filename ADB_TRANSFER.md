@@ -26,8 +26,8 @@ computer.
 
 ## Launch the app first
 
-Before transferring files, **open CrossAndroid once** on your device and grant storage permissions.
-This creates the target directory. If you skip this step, the `adb push` command will fail with
+Before transferring files, **open CrossAndroid once** on your device. This creates the target
+directory. If you skip this step, the `adb push` command will fail with
 "No such file or directory".
 
 ## Transfer game files
@@ -70,7 +70,8 @@ adb shell rm -r /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCo
 
 ## Transferring mods later
 
-To add a mod after the initial setup, push it directly into the mods directory:
+The easiest way to add mods is the **Mods** screen in the app (see the [setup guide](SETUP.md)).
+To add a mod manually instead, push it directly into the mods directory:
 
 ```
 adb push my-mod-folder/ /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/assets/mods/my-mod-folder/
@@ -92,6 +93,6 @@ adb push my-mod.ccmod /sdcard/Android/data/de.radicalfishgames.crosscode/files/C
   Disconnect and reconnect the cable, then check for a popup.
 
 - **"No such file or directory"**: You need to launch the CrossAndroid app at least once before
-  transferring files so the directory gets created. Open the app, grant permissions, then try again.
+  transferring files so the directory gets created. Open the app, then try again.
 
 - **Transfer is very slow**: Use a USB 3.0 cable and port if available. Avoid USB hubs.

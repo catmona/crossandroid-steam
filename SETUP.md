@@ -15,22 +15,7 @@ If you used Steam, the location should be:
 
 If you used a different method ([GOG](https://www.gog.com/), itch.io, etc.), search on the internet where games for that are usually saved.
 
-## 3. Install CCLoader
-
-Follow the steps at [https://wiki.c2dl.info/CCLoader#Installation](https://wiki.c2dl.info/CCLoader#Installation)
-
-**.ccmod files are supported in CrossAndroid from CCLoader version 2.26.0.**
-For earlier versions, replace `CrossCode/ccloader/js/ccloader.js` with this modified [ccloader.js](https://raw.githubusercontent.com/SiggeMcKvack/CCLoader/refs/heads/master/ccloader/js/ccloader.js)
-
-## 4. OPTIONAL: Install your favorite mods
-
-Browse and download mods at [c2dl.info/cc/mods](https://c2dl.info/cc/mods).
-All mods should work on Android. Create an issue if you find a mod that is not supported.
-The `extension-asset-preloader` mod is built in and not needed on Android.
-
-## 5. Copy the folder to your phone
-
-Make sure you have launched the app at least once so the target directory is created.
+## 3. Copy the folder to your phone
 
 ### Recommended: import from within the app
 
@@ -43,8 +28,8 @@ permissions. The copy in `Download` can be deleted afterwards.
 
 ### Alternative: copy manually
 
-Grab the folder called `CrossCode` and copy it to
-`Android/data/de.radicalfishgames.crosscode/files`
+Launch the app at least once so the target directory is created. Then grab the folder called
+`CrossCode` and copy it to `Android/data/de.radicalfishgames.crosscode/files`
 
 Both internal storage and SD card are supported. The app will use whichever location already has the `CrossCode` folder, checking internal storage first.
 
@@ -52,6 +37,8 @@ You can move the folder there with a file manager that supports app-specific dir
 [DocumentsUI](https://play.google.com/store/apps/details?id=su.axi.documentsui) or
 [Material Files](https://play.google.com/store/apps/details?id=me.zhanghai.android.files),
 or see the [ADB Transfer Guide](ADB_TRANSFER.md) to transfer files from a computer.
+
+When the copy is done, tap **Finish** in the setup guide.
 
 > **Warning:** files written into `Android/data` by adb or by file managers that use Shizuku/shell
 > access end up owned by a different user, and the app may not be allowed to read them. The app will
@@ -69,11 +56,29 @@ Android
                 ├── assets
                 │   ├── data
                 │   ├── media
-                │   ├── mods
                 │   └── ...
-                ├── ccloader
                 ├── package.json
                 └── ...
 ```
 
+## 4. OPTIONAL: Install mods
+
+Tap **Mods** on the launcher screen.
+
+1. If no modloader is installed yet, pick **CCLoader2** or **CCLoader3** to install it. The app
+   offers updates for it later.
+2. Browse the **Browse** tab and tap **Install** on the mods you want. Required dependencies are
+   installed along with them.
+3. Update or uninstall mods from the **Installed** tab.
+
+Mods you already have in your PC installation are copied along with the game folder, and you can also
+add mods manually to `CrossCode/assets/mods/`.
+
+Most mods work on Android, including many that were written for the desktop (nw.js) version.
+Known exception: CCModManager's online mod list does not work, use the **Mods** screen instead.
+The `extension-asset-preloader` mod is built in and not needed on Android.
+Create an [issue](https://gitlab.com/rumpnisse/crossandroid/issues) if you find a mod that does not work.
+
 ### That's it. You are done!
+
+To update the game, copy the game folder again with the steps above. The app itself can be updated independently.
