@@ -62,6 +62,8 @@ class LaunchActivity : AppCompatActivity() {
             SaveImportManager(this).clear()
         }
 
+        binding.versionText.text = "v${BuildConfig.VERSION_NAME}"
+
         binding.launchButton.setOnClickListener {
             launchGameActivity()
         }
