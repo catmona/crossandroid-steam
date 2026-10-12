@@ -1,5 +1,6 @@
 package de.radicalfishgames.crosscode.moddb
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.format.Formatter
 import android.view.KeyEvent
@@ -18,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,6 +46,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -58,6 +62,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
@@ -72,6 +77,7 @@ import de.radicalfishgames.crosscode.ui.focusRing
 import io.github.z4kn4fein.semver.toVersionOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 
 class ModBrowserActivity : AppCompatActivity() {
     private val viewModel: ModBrowserViewModel by viewModels()
@@ -132,7 +138,9 @@ private fun ModBrowserScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var searchVisible by rememberSaveable { mutableStateOf(false) }
-    var selectedTab by rememberSaveable { mutableStateOf(BrowserTab.INSTALLED) }
+    val pagerState = rememberPagerState { BrowserTab.entries.size }
+    val selectedTab = BrowserTab.entries[pagerState.currentPage]
+    val scope = rememberCoroutineScope()
     var sort by rememberSaveable { mutableStateOf(ModSort.NAME) }
     var sortMenuOpen by remember { mutableStateOf(false) }
     var pendingUninstall by remember { mutableStateOf<LocalMod?>(null) }
@@ -162,11 +170,11 @@ private fun ModBrowserScreen(
             inputModeManager.requestInputMode(InputMode.Keyboard)
             when (keyCode) {
                 KeyEvent.KEYCODE_BUTTON_L1 -> {
-                    selectedTab = BrowserTab.entries[(selectedTab.ordinal - 1).coerceAtLeast(0)]
+                    pagerState.animateScrollToPage((pagerState.currentPage - 1).coerceAtLeast(0))
                 }
 
                 KeyEvent.KEYCODE_BUTTON_R1 -> {
-                    selectedTab = BrowserTab.entries[(selectedTab.ordinal + 1).coerceAtMost(BrowserTab.entries.lastIndex)]
+                    pagerState.animateScrollToPage((pagerState.currentPage + 1).coerceAtMost(BrowserTab.entries.lastIndex))
                 }
 
                 else -> {
@@ -185,11 +193,31 @@ private fun ModBrowserScreen(
         }
     }
 
+    // Landscape has little height to spare, so the tabs replace the title instead of getting a row of their own.
+    val landscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val tabRow: @Composable (ScreenState.Loaded) -> Unit = { loaded ->
+        SecondaryTabRow(selectedTabIndex = selectedTab.ordinal) {
+            Tab(
+                selected = selectedTab == BrowserTab.INSTALLED,
+                onClick = { scope.launch { pagerState.animateScrollToPage(BrowserTab.INSTALLED.ordinal) } },
+                text = { Text(stringResource(R.string.mod_browser_tab_installed, loaded.localMods.size)) },
+            )
+            Tab(
+                selected = selectedTab == BrowserTab.BROWSE,
+                onClick = { scope.launch { pagerState.animateScrollToPage(BrowserTab.BROWSE.ordinal) } },
+                text = { Text(stringResource(R.string.mod_browser_tab_browse)) },
+            )
+        }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.mod_browser_title)) },
+                title = {
+                    val loaded = viewModel.state as? ScreenState.Loaded
+                    if (landscape && loaded != null) tabRow(loaded) else Text(stringResource(R.string.mod_browser_title))
+                },
                 navigationIcon = {
                     IconButton(modifier = Modifier.focusRing(), onClick = onBack) {
                         Icon(painterResource(R.drawable.ic_arrow_back), contentDescription = stringResource(R.string.back))
@@ -311,41 +339,34 @@ private fun ModBrowserScreen(
                                         },
                             )
                         }
-                        SecondaryTabRow(selectedTabIndex = selectedTab.ordinal) {
-                            Tab(
-                                selected = selectedTab == BrowserTab.INSTALLED,
-                                onClick = { selectedTab = BrowserTab.INSTALLED },
-                                text = { Text(stringResource(R.string.mod_browser_tab_installed, current.localMods.size)) },
-                            )
-                            Tab(
-                                selected = selectedTab == BrowserTab.BROWSE,
-                                onClick = { selectedTab = BrowserTab.BROWSE },
-                                text = { Text(stringResource(R.string.mod_browser_tab_browse)) },
-                            )
-                        }
+                        if (!landscape) tabRow(current)
 
-                        when (selectedTab) {
-                            BrowserTab.BROWSE -> {
-                                BrowseList(
-                                    current,
-                                    searchQuery,
-                                    sort,
-                                    browseListState,
-                                    listModifier,
-                                    onInstall = viewModel::requestInstall,
-                                )
-                            }
+                        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+                            // Only the current page takes list focus; both are composed mid-swipe.
+                            val pageModifier = if (page == pagerState.currentPage) listModifier else Modifier
+                            when (BrowserTab.entries[page]) {
+                                BrowserTab.BROWSE -> {
+                                    BrowseList(
+                                        current,
+                                        searchQuery,
+                                        sort,
+                                        browseListState,
+                                        pageModifier,
+                                        onInstall = viewModel::requestInstall,
+                                    )
+                                }
 
-                            BrowserTab.INSTALLED -> {
-                                InstalledList(
-                                    current,
-                                    searchQuery,
-                                    sort,
-                                    installedListState,
-                                    listModifier,
-                                    onInstall = viewModel::requestInstall,
-                                    onUninstall = { pendingUninstall = it },
-                                )
+                                BrowserTab.INSTALLED -> {
+                                    InstalledList(
+                                        current,
+                                        searchQuery,
+                                        sort,
+                                        installedListState,
+                                        pageModifier,
+                                        onInstall = viewModel::requestInstall,
+                                        onUninstall = { pendingUninstall = it },
+                                    )
+                                }
                             }
                         }
                     }
@@ -608,8 +629,6 @@ private fun ModRow(
                     Text(
                         description,
                         style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
