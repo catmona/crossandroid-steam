@@ -9,10 +9,15 @@ CrossCode on your Android device.
 
 Current features:
 - Play CrossCode on the go!
-- Support for controllers connected to your phone
+- Browse, install, update and uninstall mods in the app, including the
+  modloader (CCLoader2 or CCLoader3)
+- Import your game folder straight from your device's storage
+- Support for controllers connected to your phone, also in the
+  launcher and Mods screen
 - Includes a virtual controller layout _(for details see below)_
 - Customize the virtual controller with size and transparency settings
   (you can even let it disable itself automatically during cutscenes)
+- Sharp pixel scaling, Always Sprint and other gameplay settings
 - Haptic feedback when the screen shakes _(experimental)_
 - Import/Export saves between your PC and this app! _(for details, see
   below)_
@@ -24,9 +29,9 @@ suggestions for improvements.
 Main parts of CrossAndroid made by Namnodorel, Pixelart by Ichiki Hayaite aka TheSparkstarScope
 
 ## Getting the app
-Install the latest APK, then follow the [setup guide](SETUP.md) to copy the game files to your device.
+Install the [latest APK](https://gitlab.com/rumpnisse/crossandroid/-/releases) (or use Obtainium), then follow the [setup guide](SETUP.md) to copy the game files to your device.
 
-You can update the app independently of the game files. To update the game or install mods, follow the [setup guide](SETUP.md) again.
+You can update the app independently of the game files. To update the game, follow the [setup guide](SETUP.md) again. Mods are installed from the **Mods** screen in the app.
 
 ## Using the virtual controller
 Here's an overview of the combat controls overlay:
