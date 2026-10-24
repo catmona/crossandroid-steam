@@ -75,7 +75,9 @@ class GameWrapper(
         // with getImageData. On some WebViews (e.g. Chrome 109 on Adreno) drawing an image into a
         // GPU-backed canvas shifts alpha by 1-2 (0 becomes 1), so boundaries are missed and the
         // wrong glyphs are drawn. Make only the canvases created during _loadMetrics CPU-backed.
-        // Injected at document start, before the game defines ig.Font.
+        // Injected at document start, before the game defines ig.Font. The assignment of Font is
+        // trapped through Object.prototype rather than window.ig, because loaders like CCLoader3
+        // redefine window.ig themselves and would replace our trap.
         if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
             WebViewCompat.addDocumentStartJavaScript(
                 webView,
@@ -91,14 +93,15 @@ class GameWrapper(
                             try{return loadMetrics.apply(this,arguments);}finally{proto.getContext=getContext;}
                         };
                     }
-                    // Run onSet the first time obj[key] is assigned, then make it a plain property again
-                    function onAssign(obj,key,onSet){
-                        Object.defineProperty(obj,key,{configurable:true,set:function(v){
-                            Object.defineProperty(obj,key,{value:v,writable:true,enumerable:true,configurable:true});
-                            onSet(v);
-                        }});
-                    }
-                    onAssign(window,'ig',function(ig){onAssign(ig,'Font',patch);});
+                    // Any obj.Font=v without an own Font lands here; store it as the plain assignment would
+                    Object.defineProperty(Object.prototype,'Font',{configurable:true,set:function(v){
+                        Object.defineProperty(this,'Font',{value:v,writable:true,enumerable:true,configurable:true});
+                        if(v&&v.prototype&&typeof v.prototype._loadMetrics==='function'){
+                            delete Object.prototype.Font;
+                            patch(v);
+                            console.log('CrossAndroid: font fix applied');
+                        }
+                    }});
                 })();""",
                 setOf("*"),
             )
