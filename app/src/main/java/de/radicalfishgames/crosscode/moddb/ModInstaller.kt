@@ -103,7 +103,8 @@ class ModInstaller(
     /**
      * Extracts [release] over the game folder, merging into existing directories such as
      * `assets/mods/`. A single top-level folder wrapping the whole archive (GitHub source zips) is
-     * stripped.
+     * stripped. A bundled mod only replaces an installed one if it's newer: mods are updated
+     * separately, so the bundled copy may be older (e.g. CCLoader3 bundles an old CCModManager).
      */
     fun installModLoader(
         name: String,
@@ -121,6 +122,7 @@ class ModInstaller(
             extractZip(data, staging, singleTopLevelDir(data).orEmpty())
             val entries = staging.listFiles()
             if (entries.isNullOrEmpty()) throw ModInstallException("Download for '$name' is empty.")
+            keepNewerInstalledMods(File(staging, "assets/mods"))
             entries.forEach { moveMerging(it, File(gameDir, it.name)) }
         } finally {
             staging.deleteRecursively()
@@ -175,6 +177,23 @@ class ModInstaller(
             }
         }
         return top
+    }
+
+    /**
+     * Deletes the mods in [bundledDir] whose installed copy is the same version or newer, and
+     * uninstalls the installed copies of the rest (they may differ in name or format).
+     */
+    private fun keepNewerInstalledMods(bundledDir: File) {
+        val scanner = LocalModScanner(gameFolderManager)
+        val installed = scanner.scan()
+        for (bundled in scanner.scan(bundledDir.listFiles()?.toList().orEmpty()).values) {
+            val existing = installed[bundled.id] ?: continue
+            if (bundled.version > existing.version) {
+                uninstall(existing)
+            } else {
+                bundled.files.forEach { it.deleteRecursively() }
+            }
+        }
     }
 
     /** Moves [source] to [target], merging directories into existing ones and replacing files. */

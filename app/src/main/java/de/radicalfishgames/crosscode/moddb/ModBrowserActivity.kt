@@ -296,7 +296,7 @@ private fun ModBrowserScreen(
 
                 is ScreenState.Error -> {
                     Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-                        Text(stringResource(R.string.mod_browser_load_error))
+                        Text(stringResource(current.title))
                         Text(current.message, style = MaterialTheme.typography.bodySmall)
                         Button(onClick = viewModel::load, modifier = Modifier.padding(top = 16.dp)) {
                             Text(stringResource(R.string.mod_browser_retry))

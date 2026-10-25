@@ -29,13 +29,14 @@ class LocalModScanner(
     private val gameFolderManager: GameFolderManager,
 ) {
     /** Installed mods by id. */
-    fun scan(): Map<String, LocalMod> {
-        val modsDirFiles = gameFolderManager.listFiles("assets/mods") ?: return emptyMap()
-        return modsDirFiles
+    fun scan(): Map<String, LocalMod> = scan(gameFolderManager.listFiles("assets/mods").orEmpty())
+
+    /** The mods among [entries] (mod directories and `.ccmod` files) by id. */
+    fun scan(entries: List<File>): Map<String, LocalMod> =
+        entries
             .mapNotNull { entry -> readMod(entry) }
             .groupBy { it.id }
             .mapValues { (id, copies) -> LocalMod(id, copies.maxOf { it.version }, copies.map { it.file }) }
-    }
 
     private class ModCopy(
         val id: String,

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
+import java.text.DateFormat
 
 sealed class ScreenState {
     object Loading : ScreenState()
@@ -33,6 +34,7 @@ sealed class ScreenState {
 
     data class Error(
         val message: String,
+        @StringRes val title: Int = R.string.mod_browser_load_error,
     ) : ScreenState()
 
     data class Loaded(
@@ -119,6 +121,9 @@ class ModBrowserViewModel(
                         val virtualPackages = VirtualPackages.compute(gameFolderManager, loader)
                         ScreenState.Loaded(database, localMods, virtualPackages)
                     }
+                } catch (e: GitHubRateLimitException) {
+                    val time = DateFormat.getTimeInstance(DateFormat.SHORT).format(e.resetAt)
+                    ScreenState.Error(string(R.string.mod_browser_rate_limited_detail, time), R.string.mod_browser_rate_limited)
                 } catch (e: Exception) {
                     ScreenState.Error(e.message ?: e.toString())
                 }

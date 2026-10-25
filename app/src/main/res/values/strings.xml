@@ -55,6 +55,8 @@
     <string name="mod_browser_tab_installed">Installed (%1$d)</string>
     <string name="mod_browser_loading">Loading mod database…</string>
     <string name="mod_browser_load_error">Failed to load mod information. Check your internet connection.</string>
+    <string name="mod_browser_rate_limited">GitHub\'s limit for release checks is used up on this network.</string>
+    <string name="mod_browser_rate_limited_detail">Try again after %1$s. Other apps on this network that check GitHub share this limit.</string>
     <string name="mod_browser_retry">Retry</string>
     <string name="mod_browser_empty">No game folder found. Import your game folder first.</string>
     <string name="modloader_missing">Mods need a modloader, and none is installed. Pick one to install:</string>
