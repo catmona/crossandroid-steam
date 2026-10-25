@@ -39,6 +39,8 @@
     <string name="import_string_dialog_import">Import</string>
     <string name="vibration_on_rumble_title">Enable Haptic Feedback</string>
     <string name="vibration_on_rumble_summary">Vibrate when the screen shakes in-game</string>
+    <string name="gapless_music_title">Gapless music</string>
+    <string name="gapless_music_summary">Loop music without gaps or skips. Uses more memory and makes loading screens slightly longer.</string>
     <string name="about_app">About</string>
     <string name="browse_mods_button">Mods</string>
 
