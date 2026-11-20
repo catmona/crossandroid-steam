@@ -17,15 +17,3 @@ A fork of [rumpnisse/crossandroid](https://gitlab.com/rumpnisse/crossandroid) v1
 - **Full save import**: put a desktop `cc.save` at `Android/data/de.radicalfishgames.crosscode.steam/files/import/cc.save`. On the next launch it replaces localStorage `cc.save`, which holds every slot and global data. The old save is kept next to it as `cc.save.before-import-<time>`. The imported save's achievements are held back until the user answers "Sync N achievements from the imported save to Steam?"; a "Don't sync" is remembered, so those ids are never sent from a replay (live unlocks still are).
 
 Code: `app/src/main/java/de/radicalfishgames/crosscode/steam/` and `features/SteamFeature.kt`, `features/BuiltInMods.kt`, `features/FullSaveImportFeature.kt`. Tests: `./gradlew testDebugUnitTest` (schema parsing, built-in mod serving, token sealing, the achievement allow-list and retry rules, mod patching).
-
-## Before making this repo public
-
-The owner plans to publish this once it works well. Before that:
-
-- [x] **License**: neither upstream repo (rumpnisse or Namnodorel) declares a license. The maintainer chose to publish as a fork, like the other public CrossAndroid forks, with upstream's history and credits kept and a take-down offer in the README.
-- [x] **No GPL code**: GameNative is GPL-3. The Steam code here is written from the protocol, not copied from GameNative. Keep it that way, or adopt GPL-3 for the whole project. JavaSteam is MIT and ZXing is Apache-2.0; both are fine to bundle and are listed on the About screen.
-- [x] **No secrets**: never commit `keystore.properties`, keystores, `local.properties`, refresh tokens or logs with tokens. Check the history (`git log -p`) before publishing.
-- [x] **Identity**: commits use the GitHub noreply address (`30540400+catmona@users.noreply.github.com`), set as repo-local git config.
-- [x] **Steam terms**: this signs in with the user's own account and only reports their own play. Say clearly in the README that it is unofficial and not affiliated with Valve or Radical Fish Games, and that you need to own the game on Steam.
-- [x] **Package name**: the app id is `de.radicalfishgames.crosscode.steam` (label "CrossCode (Steam)"), so it installs beside upstream. The Kotlin namespace stays `de.radicalfishgames.crosscode`, so the launch component is `de.radicalfishgames.crosscode.steam/de.radicalfishgames.crosscode.LaunchActivity`.
-- [x] **minSdk** (now 26): upstream says 24, but JavaSteam uses `java.util.Base64` (API 26). Raise minSdk to 26, or enable core library desugaring.
