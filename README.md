@@ -11,16 +11,13 @@ This is a fork of [CrossAndroid](https://gitlab.com/rumpnisse/crossandroid) that
 
 **Install**: download the APK from [the releases page](https://github.com/catmona/crossandroid-steam/releases), or build it yourself (`./gradlew assembleRelease`). It uses its own package (`de.radicalfishgames.crosscode.steam`), so it installs next to upstream CrossAndroid instead of replacing it, with its own game files and saves.
 
-**Tips**
-
-- On handhelds with the Cocoon launcher: open the App Drawer, press Y on the app and choose "Treat it as a game".
-- A recent Android System WebView makes a big difference to how smoothly the game runs (it fixes most stutter at map changes). On phones with Google apps, update "Android System WebView" from the Play Store. Many handhelds (AYN, Retroid and others on AOSP firmware) only accept the `com.android.webview` package, so the Play Store version is never used there; with root, a Magisk module that replaces `/product/app/webview` with LineageOS's [Chromium WebView build](https://github.com/LineageOS/android_external_chromium-webview_prebuilt_arm64) works (tested on an AYN Thor going from WebView 109 to 157; back up your saves first, they live in the app's WebView data).
+**Tip**: a recent Android System WebView makes a big difference to how smoothly the game runs (it fixes most stutter at map changes). On phones with Google apps, update "Android System WebView" from the Play Store. Some AOSP-based devices only accept the `com.android.webview` package, so the Play Store version is never used there; with root, a Magisk module that replaces `/product/app/webview` with LineageOS's [Chromium WebView build](https://github.com/LineageOS/android_external_chromium-webview_prebuilt_arm64) works. Back up your saves first: they live in the app's WebView data.
 
 Built on CrossAndroid by Namnodorel, rumpnisse and its contributors; their full history and credits are kept here. If you're an upstream author and want something changed or taken down, please open an issue.
 
 Not affiliated with Valve, Steam or Radical Fish Games. CrossCode is a trademark of Radical Fish Games.
 
-Most of this fork's code was written with AI assistance (Anthropic's Claude) and reviewed and tested by the maintainer on an AYN Thor. Use at your own risk.
+Most of this fork's code was written with AI assistance (Anthropic's Claude) and reviewed and tested by the maintainer. Use at your own risk.
 
 ---
 
