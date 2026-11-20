@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.webkit.WebViewFeature
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
+import org.json.JSONException
+import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -34,7 +36,7 @@ class FullSaveImportFeature(
         }
 
         val save = importFile.readText().trim()
-        if (!save.startsWith(SAVE_PREFIX)) {
+        if (!looksLikeSave(save)) {
             Log.w(TAG, "Ignoring ${importFile.path}: not a CrossCode save")
             Toast.makeText(hostActivity, "import/cc.save is not a CrossCode save file", Toast.LENGTH_LONG).show()
             return
@@ -73,6 +75,17 @@ class FullSaveImportFeature(
         @JavascriptInterface
         fun backup(old: String) {
             File(importDir, "cc.save.before-import-${stamp()}").writeText(old)
+        }
+    }
+
+    /** A desktop cc.save is a JSON object of encrypted slots and globals; a bare encrypted string also loads. */
+    private fun looksLikeSave(save: String): Boolean {
+        if (save.startsWith(SAVE_PREFIX)) return true
+        return try {
+            val json = JSONObject(save)
+            json.has("slots") || json.has("globals")
+        } catch (e: JSONException) {
+            false
         }
     }
 
