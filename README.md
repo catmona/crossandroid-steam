@@ -1,8 +1,38 @@
-# CrossAndroid
+# CrossCode (Steam) - a CrossAndroid fork
+
+This is a fork of [CrossAndroid](https://gitlab.com/rumpnisse/crossandroid) that connects the game to your Steam account:
+
+- **Playtime**: while the game is in front, Steam shows you as "Playing CrossCode" and counts your hours.
+- **Achievements**: trophies you earn unlock on Steam, and ones already in your save catch up the next time you play online. Each unlock is checked by reading your stats back from Steam.
+- **Steam sign-in** with a QR code, the Steam app on the same device, or account name and password with Steam Guard. The password is never stored; the sign-in token is kept encrypted on the device.
+- **Achievement pop-ups**, full `cc.save` import from a PC, and a few launcher fixes. See [STEAM-FORK.md](STEAM-FORK.md) for details.
+
+**You must own CrossCode on Steam.** The app doesn't include the game: you copy the game files from your own Steam copy, see [SETUP.md](SETUP.md).
+
+**Install**: download the APK from [the releases page](https://github.com/catmona/crossandroid-steam/releases), or build it yourself (`./gradlew assembleRelease`). It uses its own package (`de.radicalfishgames.crosscode.steam`), so it installs next to upstream CrossAndroid instead of replacing it, with its own game files and saves.
+
+**Tips**
+
+- On handhelds with the Cocoon launcher: open the App Drawer, press Y on the app and choose "Treat it as a game".
+- A recent Android System WebView makes a big difference to how smoothly the game runs (it fixes most stutter at map changes). On phones with Google apps, update "Android System WebView" from the Play Store. Many handhelds (AYN, Retroid and others on AOSP firmware) only accept the `com.android.webview` package, so the Play Store version is never used there; with root, a Magisk module that replaces `/product/app/webview` with LineageOS's [Chromium WebView build](https://github.com/LineageOS/android_external_chromium-webview_prebuilt_arm64) works (tested on an AYN Thor going from WebView 109 to 157; back up your saves first, they live in the app's WebView data).
+
+Built on CrossAndroid by Namnodorel, rumpnisse and its contributors; their full history and credits are kept here. If you're an upstream author and want something changed or taken down, please open an issue.
+
+Not affiliated with Valve, Steam or Radical Fish Games. CrossCode is a trademark of Radical Fish Games.
+
+Most of this fork's code was written with AI assistance (Anthropic's Claude) and reviewed and tested by the maintainer on an AYN Thor. Use at your own risk.
+
+---
+
+## Upstream CrossAndroid
+
+The rest of this README is upstream's, kept as it was. Its links (gitlab, Obtainium, Discord) are upstream's, not this fork's.
 
 [![Discord](https://img.shields.io/discord/382339402338402315?label=Discord&logo=discord)](https://discord.gg/3Xw69VjXfW)
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://gitlab.com/rumpnisse/CrossAndroid)
+Upstream's Obtainium link (installs upstream CrossAndroid from gitlab, not this fork):
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get upstream CrossAndroid on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://gitlab.com/rumpnisse/CrossAndroid)
 
 Welcome to CrossAndroid! This is an app that allows you to play
 CrossCode on your Android device.

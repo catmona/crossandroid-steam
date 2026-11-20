@@ -35,7 +35,7 @@ directory. If you skip this step, the `adb push` command will fail with
 Push your `CrossCode` folder to the device:
 
 ```
-adb push CrossCode/ /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/
+adb push CrossCode/ /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode/
 ```
 
 This may take several minutes depending on the size of your game directory and USB speed.
@@ -45,7 +45,7 @@ This may take several minutes depending on the size of your game directory and U
 Check that the files are in place:
 
 ```
-adb shell ls /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/
+adb shell ls /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode/
 ```
 
 You should see `assets`, `package.json`, and other game files.
@@ -57,7 +57,7 @@ by the `shell` user without group permissions. This typically happens after movi
 with `adb shell mv` or `cp` (a plain `adb push` is usually fine). Restore group access with:
 
 ```
-adb shell chmod -R g+rwX,g+s /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode
+adb shell chmod -R g+rwX,g+s /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode
 ```
 
 Alternatively, use **Import game folder…** in the app instead. The app cannot delete the unreadable
@@ -65,7 +65,7 @@ folder itself, so it renames it to `CrossCode_unreadable_<timestamp>` and leaves
 to free the space:
 
 ```
-adb shell rm -r /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode_unreadable_*
+adb shell rm -r /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode_unreadable_*
 ```
 
 ## Transferring mods later
@@ -74,13 +74,13 @@ The easiest way to add mods is the **Mods** screen in the app (see the [setup gu
 To add a mod manually instead, push it directly into the mods directory:
 
 ```
-adb push my-mod-folder/ /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/assets/mods/my-mod-folder/
+adb push my-mod-folder/ /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode/assets/mods/my-mod-folder/
 ```
 
 For `.ccmod` files:
 
 ```
-adb push my-mod.ccmod /sdcard/Android/data/de.radicalfishgames.crosscode/files/CrossCode/assets/mods/
+adb push my-mod.ccmod /sdcard/Android/data/de.radicalfishgames.crosscode.steam/files/CrossCode/assets/mods/
 ```
 
 ## Troubleshooting

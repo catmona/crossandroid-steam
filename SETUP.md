@@ -29,7 +29,7 @@ permissions. The copy in `Download` can be deleted afterwards.
 ### Alternative: copy manually
 
 Launch the app at least once so the target directory is created. Then grab the folder called
-`CrossCode` and copy it to `Android/data/de.radicalfishgames.crosscode/files`
+`CrossCode` and copy it to `Android/data/de.radicalfishgames.crosscode.steam/files`
 
 Both internal storage and SD card are supported. The app will use whichever location already has the `CrossCode` folder, checking internal storage first.
 
@@ -50,7 +50,7 @@ When the copy is done, tap **Finish** in the setup guide.
 ```
 Android
 └── data
-    └── de.radicalfishgames.crosscode
+    └── de.radicalfishgames.crosscode.steam
         └── files
             └── CrossCode
                 ├── assets
