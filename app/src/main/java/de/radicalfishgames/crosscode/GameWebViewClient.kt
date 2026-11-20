@@ -7,6 +7,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import de.radicalfishgames.crosscode.features.BuiltInMods
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
@@ -67,6 +68,11 @@ class GameWebViewClient(
         // For https://mods/<mod>.ccmod/... prepend "mods/" so the existing assets/ fallback
         // resolves it to assets/mods/<mod>.ccmod/... where the ZIP file actually lives.
         val normalizedPath = if (isModsScheme) "mods/${urlPath.trimStart('/')}" else urlPath.trimStart('/')
+
+        BuiltInMods.serve(normalizedPath, gameWrapper.builtInMods)?.let { body ->
+            Log.d("CrossCode", "Serving built-in mod file /$normalizedPath")
+            return if (body.isEmpty()) emptyOk() else fileResponse(normalizedPath, ByteArrayInputStream(body.toByteArray(Charsets.UTF_8)))
+        }
 
         return serveCcmodPath(gameDir, request, normalizedPath)
             ?: serveModAsset(normalizedPath)

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -47,6 +48,17 @@
             android:scaleType="fitCenter"
             android:visibility="gone" />
 
+        <!-- For people playing on the phone that has the Steam app: approve without scanning -->
+        <Button
+            android:id="@+id/steam_open_in_app_button"
+            style="@style/Widget.App.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:minWidth="240dp"
+            android:text="@string/steam_open_in_app"
+            android:visibility="gone" />
+
         <Button
             android:id="@+id/steam_sign_in_button"
             android:layout_width="wrap_content"
@@ -55,12 +67,153 @@
             android:minWidth="240dp"
             android:text="@string/steam_sign_in" />
 
+        <!-- Account name and password; Steam Guard follows -->
+        <LinearLayout
+            android:id="@+id/steam_password_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_horizontal"
+            android:maxWidth="420dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:maxWidth="420dp"
+                android:text="@string/steam_or_password"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="?attr/colorOnSurfaceVariant" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="320dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/steam_username">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/steam_username"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="username"
+                    android:imeOptions="actionNext"
+                    android:inputType="text|textNoSuggestions"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="320dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:hint="@string/steam_password"
+                app:endIconMode="password_toggle">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/steam_password"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:autofillHints="password"
+                    android:imeOptions="actionDone"
+                    android:inputType="textPassword"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/steam_password_button"
+                style="@style/Widget.App.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minWidth="240dp"
+                android:text="@string/steam_sign_in_password" />
+        </LinearLayout>
+
+        <!-- Steam Guard code -->
+        <LinearLayout
+            android:id="@+id/steam_code_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="240dp"
+                android:layout_height="wrap_content"
+                android:hint="@string/steam_code">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/steam_code"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionDone"
+                    android:inputType="textCapCharacters|textNoSuggestions"
+                    android:maxLength="8"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/steam_code_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minWidth="240dp"
+                android:text="@string/steam_submit_code" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/steam_cancel_button"
+            style="@style/Widget.App.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minWidth="240dp"
+            android:text="@string/steam_cancel"
+            android:visibility="gone" />
+
+        <!-- What Steam has confirmed: playing state and achievements -->
+        <LinearLayout
+            android:id="@+id/steam_check_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/steam_check_title"
+                android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+            <TextView
+                android:id="@+id/steam_check_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="4dp"
+                android:maxWidth="460dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+            <Button
+                android:id="@+id/steam_check_button"
+                style="@style/Widget.App.Button.TonalButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:minWidth="240dp"
+                android:text="@string/steam_check_now" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/steam_sign_out_button"
             style="@style/Widget.App.Button.TonalButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:minWidth="240dp"
             android:text="@string/steam_sign_out" />
     </LinearLayout>

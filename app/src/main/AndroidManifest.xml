@@ -22,6 +22,7 @@
         android:icon="@drawable/lea_sprite"
         android:theme="@style/AppTheme"
         android:isGame="true"
+        android:appCategory="game"
         android:banner="@drawable/banner"
         android:hardwareAccelerated="true"
         android:largeHeap="true"

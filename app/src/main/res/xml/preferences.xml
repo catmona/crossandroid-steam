@@ -100,4 +100,17 @@
 
     </PreferenceCategory>
 
+    <PreferenceCategory
+        app:iconSpaceReserved="false"
+        android:title="@string/pref_category_steam">
+
+        <SwitchPreferenceCompat
+            app:iconSpaceReserved="false"
+            app:widgetLayout="@layout/pref_widget_material_switch"
+            android:defaultValue="true"
+            android:key="steam_achievement_popups"
+            android:summary="@string/steam_achievement_popups_summary"
+            android:title="@string/steam_achievement_popups_title" />
+
+    </PreferenceCategory>
 </PreferenceScreen>

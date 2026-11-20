@@ -90,6 +90,9 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-java:4.29.2'
     implementation 'com.google.zxing:core:3.5.3'
 
+    // Unit tests (app/src/test): Steam schema parsing, built-in mod routing
+    testImplementation 'junit:junit:4.13.2'
+
     // Material Design
     implementation 'com.google.android.material:material:1.14.0'
 

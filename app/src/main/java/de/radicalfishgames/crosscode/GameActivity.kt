@@ -2,8 +2,12 @@ package de.radicalfishgames.crosscode
 
 import de.radicalfishgames.crosscode.features.FullSaveImportFeature
 import de.radicalfishgames.crosscode.features.SteamFeature
+import de.radicalfishgames.crosscode.steam.AchievementPopups
 import de.radicalfishgames.crosscode.steam.SteamBridge
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
@@ -13,6 +17,7 @@ import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -29,6 +34,27 @@ import de.radicalfishgames.crosscode.features.VirtualControllerFeature
 import de.radicalfishgames.crosscode.gamelisteners.GameEventManager
 
 class GameActivity : AppCompatActivity() {
+    companion object {
+        const val PREVIEW_POPUP = "de.radicalfishgames.crosscode.PREVIEW_POPUP"
+
+        // Debug builds: `am broadcast -a de.radicalfishgames.crosscode.FPS_PROBE` logs the game loop's
+        // real frame pacing over 10 s (requestAnimationFrame intervals inside the page)
+        const val FPS_PROBE = "de.radicalfishgames.crosscode.FPS_PROBE"
+        private const val FPS_PROBE_JS = """(function(){
+            var t=[],start=performance.now(),last=start;
+            function f(now){t.push(now-last);last=now;if(now-start<10000)requestAnimationFrame(f);else done();}
+            function done(){
+                var n=t.length,s=(last-start)/1000,b={},long=0,worst=0;
+                t.forEach(function(d){var k=Math.round(d/16.667);b[k]=(b[k]||0)+1;if(d>20)long++;if(d>worst)worst=d;});
+                var c=window.ig&&ig.system&&ig.system.canvas;
+                console.log('FPS probe: '+(n/s).toFixed(1)+' fps over '+s.toFixed(1)+'s, '+long+' frames over 20ms, worst '+worst.toFixed(1)+'ms, vsync buckets '+JSON.stringify(b)
+                    +', canvas '+(c?c.width+'x'+c.height:'?')+', scale '+(window.ig&&ig.system?ig.system.scale+'/'+ig.system.contextScale:'?')
+                    +', screen '+innerWidth+'x'+innerHeight+'@'+devicePixelRatio+', game '+(window.ig&&ig.game?(ig.game.mapName||''):''));
+            }
+            requestAnimationFrame(f);
+        })();"""
+    }
+
     lateinit var binding: ActivityGameBinding
         private set
 
@@ -51,10 +77,39 @@ class GameActivity : AppCompatActivity() {
 
         gameFolderManager = GameFolderManager(this)
         SteamBridge.init(this)
+        // Corner pop-ups when an achievement unlocks; added last so they sit above the WebView and controls
+        AchievementPopups(this, binding.rootView)
+        if (BuildConfig.DEBUG) registerPopupPreview()
 
         setupBackPressHandler()
         startGame()
     }
+
+    /**
+     * Debug builds: `am broadcast -a de.radicalfishgames.crosscode.PREVIEW_POPUP [--es id TROPHY_X]`
+     * shows the pop-up for an achievement Steam already has (the first one when no id is given).
+     */
+    private fun registerPopupPreview() {
+        val receiver =
+            object : BroadcastReceiver() {
+                override fun onReceive(
+                    context: Context,
+                    intent: Intent,
+                ) {
+                    if (intent.action == FPS_PROBE) {
+                        gameWrapper.runJS(FPS_PROBE_JS)
+                        return
+                    }
+                    val id = intent.getStringExtra("id") ?: SteamBridge.unlockedOnSteam().firstOrNull()
+                    Log.i("CrossAndroidSteam", "Pop-up preview: " + (id?.let { SteamBridge.previewPopup(it) } ?: "nothing unlocked on Steam") +
+                        "; unlocked: " + SteamBridge.unlockedOnSteam())
+                }
+            }
+        ContextCompat.registerReceiver(this, receiver, IntentFilter(PREVIEW_POPUP).apply { addAction(FPS_PROBE) }, ContextCompat.RECEIVER_EXPORTED)
+        popupPreviewReceiver = receiver
+    }
+
+    private var popupPreviewReceiver: BroadcastReceiver? = null
 
     private fun setupBackPressHandler() {
         onBackPressedDispatcher.addCallback(
@@ -207,6 +262,7 @@ class GameActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        popupPreviewReceiver?.let { unregisterReceiver(it) }
         if (::gameWrapper.isInitialized) {
             gameWrapper.onDestroy()
         }

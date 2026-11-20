@@ -45,6 +45,12 @@ class ModListProvider(
             installedMods.add(modFileName)
         }
 
+        gameWrapper.builtInMods = BuiltInMods.needed(gameFolderManager)
+        for (id in gameWrapper.builtInMods) {
+            Log.d("CrossCode", "Providing built-in mod $id/")
+            installedMods.add("$id/")
+        }
+
         modList = installedMods
     }
 

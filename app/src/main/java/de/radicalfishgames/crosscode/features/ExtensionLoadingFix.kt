@@ -60,6 +60,10 @@ class ExtensionLoadingFix(
         return result
     }
 
+    /** The same entries as [buildFileForwardingEntries], for the built-in extension-asset-preloader's postload. */
+    @JavascriptInterface
+    fun getFileForwardingAsJson(): String = buildFileForwardingEntries().toString()
+
     @JavascriptInterface
     fun getExtensionListAsJson(): String {
         val json = JSONArray()

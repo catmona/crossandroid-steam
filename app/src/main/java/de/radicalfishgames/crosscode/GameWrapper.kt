@@ -34,6 +34,9 @@ class GameWrapper(
 
     var blockWebViewClicks = true
 
+    /** Ids of [de.radicalfishgames.crosscode.features.BuiltInMods] served this session; set before the page loads. */
+    @Volatile var builtInMods: Set<String> = emptySet()
+
     private val handler = Handler(Looper.getMainLooper())
 
     private var calledPostGameLoad = false
