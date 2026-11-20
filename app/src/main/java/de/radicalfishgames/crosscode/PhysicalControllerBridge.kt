@@ -23,10 +23,8 @@ class PhysicalControllerBridge(
     }
 
     fun onMotionEvent(event: MotionEvent): Boolean {
-        gamepadState.leftStick.horizontal.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_X))
-        gamepadState.leftStick.vertical.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_Y))
-        gamepadState.rightStick.horizontal.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_Z))
-        gamepadState.rightStick.vertical.state = applyDeadZone(event.getAxisValue(MotionEvent.AXIS_RZ))
+        setStick(gamepadState.leftStick, event.getAxisValue(MotionEvent.AXIS_X), event.getAxisValue(MotionEvent.AXIS_Y))
+        setStick(gamepadState.rightStick, event.getAxisValue(MotionEvent.AXIS_Z), event.getAxisValue(MotionEvent.AXIS_RZ))
 
         // Some layouts report triggers as BRAKE/GAS instead of LTRIGGER/RTRIGGER
         val lt = maxOf(event.getAxisValue(MotionEvent.AXIS_LTRIGGER), event.getAxisValue(MotionEvent.AXIS_BRAKE))
@@ -75,5 +73,13 @@ class PhysicalControllerBridge(
             else -> null
         }
 
-    private fun applyDeadZone(value: Float): Double = if (kotlin.math.abs(value) < DEAD_ZONE) 0.0 else value.toDouble()
+    private fun setStick(
+        stick: GamepadJsonBridge.Stick,
+        rawX: Float,
+        rawY: Float,
+    ) {
+        val (x, y) = StickShaper.shape(rawX.toDouble(), rawY.toDouble())
+        stick.horizontal.state = x
+        stick.vertical.state = y
+    }
 }
