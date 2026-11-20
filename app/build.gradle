@@ -30,8 +30,8 @@ android {
         applicationId = "de.radicalfishgames.crosscode.steam"
         minSdk = 26 // JavaSteam uses java.util.Base64
         targetSdk = 36
-        versionCode = 17
-        versionName = "1.7.1-steam3"
+        versionCode = 18
+        versionName = "1.7.1-steam4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

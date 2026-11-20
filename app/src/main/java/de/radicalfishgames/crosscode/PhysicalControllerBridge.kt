@@ -73,13 +73,14 @@ class PhysicalControllerBridge(
             else -> null
         }
 
+    // Sticks go to the game raw, as a desktop browser's Gamepad API reports them: the game applies
+    // its own dead zones, and stick-shaping mods need the unclipped values.
     private fun setStick(
         stick: GamepadJsonBridge.Stick,
         rawX: Float,
         rawY: Float,
     ) {
-        val (x, y) = StickShaper.shape(rawX.toDouble(), rawY.toDouble())
-        stick.horizontal.state = x
-        stick.vertical.state = y
+        stick.horizontal.state = rawX.toDouble()
+        stick.vertical.state = rawY.toDouble()
     }
 }
