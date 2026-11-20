@@ -67,7 +67,7 @@ class GameActivity : AppCompatActivity() {
 
     // Default file written by the settings screen's PreferenceManager
     val preferences: SharedPreferences
-        get() = getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
+        get() = appPreferences(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

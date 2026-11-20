@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.core.content.edit
+import de.radicalfishgames.crosscode.BuildConfig
+import de.radicalfishgames.crosscode.R
 import `in`.dragonbra.javasteam.enums.EOSType
 import `in`.dragonbra.javasteam.enums.EPersonaState
 import `in`.dragonbra.javasteam.enums.EResult
@@ -58,11 +61,13 @@ import kotlin.random.Random
  *
  * Every unlock is checked: after storing, the stats are read back from Steam and an unlock only
  * leaves the queue once its bit is set there. [health] reports what has been confirmed this way.
+ * Only achievement ids the Steam schema and the game both know are accepted ([SteamRules]).
  *
  * All state changes run on one serial coroutine dispatcher; stats requests also hold [statsMutex],
  * because coroutines on that dispatcher still interleave at suspension points.
- * The refresh token never leaves the app's private "steam" preferences, which backups exclude.
- * The password is only passed to Steam's auth call and never kept.
+ * The refresh token never leaves the app's private "steam" preferences, which backups exclude, and is
+ * stored there encrypted with a Keystore key ([TokenVault]). The password is only passed to Steam's
+ * auth call and never kept. Account names only reach the log in debug builds.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 object SteamBridge {
@@ -72,9 +77,17 @@ object SteamBridge {
     // EClientPersonaStateFlag: Status 1 | PlayerName 2 | Presence 16 | GameExtraInfo 256 | GameDataBlob 512
     private const val PERSONA_FLAGS_WITH_GAME = 1 or 2 or 16 or 256 or 512
     private const val FLUSH_DELAY_MS = 3_000L
+    private const val MAX_WAITING_UNLOCKS = 512
     private const val LIVE_FLUSH_DELAY_MS = 300L
-    private const val RETRY_DELAY_MS = 30_000L
     private const val REQUEST_TIMEOUT_MS = 20_000L
+    private const val RECONNECT_FIRST_MS = 5_000L
+    private const val RECONNECT_MAX_MS = 120_000L
+
+    // In the background, stay connected this long, then sync what's queued and disconnect
+    private const val IDLE_DISCONNECT_MS = 60_000L
+
+    // ...but stop waiting on a queue Steam won't take after this many more idle periods (it is kept)
+    private const val IDLE_MAX_EXTRA_WAITS = 4
 
     enum class Status { SIGNED_OUT, CONNECTING, WAITING_FOR_QR, SIGNING_IN, NEEDS_CODE, WAITING_FOR_APPROVAL, ONLINE, OFFLINE }
 
@@ -100,6 +113,8 @@ object SteamBridge {
         val playingSentAt: Long? = null,
         val playingConfirmedAt: Long? = null,
         val playingNote: String? = null,
+        /** True while "playing" was sent and Steam hasn't confirmed it yet. */
+        val playingWaiting: Boolean = false,
         /** Achievements set on the account, out of [schemaSize]; null until stats were read. */
         val unlockedOnSteam: Int? = null,
         val schemaSize: Int? = null,
@@ -138,6 +153,8 @@ object SteamBridge {
     val popups: SharedFlow<Popup> = _popups.asSharedFlow()
 
     private lateinit var prefs: SharedPreferences
+    private lateinit var appContext: Context
+    private lateinit var tokens: TokenVault
     private val statsMutex = Mutex()
 
     private var client: SteamClient? = null
@@ -149,11 +166,27 @@ object SteamBridge {
     private var wantQr = false
     private var pendingCredentials: Pair<String, String>? = null
     private var playing = false
-    private var reconnectDelayMs = 5_000L
+    private var panelOpen = false
+    private var reconnectDelayMs = RECONNECT_FIRST_MS
+    private var retryAttempt = 0
     private var authJob: Job? = null
     private var flushDelayJob: Job? = null
     private var reconnectJob: Job? = null
-    private var schema: Map<String, UserStatsHandler.AchievementSlot>? = null
+    private var idleJob: Job? = null
+
+    @Volatile private var schema: Map<String, UserStatsHandler.AchievementSlot>? = null
+
+    /** The game's own trophy ids (their steamID fields), sent by the page; see [setTrophyIds]. */
+    @Volatile private var trophyIds: Set<String>? = null
+
+    /** Set once Steam refused both the stats and an ownership ticket for CrossCode. */
+    private var notOwned = false
+
+    /** Whether this logon's ownership check has finished; "playing" is only sent after it. */
+    private var ownershipChecked = false
+
+    /** The eresult of the last GetUserStats; null after a timeout. */
+    private var lastStatsResult: EResult? = null
 
     @Volatile private var codeFuture: CompletableFuture<String>? = null
 
@@ -162,11 +195,24 @@ object SteamBridge {
     private val gameNames = HashMap<String, String>()
 
     private val accountName get() = prefs.getString("account_name", null)
-    private val refreshToken get() = prefs.getString("refresh_token", null)
+    private val refreshToken get() = tokens.get()
 
+    private fun str(
+        @StringRes id: Int,
+        vararg args: Any,
+    ): String = appContext.getString(id, *args)
+
+    @Synchronized
     fun init(context: Context) {
         if (::prefs.isInitialized) return
-        prefs = context.applicationContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
+        appContext = context.applicationContext
+        val p = appContext.getSharedPreferences("steam", Context.MODE_PRIVATE)
+        tokens = TokenVault(p)
+        prefs = p
+        if (refreshToken != null && accountName == null) {
+            Log.w(TAG, "Saved Steam sign-in has no account name; signing out")
+            tokens.clear()
+        }
         if (refreshToken != null) {
             _state.value = State(Status.OFFLINE, accountName)
         }
@@ -228,10 +274,8 @@ object SteamBridge {
 
     fun signOut() =
         scope.launch {
-            prefs.edit {
-                remove("account_name")
-                remove("refresh_token")
-            }
+            prefs.edit { remove("account_name") }
+            tokens.clear()
             disconnect(State(Status.SIGNED_OUT))
             _health.value = Health(reported = reportedSet().size, pending = pendingSet().size)
         }
@@ -242,7 +286,11 @@ object SteamBridge {
             if (refreshToken != null && client == null) connect()
         }
 
-    /** The game is in front (true) or not (false). Steam counts playtime while true. */
+    /**
+     * The game is in front (true) or not (false). Steam counts playtime while true. A minute after
+     * the game leaves the front, queued unlocks are synced and the connection is closed; coming
+     * back to the front reconnects.
+     */
     fun setPlaying(nowPlaying: Boolean) =
         scope.launch {
             if (playing == nowPlaying) return@launch
@@ -252,6 +300,80 @@ object SteamBridge {
             } else if (nowPlaying && refreshToken != null && client == null) {
                 connect()
             }
+            scheduleIdleDisconnect()
+        }
+
+    /** The Steam screen is showing (true) or not; the connection stays open while it shows. */
+    fun setPanelOpen(open: Boolean) =
+        scope.launch {
+            panelOpen = open
+            scheduleIdleDisconnect()
+        }
+
+    /**
+     * The game's own trophy ids, sent once per page load before any unlock. Unlocks for ids outside
+     * the Steam schema are refused; before the schema is known, ids outside this list are.
+     */
+    fun setTrophyIds(ids: Set<String>) {
+        trophyIds = ids
+        Log.i(TAG, "Game trophies with a Steam id: ${ids.size}")
+        scope.launch { recheckWaiting() }
+    }
+
+    /**
+     * The achievement API names the Steam schema lists: from this run's stats read, else from the
+     * last one saved. Null until the stats were read once.
+     */
+    fun knownAchievementIds(): Set<String>? {
+        schema?.let { return it.keys }
+        if (!::prefs.isInitialized) return null
+        return prefs.getStringSet("schema_ids", null)?.toSet()
+    }
+
+    /**
+     * A full save import replaced the save: replays of its trophies are held back until the user
+     * says whether to send them to Steam ([resolveImportedReplays]). Live unlocks still go through.
+     */
+    fun holdReplaysForImport() =
+        scope.launch {
+            prefs.edit {
+                putBoolean("import_hold", true)
+                remove("held_unlocks")
+            }
+            Log.i(TAG, "Full save import: holding its achievements until the user decides")
+        }
+
+    /** After the game replayed the saved trophies: calls [onHeld] with how many are held back, if any. */
+    fun afterReplay(onHeld: (Int) -> Unit) =
+        scope.launch {
+            if (!prefs.getBoolean("import_hold", false)) return@launch
+            val held = heldSet()
+            if (held.isNotEmpty()) {
+                onHeld(held.size)
+            } else if (waitingUnlocks.isEmpty()) {
+                // The imported save had nothing to replay; don't hold the next save's replays
+                prefs.edit { putBoolean("import_hold", false) }
+                Log.i(TAG, "Imported save replayed no achievements; nothing to hold")
+            }
+        }
+
+    /** The user's answer for the held replays: [sync] sends them to Steam, otherwise they are skipped from now on. */
+    fun resolveImportedReplays(sync: Boolean) =
+        scope.launch {
+            val held = heldSet()
+            prefs.edit {
+                if (sync) {
+                    putStringSet("reported_unlocks", reportedSet() + held)
+                    putStringSet("pending_unlocks", pendingSet() + held)
+                } else {
+                    putStringSet("declined_unlocks", declinedSet() + held)
+                }
+                remove("held_unlocks")
+                putBoolean("import_hold", false)
+            }
+            Log.i(TAG, "Imported save: ${held.size} achievements " + if (sync) "queued for Steam" else "not synced, by choice")
+            _health.update { it.copy(reported = reportedSet().size, pending = pendingSet().size) }
+            if (sync) scheduleFlush(0)
         }
 
     /**
@@ -263,8 +385,48 @@ object SteamBridge {
         apiName: String,
         live: Boolean = false,
         gameName: String? = null,
-    ) = scope.launch {
+    ) = scope.launch { handleUnlock(apiName, live, gameName) }
+
+    /** Unlocks that came before either id list was known; [recheckWaiting] decides them later. */
+    private val waitingUnlocks = LinkedHashMap<String, Pair<Boolean, String?>>()
+
+    /** Runs the unlocks that waited for an id list, now that one may be known. On [scope]. */
+    private fun recheckWaiting() {
+        if (waitingUnlocks.isEmpty() || (knownAchievementIds() == null && trophyIds == null)) return
+        val waiting = waitingUnlocks.toList()
+        waitingUnlocks.clear()
+        for ((id, args) in waiting) handleUnlock(id, args.first, args.second)
+    }
+
+    /** The body of [unlock]; on [scope]. Refused ids leave no trace, so they replay after an update. */
+    private fun handleUnlock(
+        apiName: String,
+        live: Boolean,
+        gameName: String?,
+    ) {
+        when (SteamRules.achievementVerdict(apiName, knownAchievementIds(), trophyIds)) {
+            SteamRules.Verdict.REFUSE -> {
+                Log.w(TAG, "Refusing unknown achievement id \"${apiName.take(64)}\"")
+                return
+            }
+            SteamRules.Verdict.WAIT -> {
+                // Neither the schema nor the game's list is known yet; decide once one is
+                if (waitingUnlocks.size < MAX_WAITING_UNLOCKS) {
+                    val earlier = waitingUnlocks[apiName]
+                    waitingUnlocks[apiName] = (live || earlier?.first == true) to (gameName ?: earlier?.second)
+                }
+                return
+            }
+            SteamRules.Verdict.ACCEPT -> {}
+        }
         if (gameName != null) gameNames[apiName] = gameName
+        if (!live) {
+            if (apiName in declinedSet()) return // from an imported save the user chose not to sync
+            if (prefs.getBoolean("import_hold", false)) {
+                prefs.edit { putStringSet("held_unlocks", heldSet() + apiName) }
+                return
+            }
+        }
         val reported = reportedSet()
         if (apiName !in reported) prefs.edit { putStringSet("reported_unlocks", reported + apiName) }
 
@@ -273,7 +435,7 @@ object SteamBridge {
         if (alreadyOnSteam && !live) {
             // The boot replay of something Steam already has
             Log.i(TAG, "Already on Steam: $apiName")
-            return@launch
+            return
         }
 
         val pending = pendingSet()
@@ -282,7 +444,7 @@ object SteamBridge {
 
         if (live) {
             liveUnlocks += apiName
-            if (!loggedOn) {
+            if (!loggedOn || notOwned) {
                 // No Steam answer to wait for; show it now and say it will sync later
                 emitUnlocked(apiName, onSteam = null)
                 liveUnlocks -= apiName
@@ -296,19 +458,28 @@ object SteamBridge {
     /**
      * Compares what the game reported with what Steam has: re-sends anything missing, re-reads the
      * stats, and re-announces "playing" while the game is in front. The result lands in [health].
+     * After "not owned" it checks ownership again, and it restarts uploads that ran out of retries.
      */
     fun checkNow() =
         scope.launch {
             if (!loggedOn) {
-                _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = "Not online with Steam yet") }
+                _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = str(R.string.steam_check_not_online)) }
                 if (refreshToken != null && client == null) connect()
                 return@launch
+            }
+            retryAttempt = 0
+            if (notOwned || !ownershipChecked) {
+                checkOwnership()
+                if (notOwned) {
+                    _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = str(R.string.steam_not_owned)) }
+                    return@launch
+                }
             }
             if (playing) sendPlaying() else requestOwnPersona()
             statsMutex.withLock {
                 val current = readStats()
                 if (current == null) {
-                    _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = "Steam didn't answer the stats request") }
+                    _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = str(R.string.steam_check_no_stats)) }
                     return@withLock
                 }
                 val values = current.valueMap()
@@ -320,9 +491,9 @@ object SteamBridge {
                 updateHealth(values)
                 val note =
                     when {
-                        slots.isEmpty() -> "Steam sent no achievement list"
-                        missing.isEmpty() -> "All ${_health.value.verified} achievements from your save are on Steam"
-                        else -> "${missing.size} not on Steam yet, sending them now"
+                        slots.isEmpty() -> str(R.string.steam_check_no_list)
+                        missing.isEmpty() -> str(R.string.steam_check_all_on_steam, _health.value.verified)
+                        else -> str(R.string.steam_check_sending, missing.size)
                     }
                 Log.i(TAG, "Check: $note")
                 _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = note) }
@@ -379,6 +550,7 @@ object SteamBridge {
 
     private fun disconnect(newState: State) {
         loggedOn = false
+        ownershipChecked = false
         authJob?.cancel()
         flushDelayJob?.cancel()
         reconnectJob?.cancel()
@@ -392,13 +564,52 @@ object SteamBridge {
         _state.value = newState
     }
 
+    /**
+     * While neither the game nor the Steam screen is in front: after [IDLE_DISCONNECT_MS], uploads
+     * what's queued, then disconnects. Sign-ins in progress are left alone.
+     */
+    private fun scheduleIdleDisconnect() {
+        idleJob?.cancel()
+        idleJob = null
+        if (playing || panelOpen) return
+        idleJob =
+            scope.launch {
+                delay(IDLE_DISCONNECT_MS)
+                var extraWaits = 0
+                while (true) {
+                    if (playing || panelOpen || client == null) return@launch
+                    val signingIn = authJob?.isActive == true || wantQr || pendingCredentials != null || codeFuture != null
+                    val queued = loggedOn && !notOwned && pendingSet().isNotEmpty()
+                    if (!signingIn && !queued) break
+                    if (queued && !signingIn) {
+                        if (extraWaits >= IDLE_MAX_EXTRA_WAITS) break // the queue is kept for next time
+                        flushDelayJob?.cancel()
+                        statsMutex.withLock { flush() }
+                        if (pendingSet().isEmpty()) break
+                    }
+                    extraWaits++
+                    delay(IDLE_DISCONNECT_MS)
+                }
+                Log.i(TAG, "Game in the background; disconnecting from Steam until it is back")
+                disconnect(State(Status.OFFLINE, accountName, message = str(R.string.steam_msg_paused)))
+            }
+    }
+
     private fun onConnected() {
+        // The reconnect backoff is only reset by a successful logon, so a CM that accepts the
+        // connection but fails the logon doesn't get hammered
         Log.i(TAG, "Connected to Steam")
-        reconnectDelayMs = 5_000L
         val token = refreshToken
+        val account = accountName
         when {
             pendingCredentials != null -> beginCredentials()
-            token != null -> logOn(accountName!!, token)
+            token != null && account != null -> logOn(account, token)
+            token != null -> {
+                // A token without its account name can't log on; count it as signed out
+                Log.w(TAG, "Saved Steam sign-in has no account name; signing out")
+                tokens.clear()
+                if (wantQr) beginQr() else disconnect(State(Status.SIGNED_OUT))
+            }
             wantQr -> beginQr()
         }
     }
@@ -410,20 +621,26 @@ object SteamBridge {
         if (which !== client) return // an old client we already dropped
         Log.i(TAG, "Disconnected from Steam (userInitiated=$userInitiated)")
         loggedOn = false
+        ownershipChecked = false
         stats?.cancelAll()
         client = null
         stats = null
         pumping = false
 
         if (refreshToken == null) {
-            if (_state.value.status != Status.SIGNED_OUT) _state.value = State(Status.SIGNED_OUT, message = "Connection lost")
+            if (_state.value.status != Status.SIGNED_OUT) _state.value = State(Status.SIGNED_OUT, message = str(R.string.steam_msg_connection_lost))
             wantQr = false
             pendingCredentials = null
             return
         }
-        _state.value = State(Status.OFFLINE, accountName, message = "Reconnecting...")
+        if (!playing && !panelOpen) {
+            // Nobody is looking; setPlaying(true) reconnects when the game is back
+            _state.value = State(Status.OFFLINE, accountName, message = str(R.string.steam_msg_paused))
+            return
+        }
+        _state.value = State(Status.OFFLINE, accountName, message = str(R.string.steam_msg_reconnecting))
         val wait = reconnectDelayMs
-        reconnectDelayMs = (reconnectDelayMs * 2).coerceAtMost(120_000L)
+        reconnectDelayMs = (reconnectDelayMs * 2).coerceAtMost(RECONNECT_MAX_MS)
         reconnectJob =
             scope.launch {
                 delay(wait)
@@ -460,13 +677,16 @@ object SteamBridge {
 
     private fun onLoggedOn(cb: LoggedOnCallback) {
         if (cb.result == EResult.OK) {
-            Log.i(TAG, "Logged on as $accountName")
+            Log.i(TAG, if (BuildConfig.DEBUG) "Logged on as $accountName" else "Logged on")
             loggedOn = true
+            reconnectDelayMs = RECONNECT_FIRST_MS
+            retryAttempt = 0
+            ownershipChecked = false
             _state.value = State(Status.ONLINE, accountName)
             client?.getHandler(SteamFriends::class.java)?.setPersonaState(EPersonaState.Online)
-            if (playing) sendPlaying()
-            // Reads the stats once even with nothing queued, so the status panel has real numbers
-            scheduleFlush(0)
+            // "Playing" waits for the ownership check, which also reads the stats once so the
+            // status panel has real numbers
+            scope.launch { checkOwnership() }
             return
         }
 
@@ -474,11 +694,11 @@ object SteamBridge {
         when (cb.result) {
             EResult.InvalidPassword, EResult.AccessDenied, EResult.Expired, EResult.Revoked, EResult.InvalidSignature -> {
                 // The saved token no longer works; the user has to sign in again
-                prefs.edit { remove("refresh_token") }
-                disconnect(State(Status.SIGNED_OUT, message = "Steam sign-in expired (${cb.result}), please sign in again"))
+                tokens.clear()
+                disconnect(State(Status.SIGNED_OUT, message = str(R.string.steam_msg_expired, cb.result.toString())))
             }
             else -> {
-                _state.value = State(Status.OFFLINE, accountName, message = "Steam logon failed: ${cb.result}")
+                _state.value = State(Status.OFFLINE, accountName, message = str(R.string.steam_msg_logon_failed, cb.result.toString()))
                 client?.disconnect() // onDisconnected schedules the retry
             }
         }
@@ -489,9 +709,62 @@ object SteamBridge {
         loggedOn = false
         if (result == EResult.LoggedInElsewhere || result == EResult.LogonSessionReplaced) {
             // Another device started a game on this account. Don't fight it; reconnect when the game resumes.
-            disconnect(State(Status.OFFLINE, accountName, message = "Steam is in use on another device"))
+            disconnect(State(Status.OFFLINE, accountName, message = str(R.string.steam_msg_elsewhere)))
             playing = false
         }
+    }
+
+    // ---- ownership ----
+
+    /**
+     * Reads the stats; if Steam refuses them, asks for an ownership ticket too. Both refused means
+     * the account doesn't own CrossCode: then nothing is uploaded and "playing" isn't sent. Anything
+     * else (stats fine, timeouts, transient errors) counts as owned.
+     */
+    private suspend fun checkOwnership() {
+        val c = client ?: return
+        // The stats answer is kept locally: lastStatsResult is shared and may change while we wait
+        val (current, statsResult) = statsMutex.withLock { readStats() to lastStatsResult }
+        if (client !== c || !loggedOn) return
+        val ticket = if (current == null && SteamRules.isRefusal(statsResult)) ownershipTicketResult(c) else null
+        if (client !== c || !loggedOn) return
+        if (SteamRules.looksNotOwned(statsResult, ticket)) {
+            markNotOwned(statsResult, ticket)
+            return
+        }
+        val wasNotOwned = notOwned
+        notOwned = false
+        ownershipChecked = true
+        if (wasNotOwned) _state.value = State(Status.ONLINE, accountName)
+        if (playing) sendPlaying()
+        scheduleFlush(0)
+    }
+
+    private suspend fun ownershipTicketResult(c: SteamClient): EResult? {
+        val apps = c.getHandler(SteamApps::class.java) ?: return null
+        return try {
+            withTimeoutOrNull(REQUEST_TIMEOUT_MS) { apps.getAppOwnershipTicket(APP_ID).toFuture().await() }?.result
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            null // the request was dropped by a disconnect
+        } catch (e: Exception) {
+            Log.w(TAG, "Ownership ticket request failed: ${e.javaClass.simpleName}")
+            null
+        }
+    }
+
+    private fun markNotOwned(
+        statsResult: EResult?,
+        ticket: EResult?,
+    ) {
+        Log.w(TAG, "CrossCode isn't on this account (stats: $statsResult, ticket: $ticket); not uploading or announcing")
+        val announced = ownershipChecked && !notOwned && playing
+        notOwned = true
+        ownershipChecked = true
+        flushDelayJob?.cancel()
+        if (announced) client?.getHandler(SteamApps::class.java)?.notifyGamesPlayed(emptyList(), EOSType.AndroidUnknown)
+        val text = str(R.string.steam_not_owned)
+        _state.value = State(Status.ONLINE, accountName, message = text)
+        _health.update { it.copy(playingConfirmedAt = null, playingWaiting = false, playingNote = text) }
     }
 
     // ---- sign-in ----
@@ -571,25 +844,24 @@ object SteamBridge {
     private suspend fun runAuth(start: suspend () -> AuthSession) {
         try {
             val result: AuthPollResult = start().pollingWaitForResult().await()
-            prefs.edit {
-                putString("account_name", result.accountName)
-                putString("refresh_token", result.refreshToken)
-            }
+            prefs.edit { putString("account_name", result.accountName) }
+            tokens.set(result.refreshToken)
             wantQr = false
             _state.value = State(Status.CONNECTING, result.accountName)
             logOn(result.accountName, result.refreshToken)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.e(TAG, "Sign-in failed: ${e.javaClass.simpleName}: ${e.message}")
+            // Exception messages can carry the account name; release builds log only the type
+            Log.e(TAG, "Sign-in failed: ${e.javaClass.simpleName}" + if (BuildConfig.DEBUG) ": ${e.message}" else "")
             wantQr = false
             val cause = (e as? AuthenticationException) ?: (e.cause as? AuthenticationException)
             val text =
                 when (cause?.result) {
-                    EResult.InvalidPassword -> "Wrong account name or password"
-                    EResult.RateLimitExceeded, EResult.AccountLoginDeniedThrottle -> "Too many attempts, wait a while and try again"
-                    EResult.Expired, EResult.Timeout -> "The sign-in timed out, please try again"
-                    else -> "Sign-in failed: ${cause?.result ?: e.message}"
+                    EResult.InvalidPassword -> str(R.string.steam_auth_wrong_password)
+                    EResult.RateLimitExceeded, EResult.AccountLoginDeniedThrottle -> str(R.string.steam_auth_throttled)
+                    EResult.Expired, EResult.Timeout -> str(R.string.steam_auth_timed_out)
+                    else -> str(R.string.steam_auth_failed, (cause?.result ?: e.message ?: e.javaClass.simpleName).toString())
                 }
             disconnect(State(Status.SIGNED_OUT, message = text))
         } finally {
@@ -602,6 +874,7 @@ object SteamBridge {
     private fun sendPlaying() {
         val c = client ?: return
         val apps = c.getHandler(SteamApps::class.java) ?: return
+        if (playing && (notOwned || !ownershipChecked)) return // nothing to announce for a game the account lacks
         val games =
             if (playing) {
                 listOf(
@@ -618,9 +891,16 @@ object SteamBridge {
         apps.notifyGamesPlayed(games, EOSType.AndroidUnknown)
         Log.i(TAG, if (playing) "Now playing CrossCode" else "Stopped playing")
         if (playing) {
-            _health.update { it.copy(playingSentAt = System.currentTimeMillis(), playingConfirmedAt = null, playingNote = "Waiting for Steam") }
-        } else {
-            _health.update { it.copy(playingNote = "Not playing (game not in front)") }
+            _health.update {
+                it.copy(
+                    playingSentAt = System.currentTimeMillis(),
+                    playingConfirmedAt = null,
+                    playingWaiting = true,
+                    playingNote = str(R.string.steam_playing_waiting),
+                )
+            }
+        } else if (!notOwned) {
+            _health.update { it.copy(playingWaiting = false, playingNote = str(R.string.steam_playing_not_in_front)) }
         }
         requestOwnPersona()
     }
@@ -643,21 +923,21 @@ object SteamBridge {
     ) {
         Log.i(TAG, "Playing session: app $appId, blocked=$blocked")
         when {
-            blocked -> _health.update { it.copy(playingConfirmedAt = null, playingNote = "Blocked: this account is playing on another device") }
-            appId == APP_ID && playing -> confirmPlaying("Steam session")
+            blocked -> _health.update { it.copy(playingConfirmedAt = null, playingWaiting = false, playingNote = str(R.string.steam_playing_blocked)) }
+            appId == APP_ID && playing && !notOwned -> confirmPlaying(str(R.string.steam_playing_session))
             else -> Unit
         }
     }
 
     private fun onOwnPersona(gameAppId: Int) {
         Log.i(TAG, "Own persona: in game $gameAppId")
-        if (gameAppId == APP_ID && playing) confirmPlaying("Friends see Playing CrossCode")
+        if (gameAppId == APP_ID && playing && !notOwned) confirmPlaying(str(R.string.steam_playing_friends))
     }
 
     private fun confirmPlaying(how: String) {
         val now = System.currentTimeMillis()
         Log.i(TAG, "Playing confirmed: $how")
-        _health.update { it.copy(playingConfirmedAt = now, playingNote = how) }
+        _health.update { it.copy(playingConfirmedAt = now, playingWaiting = false, playingNote = how) }
     }
 
     // ---- achievements ----
@@ -668,10 +948,17 @@ object SteamBridge {
 
     private fun reportedSet(): Set<String> = prefs.getStringSet("reported_unlocks", emptySet())!!.toSet()
 
+    /** Replays from an imported save, waiting for the user's yes or no. */
+    private fun heldSet(): Set<String> = prefs.getStringSet("held_unlocks", emptySet())!!.toSet()
+
+    /** Replays from an imported save the user chose not to send. */
+    private fun declinedSet(): Set<String> = prefs.getStringSet("declined_unlocks", emptySet())!!.toSet()
+
     private fun CMsgClientGetUserStatsResponse.valueMap(): Map<Int, Int> = statsList.associate { it.statId to it.statValue }
 
     private fun scheduleFlush(delayMs: Long = FLUSH_DELAY_MS) {
-        if (!loggedOn) return
+        // Before the ownership check is done, checkOwnership schedules the flush itself when it ends
+        if (!loggedOn || notOwned || !ownershipChecked) return
         // Restarting the timer batches the burst of unlocks the game replays from the save on load.
         // Only the wait is cancelled; a flush already talking to Steam runs to the end.
         flushDelayJob?.cancel()
@@ -693,13 +980,18 @@ object SteamBridge {
             } catch (e: kotlinx.coroutines.CancellationException) {
                 null // the request was dropped by a disconnect
             }
+        lastStatsResult = current?.let { EResult.from(it.eresult) }
         if (current == null || current.eresult != EResult.OK.code()) {
-            Log.w(TAG, "GetUserStats failed: ${current?.eresult ?: "timeout"}")
+            Log.w(TAG, "GetUserStats failed: ${lastStatsResult ?: "timeout"}")
             return null
         }
         if (schema == null && current.hasSchema() && !current.schema.isEmpty) {
-            schema = UserStatsHandler.parseSchema(current.schema.toByteArray())
-            Log.i(TAG, "Achievement schema: ${schema!!.size} achievements")
+            val parsed = UserStatsHandler.parseSchema(current.schema.toByteArray())
+            schema = parsed
+            // Kept so the allow-list works offline on the next run too
+            if (parsed.isNotEmpty()) prefs.edit { putStringSet("schema_ids", parsed.keys.toSet()) }
+            Log.i(TAG, "Achievement schema: ${parsed.size} achievements")
+            scope.launch { recheckWaiting() }
         }
         lastValues = current.valueMap()
         return current
@@ -721,7 +1013,7 @@ object SteamBridge {
 
     /** Uploads queued unlocks, then reads the stats back to confirm them. Call with [statsMutex] held. */
     private suspend fun flush() {
-        if (!loggedOn) return
+        if (!loggedOn || notOwned || !ownershipChecked) return // checkOwnership flushes once it is done
         val pending = pendingSet()
         val current = readStats() ?: return retryLater()
         val slots = schema
@@ -731,6 +1023,7 @@ object SteamBridge {
         }
         val values = current.valueMap().toMutableMap()
         if (pending.isEmpty()) {
+            retryAttempt = 0
             updateHealth(values)
             return
         }
@@ -793,10 +1086,25 @@ object SteamBridge {
         if (caughtUp > 0) _popups.tryEmit(Popup.CaughtUp(caughtUp))
         liveUnlocks.removeAll(handled)
 
-        if (notTaken.isNotEmpty()) retryLater() else if (pendingSet().isNotEmpty()) scheduleFlush()
+        if (notTaken.isNotEmpty()) {
+            retryLater()
+        } else {
+            retryAttempt = 0
+            if (pendingSet().isNotEmpty()) scheduleFlush()
+        }
     }
 
-    private fun retryLater() = scheduleFlush(RETRY_DELAY_MS)
+    /** Schedules the next try with a growing wait; after [SteamRules.RETRY_ATTEMPTS] tries it stops until "Check now" or the next logon. */
+    private fun retryLater() {
+        val wait = SteamRules.retryDelayMs(retryAttempt)
+        if (wait == null) {
+            Log.w(TAG, "Steam still refuses after $retryAttempt retries; keeping the queue and stopping")
+            _health.update { it.copy(lastCheckAt = System.currentTimeMillis(), lastCheckNote = str(R.string.steam_check_gave_up)) }
+            return
+        }
+        retryAttempt++
+        scheduleFlush(wait)
+    }
 
     private fun announceLive(
         names: Collection<String>,

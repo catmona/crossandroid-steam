@@ -5,7 +5,7 @@ import android.os.storage.StorageManager
 import java.io.File
 
 /**
- * Locates the game folder: Android/data/de.radicalfishgames.crosscode/files/CrossCode/ on any
+ * Locates the game folder: Android/data/<application id>/files/CrossCode/ on any
  * external volume (internal storage or SD card).
  */
 class GameFolderManager(

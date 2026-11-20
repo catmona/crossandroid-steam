@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.webkit.WebViewFeature
 import de.radicalfishgames.crosscode.GameActivity
 import de.radicalfishgames.crosscode.GameWrapper
+import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.steam.SteamBridge
 import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
@@ -38,7 +40,7 @@ class FullSaveImportFeature(
         val save = importFile.readText().trim()
         if (!looksLikeSave(save)) {
             Log.w(TAG, "Ignoring ${importFile.path}: not a CrossCode save")
-            Toast.makeText(hostActivity, "import/cc.save is not a CrossCode save file", Toast.LENGTH_LONG).show()
+            Toast.makeText(hostActivity, R.string.import_full_save_invalid, Toast.LENGTH_LONG).show()
             return
         }
         pendingSave = save
@@ -63,10 +65,12 @@ class FullSaveImportFeature(
         fun take(): String? {
             val save = pendingSave ?: return null
             pendingSave = null
+            // The imported save replays its trophies on load; ask before they go to Steam
+            SteamBridge.holdReplaysForImport()
             val done = File(importDir, "cc.save.imported-${stamp()}")
             if (!importFile.renameTo(done)) importFile.delete()
             hostActivity.runOnUiThread {
-                Toast.makeText(hostActivity, "Imported the full save from import/cc.save", Toast.LENGTH_LONG).show()
+                Toast.makeText(hostActivity, R.string.import_full_save_done, Toast.LENGTH_LONG).show()
             }
             Log.i(TAG, "Full save imported; file moved to ${done.name}")
             return save

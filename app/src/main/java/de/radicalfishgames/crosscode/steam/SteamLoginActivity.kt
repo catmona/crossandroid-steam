@@ -66,7 +66,13 @@ class SteamLoginActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        SteamBridge.setPanelOpen(true)
         SteamBridge.ensureConnected()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        SteamBridge.setPanelOpen(false)
     }
 
     override fun onDestroy() {
@@ -160,7 +166,7 @@ class SteamLoginActivity : AppCompatActivity() {
     private fun codePromptText(prompt: SteamBridge.CodePrompt?): String {
         val base =
             when (prompt?.kind) {
-                SteamBridge.CodeKind.EMAIL -> getString(R.string.steam_code_email, prompt.email ?: "your email")
+                SteamBridge.CodeKind.EMAIL -> getString(R.string.steam_code_email, prompt.email ?: getString(R.string.steam_your_email))
                 else -> getString(R.string.steam_code_authenticator)
             }
         return if (prompt?.previousWasWrong == true) getString(R.string.steam_code_wrong) + "\n" + base else base
@@ -172,7 +178,7 @@ class SteamLoginActivity : AppCompatActivity() {
         lines +=
             when {
                 h.playingConfirmedAt != null -> getString(R.string.steam_check_playing_confirmed, t(h.playingConfirmedAt), h.playingNote ?: "")
-                h.playingSentAt != null && h.playingNote == "Waiting for Steam" -> getString(R.string.steam_check_playing_waiting, t(h.playingSentAt))
+                h.playingSentAt != null && h.playingWaiting -> getString(R.string.steam_check_playing_waiting, t(h.playingSentAt))
                 h.playingNote != null -> getString(R.string.steam_check_playing_note, h.playingNote)
                 else -> getString(R.string.steam_check_playing_none)
             }

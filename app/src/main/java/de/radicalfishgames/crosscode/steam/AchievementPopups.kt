@@ -25,6 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.radicalfishgames.crosscode.R
+import de.radicalfishgames.crosscode.appPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -235,8 +236,6 @@ class AchievementPopups(
 
         /** The settings switch, read each time so turning it off applies at once. */
         fun enabled(context: Context): Boolean =
-            context
-                .getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
-                .getBoolean(PREF_KEY, true)
+            appPreferences(context).getBoolean(PREF_KEY, true)
     }
 }

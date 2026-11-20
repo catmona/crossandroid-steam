@@ -2,13 +2,14 @@ package de.radicalfishgames.crosscode.preferences
 
 import android.content.Context
 import android.content.SharedPreferences
+import de.radicalfishgames.crosscode.appPreferences
 import org.json.JSONArray
 
 class SaveImportManager(
     context: Context,
 ) {
     private val prefs: SharedPreferences =
-        context.getSharedPreferences("de.radicalfishgames.crosscode_preferences", Context.MODE_PRIVATE)
+        appPreferences(context)
 
     companion object {
         private const val KEY_SAVES_TO_IMPORT = "saves_to_import"

@@ -26,11 +26,12 @@ android {
     }
 
     defaultConfig {
-        applicationId = "de.radicalfishgames.crosscode"
-        minSdk = 24
+        // An id of its own so it installs next to upstream CrossAndroid; namespace (R, BuildConfig) stays
+        applicationId = "de.radicalfishgames.crosscode.steam"
+        minSdk = 26 // JavaSteam uses java.util.Base64
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.7.1"
+        versionCode = 15
+        versionName = "1.7.1-steam1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
