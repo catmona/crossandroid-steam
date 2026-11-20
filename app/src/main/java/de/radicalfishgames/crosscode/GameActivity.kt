@@ -1,5 +1,8 @@
 package de.radicalfishgames.crosscode
 
+import de.radicalfishgames.crosscode.features.FullSaveImportFeature
+import de.radicalfishgames.crosscode.features.SteamFeature
+import de.radicalfishgames.crosscode.steam.SteamBridge
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
@@ -47,6 +50,7 @@ class GameActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         gameFolderManager = GameFolderManager(this)
+        SteamBridge.init(this)
 
         setupBackPressHandler()
         startGame()
@@ -110,6 +114,8 @@ class GameActivity : AppCompatActivity() {
                 ImportExportFeature(gameWrapper, this),
                 HapticFeedbackFeature(gameWrapper, this),
                 OverlayScaleFeature(gameWrapper, this),
+                SteamFeature(gameWrapper, this),
+                FullSaveImportFeature(gameWrapper, this),
             ),
         )
 
@@ -182,6 +188,8 @@ class GameActivity : AppCompatActivity() {
         Log.d("CrossCode", "Pausing game.")
 
         gameWrapper.onPause()
+
+        SteamBridge.setPlaying(false)
     }
 
     override fun onResume() {
@@ -190,6 +198,9 @@ class GameActivity : AppCompatActivity() {
         Log.d("CrossCode", "Resuming game.")
 
         gameWrapper.onResume()
+
+        // Counts playtime and shows "Playing CrossCode" while the game is in front
+        SteamBridge.setPlaying(true)
 
         goIntoFullScreen()
     }

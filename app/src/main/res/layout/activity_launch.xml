@@ -76,10 +76,21 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text="@string/export_saves_button"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/steam_button"
             app:layout_constraintEnd_toEndOf="@+id/launch_button"
             app:layout_constraintStart_toStartOf="@+id/launch_button"
             app:layout_constraintTop_toBottomOf="@+id/import_saves_button" />
+
+        <Button
+            android:id="@+id/steam_button"
+            style="@style/Widget.App.Button.TonalButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/steam_button_signed_out"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/launch_button"
+            app:layout_constraintStart_toStartOf="@+id/launch_button"
+            app:layout_constraintTop_toBottomOf="@+id/export_saves_button" />
 
         <Button
             android:id="@+id/about_button"

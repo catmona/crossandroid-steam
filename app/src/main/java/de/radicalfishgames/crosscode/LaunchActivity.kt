@@ -1,5 +1,11 @@
 package de.radicalfishgames.crosscode
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import de.radicalfishgames.crosscode.steam.SteamBridge
+import de.radicalfishgames.crosscode.steam.SteamLoginActivity
+import kotlinx.coroutines.launch
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -86,6 +92,23 @@ class LaunchActivity : AppCompatActivity() {
 
         binding.browseModsButton.setOnClickListener {
             launchModBrowserActivity(fromController = !it.isInTouchMode)
+        }
+
+        SteamBridge.init(this)
+        binding.steamButton.setOnClickListener {
+            startActivity(Intent(this, SteamLoginActivity::class.java))
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                SteamBridge.state.collect { state ->
+                    binding.steamButton.text =
+                        if (SteamBridge.isSignedIn && state.accountName != null) {
+                            getString(R.string.steam_button_signed_in, state.accountName)
+                        } else {
+                            getString(R.string.steam_button_signed_out)
+                        }
+                }
+            }
         }
     }
 

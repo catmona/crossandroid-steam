@@ -26,6 +26,8 @@
         android:hardwareAccelerated="true"
         android:largeHeap="true"
         android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:hasFragileUserData="true"
         android:enableOnBackInvokedCallback="true">
 
@@ -59,6 +61,11 @@
         <activity
             android:name=".moddb.ModBrowserActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".steam.SteamLoginActivity"
+            android:exported="false"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|screenLayout|uiMode" />
 
         <activity
             android:name=".GameActivity"

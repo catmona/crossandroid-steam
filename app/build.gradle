@@ -84,6 +84,12 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:5.5.0'
     implementation 'io.github.z4kn4fein:semver:3.1.0'
 
+    // Steam connection (playtime, achievements) and the QR code for signing in
+    implementation 'in.dragonbra:javasteam:1.6.0'
+    // JavaSteam lists protobuf as runtime-only, but our stats handler builds its messages directly
+    implementation 'com.google.protobuf:protobuf-java:4.29.2'
+    implementation 'com.google.zxing:core:3.5.3'
+
     // Material Design
     implementation 'com.google.android.material:material:1.14.0'
 

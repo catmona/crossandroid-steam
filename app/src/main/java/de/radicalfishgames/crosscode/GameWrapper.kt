@@ -283,6 +283,11 @@ class GameWrapper(
         name: String,
     ) = webView.addJavascriptInterface(obj, name)
 
+    /** Runs [js] in every page before its own scripts; needs WebViewFeature.DOCUMENT_START_SCRIPT. */
+    fun addDocumentStartScript(js: String) {
+        WebViewCompat.addDocumentStartJavaScript(webView, js, setOf("*"))
+    }
+
     private fun startCrossCodeManually() = runJS("doStartCrossCodePlz()")
 
     fun onResume() = runJS("window.dispatchEvent(new FocusEvent(\"focus\"));")
