@@ -2,6 +2,7 @@ package de.radicalfishgames.crosscode
 
 import android.util.Log
 import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -20,6 +21,9 @@ class CcmodManager {
 
     // Target JSON path (e.g. "data/lang/sc/gui.en_US.json") -> (modPath, internalPath) of each patch
     private val patchIndex = ConcurrentHashMap<String, MutableList<Pair<String, String>>>()
+
+    // Ids of installed mods (ccmod.json "id" or package.json "name"), for IF steps that check for other mods
+    private val modIds: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     private fun getZipFile(ccmodPath: String): ZipFile? {
         return zipCache.getOrPut(ccmodPath) {
@@ -186,6 +190,7 @@ class CcmodManager {
     fun buildAssetIndex(modsDir: File) {
         assetIndex.clear()
         patchIndex.clear()
+        modIds.clear()
 
         // Sorted so the winning override and patch order are stable (last mod wins, patches in name order)
         val modEntries = modsDir.listFiles()?.sortedBy { it.name } ?: return
@@ -196,9 +201,11 @@ class CcmodManager {
             try {
                 if (entry.isFile && entry.name.endsWith(".ccmod")) {
                     indexCcmodAssets(entry.absolutePath)
+                    readModId(entry.absolutePath)?.let { modIds.add(it) }
                     packedCount++
                 } else if (entry.isDirectory && isUnpackedMod(entry)) {
                     indexUnpackedModAssets(entry)
+                    readModId(entry.absolutePath)?.let { modIds.add(it) }
                     unpackedCount++
                 }
             } catch (e: Exception) {
@@ -210,6 +217,19 @@ class CcmodManager {
             "Asset index built with ${assetIndex.size} entries, ${patchIndex.size} patchable files " +
                 "from $packedCount packed + $unpackedCount unpacked mods",
         )
+    }
+
+    /** The id CCLoader knows a mod by: ccmod.json "id", else package.json "name". */
+    private fun readModId(modPath: String): String? {
+        for ((file, key) in listOf("ccmod.json" to "id", "package.json" to "name")) {
+            val text = getModFileStream(modPath, file)?.bufferedReader()?.use { it.readText() } ?: continue
+            try {
+                JSONObject(text).optString(key).takeIf { it.isNotEmpty() }?.let { return it }
+            } catch (e: Exception) {
+                Log.w(TAG, "Unreadable $file in $modPath", e)
+            }
+        }
+        return null
     }
 
     private fun isUnpackedMod(dir: File): Boolean = File(dir, "package.json").exists() || File(dir, "ccmod.json").exists()
@@ -318,7 +338,7 @@ class CcmodManager {
                 if (patchStream != null) {
                     val patchJson = patchStream.bufferedReader().use { it.readText() }
                     val fileResolver = createFileResolver(modPath, gameFileResolver)
-                    val patched = PatchStepsApplier.apply(result, patchJson, fileResolver)
+                    val patched = PatchStepsApplier.apply(result, patchJson, fileResolver, modIds)
                     if (patched != null) {
                         result = patched
                         Log.d(TAG, "Applied patch $internalPath from $modPath to $assetPath")

@@ -202,6 +202,10 @@ class GameWebViewClient(
 
     /** Reads a `game:` patch path, which like CCLoader is relative to (and jailed in) `assets/`. */
     private fun readGameAsset(path: String): String? {
+        // As in CCLoader, `game:` sees mod-provided assets too (Azure's Adjustments IMPORTs its own files).
+        ccmodManager.getAssetStream(path)?.let { stream ->
+            return stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        }
         val assetsDir = File(gameDir ?: return null, "assets").canonicalFile
         val file = File(assetsDir, path).canonicalFile
         if (!isPathInside(file.path, assetsDir.path) || !file.isFile) return null

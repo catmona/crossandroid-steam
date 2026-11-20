@@ -99,7 +99,9 @@ class GameWrapper(
         val gaplessMusicJs =
             if (gaplessMusic) {
                 """
-                    Object.defineProperty(window,'IG_WEB_AUDIO_BGM',{get:function(){return true;},set:function(){}});
+                    // CCLoader's page keeps its window when it swaps documents, so this can run twice there
+                    if(!Object.getOwnPropertyDescriptor(window,'IG_WEB_AUDIO_BGM'))
+                        Object.defineProperty(window,'IG_WEB_AUDIO_BGM',{get:function(){return true;},set:function(){}});
                     function onMusicStack(track){
                         var m=ig.music,on=function(e){return !!e&&e.track===track;};
                         return !!m&&(on(m.currentTrack)||on(m.inBetweenTrack)||m.trackStack.some(on));

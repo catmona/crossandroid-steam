@@ -20,40 +20,51 @@ class PatchStepsApplier {
 
         /**
          * Applies [patchJson] to [originalJson]: a JSON array is run as Patch Steps, an object is
-         * deep-merged. Returns null if patching fails.
+         * deep-merged. Returns null if patching fails. [activeMods] (mod ids) lets IF steps that
+         * check for other mods be evaluated; without it, their thenSteps always run.
          */
         fun apply(
             originalJson: String,
             patchJson: String,
             fileResolver: FileResolver? = null,
-        ): String? {
-            return try {
-                val root = JSONObject(originalJson)
-                val cleanedPatch = stripTrailingCommas(patchJson)
-                val trimmed = cleanedPatch.trim()
-
-                if (trimmed.startsWith("[")) {
-                    val steps = JSONArray(cleanedPatch)
-                    val state = PatchState(fileResolver = fileResolver, current = root)
-                    applySteps(steps, state)
-                } else if (trimmed.startsWith("{")) {
-                    val patch = JSONObject(cleanedPatch)
-                    deepMerge(root, patch)
-                } else {
-                    Log.e(TAG, "Invalid patch format - must be JSON array or object")
-                    return null
-                }
-
-                root.toString()
+            activeMods: Set<String>? = null,
+        ): String? =
+            try {
+                applyOrThrow(originalJson, patchJson, fileResolver, activeMods)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to apply patch", e)
                 null
             }
+
+        /** Like [apply], but throws the reason a patch fails (used by tests). */
+        internal fun applyOrThrow(
+            originalJson: String,
+            patchJson: String,
+            fileResolver: FileResolver? = null,
+            activeMods: Set<String>? = null,
+        ): String {
+            // Some files have an array root, e.g. menu-ui-replacer's data/menu.json.
+            val root = parseJsonRoot(originalJson)
+            val cleanedPatch = stripTrailingCommas(patchJson)
+            val trimmed = cleanedPatch.trim()
+
+            if (trimmed.startsWith("[")) {
+                val steps = JSONArray(cleanedPatch)
+                val state = PatchState(fileResolver = fileResolver, activeMods = activeMods, current = root)
+                applySteps(steps, state)
+            } else if (trimmed.startsWith("{")) {
+                mergeAny(root, JSONObject(cleanedPatch))
+            } else {
+                throw IllegalArgumentException("Invalid patch format - must be JSON array or object")
+            }
+
+            return root.toString()
         }
 
         private class PatchState(
             val memory: MutableMap<String, Any> = mutableMapOf(),
             val fileResolver: FileResolver? = null,
+            val activeMods: Set<String>? = null,
             var debugEnabled: Boolean = false,
             val stack: MutableList<Any> = mutableListOf(),
             val pathStack: MutableList<String> = mutableListOf(),
@@ -66,6 +77,7 @@ class PatchStepsApplier {
                 PatchState(
                     memory = memory,
                     fileResolver = fileResolver,
+                    activeMods = activeMods,
                     debugEnabled = debugEnabled,
                     stack = mutableListOf(),
                     pathStack = mutableListOf(),
@@ -173,6 +185,10 @@ class PatchStepsApplier {
                 }
             }
         }
+
+        /** Parses a JSON document whose root may be an object or an array. */
+        private fun parseJsonRoot(text: String): Any =
+            if (text.trimStart().startsWith("[")) JSONArray(text) else JSONObject(text)
 
         private fun deepCopy(value: Any): Any =
             when (value) {
@@ -286,7 +302,7 @@ class PatchStepsApplier {
                                     ?: throw IllegalArgumentException("Failed to resolve IMPORT: $src")
 
                             val cleaned = stripTrailingCommas(content)
-                            var imported: Any = JSONObject(cleaned)
+                            var imported: Any = parseJsonRoot(cleaned)
 
                             val path = step.optJSONArray("path")
                             if (path != null) {
@@ -313,10 +329,13 @@ class PatchStepsApplier {
                                 resolver(resolvedSrc)
                                     ?: throw IllegalArgumentException("Failed to resolve INCLUDE: $src")
 
-                            val cleaned = stripTrailingCommas(patchContent)
-                            val includeSteps = JSONArray(cleaned)
-                            // Fresh stack but same current position and COPY memory.
-                            applySteps(includeSteps, state.childState())
+                            // CCLoader's patch() treats an array as steps and an object as data to
+                            // deep-merge (photomerge), so mods like xenons-playable-classes INCLUDE plain objects.
+                            when (val included = parseJsonRoot(stripTrailingCommas(patchContent))) {
+                                // Fresh stack but same current position and COPY memory.
+                                is JSONArray -> applySteps(included, state.childState())
+                                else -> mergeAny(state.current, included)
+                            }
                         }
 
                         "FOR_IN" -> {
@@ -349,16 +368,16 @@ class PatchStepsApplier {
                         }
 
                         "IF" -> {
-                            // Conditions are JS expressions, which can't be evaluated natively.
-                            val condition = step.opt("condition")
+                            // IF comes from cc-alybox: `cond` is JS. Mod-presence checks are evaluated
+                            // natively; anything else (e.g. localStorage options) runs thenSteps.
+                            val condition = step.optString("cond", step.optString("condition", ""))
+                            // Like cc-alybox, there is no else branch: mods write a second, negated IF.
                             val thenSteps = step.optJSONArray("thenSteps")
-                            val elseSteps = step.optJSONArray("elseSteps")
-                            Log.w(
-                                TAG,
-                                "IF condition not evaluated (JS not supported), executing thenSteps unconditionally. " +
-                                    "Condition: $condition, elseSteps present: ${elseSteps != null}",
-                            )
-                            if (thenSteps != null) {
+                            val result = state.activeMods?.let { PatchCondition.evaluate(condition, it) }
+                            if (result == null) {
+                                Log.w(TAG, "IF condition not evaluated, running thenSteps: $condition")
+                            }
+                            if (result != false && thenSteps != null) {
                                 applySteps(thenSteps, state)
                             }
                         }

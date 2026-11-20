@@ -61,6 +61,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    // android.util.Log is a stub on the JVM; let unit tests call it as a no-op.
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -93,6 +98,9 @@ dependencies {
 
     // Unit tests (app/src/test): Steam schema parsing, built-in mod routing
     testImplementation 'junit:junit:4.13.2'
+    // android.jar's org.json is a stub on the JVM; this is Android's own org.json source, so tests
+    // parse like the device (json.org's library rejects duplicate keys that Android accepts)
+    testImplementation 'com.vaadin.external.google:android-json:0.0.20131108.vaadin1'
 
     // Material Design
     implementation 'com.google.android.material:material:1.14.0'
